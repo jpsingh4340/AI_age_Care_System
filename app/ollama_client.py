@@ -1,6 +1,6 @@
 import httpx
 
-from .config import CHAT_MODEL, EMBED_MODEL, OLLAMA_URL
+from .config import CHAT_MODEL, EMBED_MODEL, NUM_GPU, OLLAMA_URL
 
 
 class OllamaError(Exception):
@@ -31,13 +31,14 @@ def _post(path: str, payload: dict, timeout: float = 180) -> dict:
 # Two sets of model settings. The first is strict and repeatable (temperature 0).
 # Small models sometimes get stuck repeating themselves with it, so if Ollama stops
 # the answer for repeating, we try once more with a little randomness and a repeat penalty.
-_STRICT = {"temperature": 0, "num_predict": 900, "num_ctx": 4096}
+_STRICT = {"temperature": 0, "num_predict": 900, "num_ctx": 4096, "num_gpu": NUM_GPU}
 _RETRY = {
     "temperature": 0.3,
     "repeat_penalty": 1.15,
     "seed": 1,
     "num_predict": 900,
     "num_ctx": 4096,
+    "num_gpu": NUM_GPU,
 }
 
 
@@ -70,7 +71,7 @@ def chat_json(system: str, user: str, schema: dict) -> str:
 
 def embed(texts: list[str]) -> list[list[float]]:
     """Turn each text into a list of numbers that captures its meaning."""
-    data = _post("/api/embed", {"model": EMBED_MODEL, "input": texts}, timeout=120)
+    data = _post("/api/embed", {"model": EMBED_MODEL, "input": texts, "options": {"num_gpu": NUM_GPU}}, timeout=120)
     return data["embeddings"]
 
 

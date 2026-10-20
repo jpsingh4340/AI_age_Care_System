@@ -1,7 +1,9 @@
 import time
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 
 from . import guidance, ollama_client, rag, slm
 from .config import CHAT_MODEL, EMBED_MODEL
@@ -20,6 +22,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
+
+
+@app.get("/", include_in_schema=False)
+def home():
+    """The simple web screen. Open http://127.0.0.1:8000 in the browser."""
+    return FileResponse(STATIC_DIR / "index.html")
+
+
+@app.get("/api/residents")
+def residents():
+    """The fake residents and their recorded conditions."""
+    return guidance.list_residents()
 
 
 @app.get("/api/health")
