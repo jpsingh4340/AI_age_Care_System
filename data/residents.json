@@ -1,0 +1,37 @@
+{
+  "note": "FAKE residents for a student project. Not real people.",
+  "residents": [
+    {
+      "resident_id": 1,
+      "name": "Margaret T.",
+      "conditions": [
+        {"name": "Low fluid intake risk", "topic": "hydration"},
+        {"name": "Needs help to change position", "topic": "skin_pressure"},
+        {"name": "Uses a walking frame", "topic": "falls"}
+      ]
+    },
+    {
+      "resident_id": 2,
+      "name": "Ron H.",
+      "conditions": [
+        {"name": "Falls risk", "topic": "falls"},
+        {"name": "Needs reminders to drink", "topic": "hydration"}
+      ]
+    },
+    {
+      "resident_id": 3,
+      "name": "Joan P.",
+      "conditions": [
+        {"name": "Nausea and vomiting", "topic": "appetite_vomiting"},
+        {"name": "Needs encouragement to drink", "topic": "hydration"}
+      ]
+    },
+    {
+      "resident_id": 4,
+      "name": "Ahmed K.",
+      "conditions": [
+        {"name": "Needs reminders to drink", "topic": "hydration"}
+      ]
+    }
+  ]
+}

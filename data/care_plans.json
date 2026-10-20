@@ -1,0 +1,56 @@
+{
+  "care_plans": [
+    {
+      "resident_id": 1,
+      "resident": "Margaret T.",
+      "items": [
+        "Offer a drink at least every 2 hours. Aim for about 1.5 litres of fluid a day.",
+        "Record how much of each meal is eaten. Tell the nurse if two meals in a row are mostly left.",
+        "Help to reposition at least every 3 hours when in bed or in a chair for a long time.",
+        "Enjoys a daily phone call with her daughter. Note when she calls.",
+        "Uses a walking frame. Staff stay close when she stands up."
+      ]
+    },
+    {
+      "resident_id": 2,
+      "resident": "Ron H.",
+      "items": [
+        "Falls risk. Staff stay within arm's reach when Ron stands from a chair or goes to the bathroom.",
+        "The walking frame must be within reach at all times.",
+        "Encourage a drink with each meal and at morning and afternoon tea.",
+        "Likes to eat breakfast at the dining table.",
+        "Tell the nurse after any slip, trip or near-fall."
+      ]
+    },
+    {
+      "resident_id": 3,
+      "resident": "Joan P.",
+      "items": [
+        "Offer small, light meals. Tell the nurse if she says she feels sick.",
+        "Record any vomiting: the time, and roughly how much.",
+        "Encourage sips of fluid often through the day.",
+        "Enjoys the afternoon music group.",
+        "Sleeps best with the door open and the hallway light on."
+      ]
+    },
+    {
+      "resident_id": 4,
+      "resident": "Ahmed K.",
+      "items": [
+        "Prefers halal meals. Check the meal label at each meal.",
+        "Daily walk in the garden if the weather is fine.",
+        "Enjoys bingo and group games in the afternoon.",
+        "Encourage a drink with each meal.",
+        "Prays in his room at midday. Keep the room quiet at that time."
+      ]
+    }
+  ],
+  "home_procedures": [
+    "Any fall or near-fall must be reported to the nurse on shift straight away and written in the note.",
+    "If a resident vomits, write down the time and tell the nurse on shift.",
+    "If a resident refuses a meal, write it in the note and offer an alternative.",
+    "If a resident says they are in pain, tell the nurse on shift and write down what they said.",
+    "Record at least one drink offered at each round on the fluid chart.",
+    "Write notes in plain words about what you saw and heard. Do not guess the cause."
+  ]
+}

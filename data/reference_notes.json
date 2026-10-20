@@ -1,0 +1,41 @@
+{
+  "status": "EXAMPLE CONTENT written by the student team in plain English. A nurse or clinical lead must review it before any real use.",
+  "notes": [
+    {
+      "topic": "hydration",
+      "title": "Hydration",
+      "lines": [
+        "A resident who is not drinking enough may have a dry mouth, dark urine, be more sleepy or confused than usual, or keep refusing drinks.",
+        "Offer a drink often and with every meal. Keep a drink within reach and record how much is taken.",
+        "Tell the nurse if a resident keeps refusing drinks."
+      ]
+    },
+    {
+      "topic": "falls",
+      "title": "Falls",
+      "lines": [
+        "A resident may be at higher risk of falling if they are unsteady when standing, feel dizzy, are newly confused, or have had a recent near-fall.",
+        "Keep the walking frame within reach, keep floors clear, and stay close when the resident stands or walks.",
+        "Report any fall or near-fall to the nurse on shift straight away."
+      ]
+    },
+    {
+      "topic": "appetite_vomiting",
+      "title": "Poor appetite and vomiting",
+      "lines": [
+        "Signs to watch for include leaving most of a meal, saying they feel sick, vomiting, or looking pale and weak.",
+        "Offer small, light meals and sips of fluid often. Write down the time and roughly how much was vomited.",
+        "Tell the nurse if a resident vomits or cannot keep fluids down."
+      ]
+    },
+    {
+      "topic": "skin_pressure",
+      "title": "Skin and pressure areas",
+      "lines": [
+        "Signs of skin trouble include red or sore skin that does not fade, a new blister, or a resident saying an area is sore.",
+        "Help the resident change position regularly, and keep skin clean and dry.",
+        "Tell the nurse about any change in the skin."
+      ]
+    }
+  ]
+}
