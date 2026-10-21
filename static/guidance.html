@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Age-Care Intelligence</title>
+  <style>
+    :root {
+      --ink: #17313a; --soft: #4b6670; --teal: #1f6f78; --deep: #0f3f46;
+      --sea: #eaf3f2; --line: #c9dad8; --amber: #b7791f; --amber-bg: #fff1d0;
+      --red: #a52f2b; --red-bg: #fbe6e3; --white: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, "Segoe UI", Arial, sans-serif; color: var(--ink); background: #f4f8f7; line-height: 1.5; }
+    header { background: var(--deep); color: var(--white); padding: 18px 20px; }
+    header h1 { margin: 0; font-size: 1.25rem; }
+    header p { margin: 2px 0 0; color: #b8d6d3; font-size: 0.9rem; }
+    nav { margin-top: 8px; font-size: 0.9rem; }
+    nav a { color: #ffffff; margin-right: 16px; }
+    main { max-width: 980px; margin: 0 auto; padding: 18px 16px 40px; }
+    .demo { background: var(--amber-bg); border-left: 5px solid var(--amber); padding: 10px 14px; border-radius: 6px; font-size: 0.9rem; margin-bottom: 16px; }
+    .card { background: var(--white); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+    .card h2 { margin: 0 0 10px; font-size: 1.05rem; color: var(--deep); }
+    .controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+    label { display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 4px; }
+    select, button { font: inherit; border-radius: 8px; padding: 10px 12px; }
+    select { border: 1px solid var(--line); min-width: 240px; background: var(--white); color: var(--ink); }
+    button { border: 0; background: var(--teal); color: var(--white); font-weight: 600; cursor: pointer; }
+    button:hover { background: var(--deep); }
+    button:disabled { background: #8aa4a8; cursor: wait; }
+    .chips { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip { background: var(--sea); border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; font-size: 0.82rem; }
+    .status { margin-top: 12px; padding: 10px 14px; border-radius: 8px; background: var(--sea); display: none; }
+    .status.error { background: var(--red-bg); color: var(--red); display: block; }
+    .status.busy { display: block; }
+    .draft-banner { background: var(--amber-bg); border: 1px solid var(--amber); border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; font-weight: 600; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+    ul.lines { list-style: none; margin: 0; padding: 0; }
+    ul.lines li { padding: 10px 0; border-top: 1px solid var(--line); }
+    ul.lines li:first-child { border-top: 0; }
+    .src { display: inline-block; background: var(--sea); color: var(--deep); border-radius: 6px; padding: 1px 8px; font-size: 0.78rem; margin-top: 4px; }
+    details.sources { font-size: 1rem; color: var(--ink); margin: 0; }
+    details { margin-top: 4px; font-size: 0.85rem; color: var(--soft); }
+    summary { cursor: pointer; }
+    q { display: block; margin-top: 2px; font-style: italic; }
+    .empty { color: var(--soft); font-style: italic; }
+    .removed { border-color: var(--red); }
+    .removed li { color: var(--ink); }
+    .reason { color: var(--red); font-size: 0.85rem; }
+    .meta { color: var(--soft); font-size: 0.82rem; margin-top: 8px; }
+    .gap { background: var(--amber-bg); border-left: 5px solid var(--amber); border-radius: 6px; padding: 10px 14px; margin-bottom: 14px; font-weight: 600; }
+    .next { color: var(--soft); font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Age-Care Intelligence System</h1>
+    <p>Feature A: symptoms to watch for and prevention steps</p>
+    <nav><a href="/">Dashboard</a><a href="/guidance">Guidance</a><a href="/ocr">Health report (OCR)</a></nav>
+  </header>
+
+  <main>
+    <div class="demo"><strong>Demo data only.</strong> These residents are fake. This is a student prototype and not a medical tool. The AI never diagnoses or suggests medicines.</div>
+
+    <section class="card">
+      <h2>1. Choose a resident</h2>
+      <div class="controls">
+        <div>
+          <label for="resident">Resident</label>
+          <select id="resident"><option>Loading...</option></select>
+        </div>
+        <button id="go" type="button">Draft guidance</button>
+      </div>
+      <div class="chips" id="conditions"></div>
+      <div class="status" id="status"></div>
+    </section>
+
+    <div id="result" hidden>
+      <div class="draft-banner">AI DRAFT. A nurse must approve this before carers see it. <span class="next">(Nurse approval is the next step we build.)</span></div>
+
+      <div class="gap" id="gaps" hidden></div>
+
+      <div class="grid">
+        <section class="card">
+          <h2>Symptoms to watch for</h2>
+          <ul class="lines" id="watch"></ul>
+        </section>
+        <section class="card">
+          <h2>Prevention steps</h2>
+          <ul class="lines" id="prevent"></ul>
+        </section>
+      </div>
+
+      <section class="card removed">
+        <h2>Removed by the automatic check</h2>
+        <p class="next">The AI wrote these, but a check removed them. Nobody else sees them.</p>
+        <ul class="lines" id="dropped"></ul>
+      </section>
+
+      <section class="card">
+        <details class="sources">
+          <summary><strong>Approved sources the AI was allowed to use</strong> (click to open)</summary>
+          <ul class="lines" id="sources"></ul>
+        </details>
+        <p class="meta" id="meta"></p>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    // Build elements with textContent only, so text from the server can never run as code.
+    function el(tag, className, text) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
+
+    let residents = [];
+
+    function showConditions() {
+      const box = $("conditions");
+      box.replaceChildren();
+      const chosen = residents.find((r) => String(r.resident_id) === $("resident").value);
+      if (!chosen) return;
+      for (const name of chosen.conditions) box.append(el("span", "chip", name));
+    }
+
+    async function loadResidents() {
+      try {
+        const response = await fetch("/api/residents");
+        residents = await response.json();
+        const select = $("resident");
+        select.replaceChildren();
+        for (const r of residents) {
+          const option = el("option", "", r.name);
+          option.value = r.resident_id;
+          select.append(option);
+        }
+        showConditions();
+      } catch (error) {
+        setStatus("Could not load residents. Is the API running?", "error");
+      }
+    }
+
+    function setStatus(message, kind) {
+      const box = $("status");
+      box.textContent = message || "";
+      box.className = "status" + (kind ? " " + kind : "");
+    }
+
+    function fillLines(listId, lines, emptyText) {
+      const list = $(listId);
+      list.replaceChildren();
+      if (!lines.length) {
+        const item = el("li");
+        item.append(el("span", "empty", emptyText));
+        list.append(item);
+        return;
+      }
+      for (const line of lines) {
+        const item = el("li");
+        item.append(el("div", "", line.text));
+        item.append(el("span", "src", line.source_id + " · " + line.source));
+        const details = el("details");
+        details.append(el("summary", "", "Exact words from the source"));
+        details.append(el("q", "", line.quote));
+        item.append(details);
+        list.append(item);
+      }
+    }
+
+    function render(data) {
+      const gaps = $("gaps");
+      gaps.hidden = !data.gaps.length;
+      gaps.textContent = data.gaps.length
+        ? "No line was kept about: " + data.gaps.join(", ") + ". A nurse should add one if it is needed."
+        : "";
+      fillLines("watch", data.watch_for, "No line passed the checks.");
+      fillLines("prevent", data.prevention, "No line passed the checks.");
+
+      const dropped = $("dropped");
+      dropped.replaceChildren();
+      if (!data.dropped.length) {
+        const item = el("li");
+        item.append(el("span", "empty", "Nothing was removed."));
+        dropped.append(item);
+      }
+      for (const line of data.dropped) {
+        const item = el("li");
+        item.append(el("div", "", line.text || "(empty line)"));
+        item.append(el("div", "reason", "Removed: " + line.reason));
+        dropped.append(item);
+      }
+
+      const sources = $("sources");
+      sources.replaceChildren();
+      for (const s of data.sources) {
+        const item = el("li");
+        item.append(el("span", "src", s.id + " · " + s.source));
+        item.append(el("div", "", s.text));
+        sources.append(item);
+      }
+
+      $("meta").textContent =
+        "Model: " + data.model + " (runs on this laptop). Time: " + data.seconds + " seconds. " +
+        "Lines kept: " + (data.watch_for.length + data.prevention.length) +
+        ". Lines removed: " + data.dropped.length + ".";
+      $("result").hidden = false;
+    }
+
+    async function draft() {
+      const button = $("go");
+      button.disabled = true;
+      $("result").hidden = true;
+      setStatus("The AI is working on this laptop. This can take a minute...", "busy");
+      try {
+        const response = await fetch("/api/guidance/draft", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ resident_id: Number($("resident").value) }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || "Something went wrong.");
+        setStatus("");
+        render(data);
+      } catch (error) {
+        setStatus(error.message, "error");
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    $("resident").addEventListener("change", showConditions);
+    $("go").addEventListener("click", draft);
+    loadResidents();
+  </script>
+</body>
+</html>
