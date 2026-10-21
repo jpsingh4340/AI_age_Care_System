@@ -88,6 +88,7 @@ class SourceOut(BaseModel):
     id: str
     source: str
     text: str
+    topic: str = ""  # for example "falls"; empty for care plan lines
 
 
 class CheckedLine(BaseModel):
@@ -111,6 +112,7 @@ class GuidanceResponse(BaseModel):
     watch_for: list[CheckedLine]
     prevention: list[CheckedLine]
     dropped: list[DroppedLine]  # lines the check removed, so we can measure it
+    gaps: list[str] = []  # conditions that have no kept line, so the nurse can add one
     sources: list[SourceOut]
     model: str
     seconds: float
@@ -168,6 +170,8 @@ class DraftOut(BaseModel):
     watch_for: list[StoredLine]
     prevention: list[StoredLine]
     dropped: list[DroppedLine]
+    gaps: list[str] = []
+    sources: list[SourceOut]
     sources: list[SourceOut]
 
 

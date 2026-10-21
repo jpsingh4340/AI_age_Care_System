@@ -113,7 +113,7 @@ def guidance_draft(request: GuidanceRequest):
     if result is None:
         raise HTTPException(status_code=404, detail="Resident not found.")
 
-    resident, sources, watch_for, prevention, dropped = result
+    resident, sources, watch_for, prevention, dropped, gaps = result
     conditions = [c["name"] for c in resident["conditions"]]
     draft_id = db.save_draft(
         resident["resident_id"],
@@ -124,6 +124,7 @@ def guidance_draft(request: GuidanceRequest):
             "watch_for": [line.model_dump() for line in watch_for],
             "prevention": [line.model_dump() for line in prevention],
             "dropped": [line.model_dump() for line in dropped],
+            "gaps": gaps,
             "sources": [source.model_dump() for source in sources],
         },
     )
@@ -133,6 +134,7 @@ def guidance_draft(request: GuidanceRequest):
         watch_for=watch_for,
         prevention=prevention,
         dropped=dropped,
+        gaps=gaps,
         sources=sources,
         model=CHAT_MODEL,
         seconds=round(time.perf_counter() - started, 1),

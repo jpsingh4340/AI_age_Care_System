@@ -102,13 +102,14 @@ def test_draft_keeps_good_lines_and_records_removed_ones(monkeypatch):
     ]
     monkeypatch.setattr(ollama_client, "chat_json", make_fake_model(watch_for, prevention))
 
-    resident, sources, kept_watch, kept_prev, dropped = guidance.draft_guidance(2)
+    resident, sources, kept_watch, kept_prev, dropped, gaps = guidance.draft_guidance(2)
 
     assert resident["name"] == "Ron H."
     assert [line.text for line in kept_watch] == ["Watch for unsteadiness when Ron stands up."]
     assert [line.text for line in kept_prev] == ["Keep the walking frame within reach."]
     assert {d.reason for d in dropped} == {"The source number does not exist.", "Duplicate line."}
     assert kept_prev[0].source == "Reference note: Falls"
+    assert gaps == ["Hydration"]  # Ron's drinking has no kept line, so the nurse is told
 
 
 def test_unknown_resident_returns_none():
@@ -156,3 +157,98 @@ def test_screen_and_resident_list_are_served():
     people = client.get("/api/residents").json()
     assert [p["name"] for p in people] == ["Margaret T.", "Ron H.", "Joan P.", "Ahmed K."]
     assert "Falls risk" in people[1]["conditions"]
+
+    
+
+
+
+# ---------- coverage: every recorded condition should get at least one line ----------
+def lines_from(resident_id, topic, count=1):
+    """Good lines that quote a whole reference-note sentence for this topic."""
+    sources = [s for s in guidance.build_sources(guidance.load_resident(resident_id)) if s.topic == topic]
+    return [good(s.text, s.id, s.text) for s in sources[:count]]
+
+
+def recording_model(answers):
+    """A fake model that returns the next prepared answer each time and remembers what it was asked."""
+    asked = []
+
+    def fake_chat_json(system, user, schema):
+        asked.append((user, schema))
+        return json.dumps(answers[min(len(asked), len(answers)) - 1])
+        
+    return fake_chat_json, asked
+
+
+def test_a_missing_condition_gets_one_extra_try_using_only_its_sources(monkeypatch):
+    first = {"watch_for": lines_from(2, "falls"), "prevention": lines_from(2, "falls", 2)[1:]}
+    second = {"watch_for": lines_from(2, "hydration"), "prevention": lines_from(2, "hydration", 2)[1:]}
+    model, asked = recording_model([first, second])
+    monkeypatch.setattr(ollama_client, "chat_json", model)
+
+    _, sources, watch, prevention, dropped, gaps = guidance.draft_guidance(2)
+
+    assert len(asked) == 2
+    assert "Reference note: Hydration" in asked[1][0] and "Reference note: Falls" not in asked[1][0]
+    assert asked[1][1]["properties"]["watch_for"]["minItems"] == 1
+    topics = {s.id: s.topic for s in sources}
+    assert {topics[line.source_id] for line in watch + prevention} == {"falls", "hydration"}
+    assert gaps == []
+
+
+def test_no_extra_try_when_every_condition_is_covered(monkeypatch):
+    answer = {
+        "watch_for": lines_from(2, "falls") + lines_from(2, "hydration"),
+        "prevention": lines_from(2, "falls", 2)[1:],
+    }
+    model, asked = recording_model([answer])
+    monkeypatch.setattr(ollama_client, "chat_json", model)
+
+    *_, gaps = guidance.draft_guidance(2)
+
+    assert len(asked) == 1
+    assert gaps == []
+
+
+def test_a_gap_is_reported_when_the_extra_try_also_fails(monkeypatch):
+    first = {"watch_for": lines_from(2, "falls"), "prevention": lines_from(2, "falls", 2)[1:]}
+    nothing_useful = {"watch_for": [good("Made up.", "S99", "made up")], "prevention": []}
+    model, asked = recording_model([first, nothing_useful])
+    monkeypatch.setattr(ollama_client, "chat_json", model)
+
+    _, _, watch, prevention, dropped, gaps = guidance.draft_guidance(2)
+
+    assert gaps == ["Hydration"]
+    assert watch and prevention  # the falls lines are still kept
+    assert any(d.reason == "The source number does not exist." for d in dropped)
+
+
+def test_a_broken_extra_try_does_not_lose_the_first_answer(monkeypatch):
+    first = {"watch_for": lines_from(2, "falls"), "prevention": lines_from(2, "falls", 2)[1:]}
+    calls = []
+
+    def flaky(system, user, schema):
+        calls.append(1)
+        if len(calls) == 2:
+            raise ollama_client.OllamaError("token repeat limit reached")
+        return json.dumps(first)
+
+    monkeypatch.setattr(ollama_client, "chat_json", flaky)
+
+    _, _, watch, prevention, _, gaps = guidance.draft_guidance(2)
+
+    assert len(calls) == 2 and watch and prevention
+    assert gaps == ["Hydration"]
+
+
+def test_api_tells_the_nurse_about_gaps(monkeypatch):
+    first = {"watch_for": lines_from(2, "falls"), "prevention": lines_from(2, "falls", 2)[1:]}
+    model, _ = recording_model([first, {"watch_for": [], "prevention": []}])
+    monkeypatch.setattr(ollama_client, "chat_json", model)
+    client = TestClient(app)
+
+    body = client.post("/api/guidance/draft", json={"resident_id": 2}).json()
+    assert body["gaps"] == ["Hydration"]
+
+    saved = client.get(f"/api/guidance/draft/{body['draft_id']}", headers={"X-Role": "nurse"}).json()
+    assert saved["gaps"] == ["Hydration"]
