@@ -33,6 +33,7 @@ GUIDANCE_SYSTEM = """You help care staff at a New Zealand rest home. You write s
 Rules:
 - Write two lists: "watch_for" (signs to watch for) and "prevention" (things staff can do to help prevent problems).
 - Write 2 to 4 lines in each list. Do not leave a list empty.
+- Use the sources from EVERY reference note you are given, not only the first one. Each recorded condition needs at least one line.
 - Every line must come from one source. Give its source_id exactly as shown, for example S3.
 - "quote" must be words copied exactly from that source, 4 to 12 words long.
 - Write each line as one short sentence of plain English.

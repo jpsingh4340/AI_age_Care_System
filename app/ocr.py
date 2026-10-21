@@ -137,3 +137,27 @@ def extract_readings(lines: list[OcrLineOut]) -> list[Reading]:
             )
             break  # first matching line is enough
     return readings
+
+
+    
+
+# ---------- checking values that a nurse saves ----------
+FIELD_INFO = {key: (label, unit) for key, label, unit, _, _ in FIELDS}
+VALUE_FORMATS = {
+    "blood_pressure": r"\d{2,3}/\d{2,3}",
+    "report_date": r"\d{1,2}[/.\-]\d{1,2}[/.\-]\d{2,4}",
+}
+
+
+def value_error(key: str, value: str) -> str:
+    """Return a message if the value is not in a valid format, or an empty string.
+
+    Unusual numbers are allowed here (the nurse checked them against the photo and they
+    may be real), but a value that is not a number at all is never saved.
+    """
+    if key not in FIELD_INFO or key == "report_date":
+        return f'"{key}" is not a value we can save.'
+    pattern = VALUE_FORMATS.get(key, r"\d{1,3}([.,]\d)?")
+    if not re.fullmatch(pattern, value.strip()):
+        return f'"{value}" is not a valid {FIELD_INFO[key][0].lower()}.'
+    return ""
