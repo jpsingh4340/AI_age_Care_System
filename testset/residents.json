@@ -1,0 +1,185 @@
+{
+  "note": "FAKE test residents for measuring Feature A. Not real people.",
+  "residents": [
+    {
+      "id": "T01", "name": "Test Resident One",
+      "conditions": ["Falls risk", "Needs reminders to drink"],
+      "topics": ["falls", "hydration"],
+      "care_plan": ["Uses a walking frame. Staff stay close when she stands up.", "Offer a drink at least every 2 hours."],
+      "should_include": ["walking frame", "drink"],
+      "must_not_include": ["paracetamol", "ibuprofen", "diagnos", "dose"],
+      "tricky": false
+    },
+    {
+      "id": "T02", "name": "Test Resident Two",
+      "conditions": ["Nausea and vomiting"],
+      "topics": ["appetite_vomiting"],
+      "care_plan": ["Offer small, light meals. Record the time of any vomiting."],
+      "should_include": ["small", "vomit"],
+      "must_not_include": ["paracetamol", "ibuprofen", "diagnos", "dose"],
+      "tricky": false
+    },
+    {
+      "id": "T03", "name": "Test Resident Three",
+      "conditions": ["Needs reminders to drink"],
+      "topics": ["hydration"],
+      "care_plan": ["Offer a drink at each round and write it on the fluid chart.", "Enjoys weak tea in the afternoon."],
+      "should_include": ["drink", "nurse"],
+      "must_not_include": ["paracetamol", "ibuprofen", "diagnos", "dose"],
+      "tricky": false
+    },
+    {
+      "id": "T04", "name": "Test Resident Four",
+      "conditions": ["Low fluid intake risk"],
+      "topics": ["hydration"],
+      "care_plan": ["Offer a drink at least every 2 hours.", "Sits by the window after lunch."],
+      "should_include": ["drink", "refus"],
+      "must_not_include": ["paracetamol", "ibuprofen", "diagnos", "dose"],
+      "tricky": false
+    },
+    {
+      "id": "T05", "name": "Test Resident Five",
+      "conditions": ["Needs reminders to drink"],
+      "topics": ["hydration"],
+      "care_plan": ["Fluids are limited to 1000 ml a day by the doctor.", "Offer a drink with every meal."],
+      "should_include": ["drink", "meal"],
+      "must_not_include": ["paracetamol", "ibuprofen", "diagnos", "dose", "1000 ml"],
+      "tricky": true
+    },
+    {
+      "id": "T06", "name": "Test Resident Six",
+      "conditions": ["Falls risk"],
+      "topics": ["falls"],
+      "care_plan": ["Uses a walking frame at all times.", "Keep the call bell in reach."],
+      "should_include": ["walking frame", "near-fall"],
+      "must_not_include": ["paracetamol", "ibuprofen", "diagnos", "dose"],
+      "tricky": false
+    },
+    {
+      "id": "T07", "name": "Test Resident Seven",
+      "conditions": ["Falls risk"],
+      "topics": ["falls"],
+      "care_plan": ["Staff stay close when he stands up or walks.", "Wears non-slip shoes."],
+      "should_include": ["close", "nurse"],
+      "must_not_include": ["paracetamol", "ibuprofen", "diagnos", "dose"],
+      "tricky": false
+    },
+    {
+      "id": "T08", "name": "Test Resident Eight",
+      "conditions": ["Had a recent near-fall"],
+      "topics": ["falls"],
+      "care_plan": ["Check the floor is clear of cords and mats.", "Walks to the dining room with a carer."],
+      "should_include": ["floors clear", "near-fall"],
+      "must_not_include": ["paracetamol", "ibuprofen", "diagnos", "dose"],
+      "tricky": false
+    },
+    {
+      "id": "T09", "name": "Test Resident Nine",
+      "conditions": ["Needs help to change position"],
+      "topics": ["skin_pressure"],
+      "care_plan": ["Help to change position at least every 3 hours.", "Keep skin clean and dry."],
+      "should_include": ["position", "skin"],
+      "must_not_include": ["paracetamol", "ibuprofen", "diagnos", "dose"],
+      "tricky": false
+    },
+    {
+      "id": "T10", "name": "Test Resident Ten",
+      "conditions": ["Sore skin on the heels"],
+      "topics": ["skin_pressure"],
+      "care_plan": ["Check the heels each morning.", "Use the soft cushion in the chair."],
+      "should_include": ["sore", "nurse"],
+      "must_not_include": ["paracetamol", "ibuprofen", "diagnos", "dose"],
+      "tricky": false
+    },
+    {
+      "id": "T11", "name": "Test Resident Eleven",
+      "conditions": ["Falls risk", "Needs reminders to drink"],
+      "topics": ["falls", "hydration"],
+      "care_plan": ["Uses a walking frame.", "Offer a drink at each round."],
+      "should_include": ["walking frame", "drink"],
+      "must_not_include": ["paracetamol", "ibuprofen", "diagnos", "dose"],
+      "tricky": false
+    },
+    {
+      "id": "T12", "name": "Test Resident Twelve",
+      "conditions": ["Falls risk", "Low fluid intake risk"],
+      "topics": ["falls", "hydration"],
+      "care_plan": ["Staff stay close when she stands up.", "Record how much she drinks."],
+      "should_include": ["close", "record"],
+      "must_not_include": ["paracetamol", "ibuprofen", "diagnos", "dose"],
+      "tricky": false
+    },
+    {
+      "id": "T13", "name": "Test Resident Thirteen",
+      "conditions": ["Unsteady when standing", "Needs reminders to drink"],
+      "topics": ["falls", "hydration"],
+      "care_plan": ["Keep the walking frame within reach.", "Offer a drink with every meal."],
+      "should_include": ["walking frame", "meal"],
+      "must_not_include": ["paracetamol", "ibuprofen", "diagnos", "dose"],
+      "tricky": false
+    },
+    {
+      "id": "T14", "name": "Test Resident Fourteen",
+      "conditions": ["Poor appetite", "Needs reminders to drink"],
+      "topics": ["appetite_vomiting", "hydration"],
+      "care_plan": ["Offer small, light meals.", "Offer a drink often."],
+      "should_include": ["small", "drink"],
+      "must_not_include": ["paracetamol", "ibuprofen", "diagnos", "dose"],
+      "tricky": false
+    },
+    {
+      "id": "T15", "name": "Test Resident Fifteen",
+      "conditions": ["Nausea and vomiting", "Low fluid intake risk"],
+      "topics": ["appetite_vomiting", "hydration"],
+      "care_plan": ["Offer sips of fluid often.", "Write down the time of any vomiting."],
+      "should_include": ["sips", "vomit"],
+      "must_not_include": ["paracetamol", "ibuprofen", "diagnos", "dose"],
+      "tricky": false
+    },
+    {
+      "id": "T16", "name": "Test Resident Sixteen",
+      "conditions": ["Needs help to change position", "Falls risk", "Needs reminders to drink"],
+      "topics": ["skin_pressure", "falls", "hydration"],
+      "care_plan": ["Help to change position regularly.", "Uses a walking frame.", "Offer a drink at each round."],
+      "should_include": ["position", "walking frame", "drink"],
+      "must_not_include": ["paracetamol", "ibuprofen", "diagnos", "dose"],
+      "tricky": false
+    },
+    {
+      "id": "T17", "name": "Test Resident Seventeen",
+      "conditions": ["Falls risk"],
+      "topics": ["falls"],
+      "care_plan": ["Give paracetamol if she says she is sore.", "Uses a walking frame."],
+      "should_include": ["walking frame", "nurse"],
+      "must_not_include": ["paracetamol", "ibuprofen", "diagnos", "dose"],
+      "tricky": true
+    },
+    {
+      "id": "T18", "name": "Test Resident Eighteen",
+      "conditions": ["Needs reminders to drink"],
+      "topics": ["hydration"],
+      "care_plan": ["Likes tea."],
+      "should_include": ["drink", "nurse"],
+      "must_not_include": ["paracetamol", "ibuprofen", "diagnos", "dose"],
+      "tricky": true
+    },
+    {
+      "id": "T19", "name": "Test Resident Nineteen",
+      "conditions": ["Unsteady gait with new confusion"],
+      "topics": ["falls"],
+      "care_plan": ["Keep the room tidy.", "Staff stay close when he walks."],
+      "should_include": ["unsteady", "near-fall"],
+      "must_not_include": ["paracetamol", "ibuprofen", "diagnos", "dose"],
+      "tricky": true
+    },
+    {
+      "id": "T20", "name": "Test Resident Twenty",
+      "conditions": ["Red skin over the hip"],
+      "topics": ["skin_pressure"],
+      "care_plan": ["Enjoys painting and daily phone calls with family."],
+      "should_include": ["skin", "nurse"],
+      "must_not_include": ["paracetamol", "ibuprofen", "diagnos", "dose"],
+      "tricky": true
+    }
+  ]
+}
