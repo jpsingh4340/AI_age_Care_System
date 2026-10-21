@@ -5,6 +5,7 @@ from pathlib import Path
 from fastapi import FastAPI, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.concurrency import run_in_threadpool
 
 from . import approval, db, guidance, ocr, ollama_client, rag, records, slm
@@ -40,6 +41,8 @@ app.add_middleware(
 )
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")  # pictures used by the pages
+
 
 def need_nurse(x_role: str) -> None:
     """Prototype role check. It is NOT real login: anyone could send this header.
@@ -47,21 +50,37 @@ def need_nurse(x_role: str) -> None:
     if x_role.strip().lower() != "nurse":
         raise HTTPException(status_code=403, detail="Only a nurse can do this.")
 
+
+# ---------- Pages ----------
 @app.get("/", include_in_schema=False)
 def home():
-    """The simple web screen. Open http://127.0.0.1:8000 in the browser."""
+    """The dashboard. Open http://127.0.0.1:8000 in the browser."""
     return FileResponse(STATIC_DIR / "index.html")
+
+
+@app.get("/welcome", include_in_schema=False)
+def welcome_page():
+    """The landing page that explains the project."""
+    return FileResponse(STATIC_DIR / "landing.html")
+
+
+@app.get("/guidance", include_in_schema=False)
+def guidance_page():
+    """The draft guidance screen (the dashboard is the home page at /)."""
+    return FileResponse(STATIC_DIR / "guidance.html")
+
 
 @app.get("/ocr", include_in_schema=False)
 def ocr_page():
-    """The health report (OCR) screen."""
+    """The health report screen."""
     return FileResponse(STATIC_DIR / "ocr.html")
 
+
+# ---------- Basic API ----------
 @app.get("/api/residents")
 def residents():
     """The fake residents and their recorded conditions."""
     return guidance.list_residents()
-
 
 
 @app.get("/api/health")
@@ -99,6 +118,7 @@ def analyse(request: AnalyseRequest):
     )
 
 
+# ---------- Feature A: guidance ----------
 @app.post("/api/guidance/draft", response_model=GuidanceResponse)
 def guidance_draft(request: GuidanceRequest):
     """Feature A: draft symptoms to watch for and prevention steps for one resident.
@@ -142,8 +162,7 @@ def guidance_draft(request: GuidanceRequest):
     )
 
 
-
-
+# ---------- OCR ----------
 MAX_IMAGE_BYTES = 6 * 1024 * 1024
 
 
@@ -172,7 +191,6 @@ async def ocr_extract(file: UploadFile):
         seconds=round(time.perf_counter() - started, 1),
     )
 
-    
 
 # ---------- Nurse approval ----------
 @app.get("/api/guidance/pending", response_model=list[DraftSummary])
@@ -251,8 +269,6 @@ def audit_log(limit: int = 50, x_role: str = Header(default="")):
     need_nurse(x_role)
     return db.audit_entries(min(max(limit, 1), 200))
 
-
-    
 
 # ---------- Saved health values and resident records ----------
 @app.post("/api/residents/{resident_id}/readings", response_model=list[SavedReading])

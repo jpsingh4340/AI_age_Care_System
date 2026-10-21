@@ -3,113 +3,276 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Health report (OCR)</title>
+  <title>Health report reader</title>
+  <link rel="icon" type="image/png" href="/static/img/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --ink: #17313a; --soft: #4b6670; --teal: #1f6f78; --deep: #0f3f46;
-      --sea: #eaf3f2; --line: #c9dad8; --amber: #b7791f; --amber-bg: #fff1d0;
-      --red: #a52f2b; --red-bg: #fbe6e3; --white: #ffffff;
+      --bg: #edf0ee; --surface: #ffffff; --ink: #0f1f1e; --ink2: #44595a; --ink3: #566b6c;
+      --line: #d9e0de; --line2: #e8edeb;
+      --rail: #0c3b3a; --rail-ink: #cfe3e1; --rail-on: #ffffff;
+      --accent: #0a7c73; --accent-text: #08706a; --accent-soft: #dff1ee;
+      --warn: #9a5700; --warn-soft: #fff1d6; --warn-mark: #c27a12;
+      --bad: #b3261e; --bad-soft: #fce8e6;
+      --good: #1f7a4a; --good-soft: #e3f3e9;
+      --shadow: 0 1px 2px rgba(15, 31, 30, 0.05), 0 8px 24px -12px rgba(15, 31, 30, 0.12);
+      --shadow-hover: 0 2px 4px rgba(15, 31, 30, 0.06), 0 16px 32px -14px rgba(15, 31, 30, 0.22);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1514; --surface: #122120; --ink: #e6efee; --ink2: #a7bdbb; --ink3: #869f9d;
+        --line: #243836; --line2: #1b2d2b;
+        --rail: #081110; --rail-ink: #9fb9b6; --rail-on: #ffffff;
+        --accent: #3fc1b5; --accent-text: #3fc1b5; --accent-soft: #14312f;
+        --warn: #eba64a; --warn-soft: #33260f; --warn-mark: #eba64a;
+        --bad: #f2766e; --bad-soft: #3a1917;
+        --good: #5ccb8b; --good-soft: #12301f;
+        --shadow: none; --shadow-hover: 0 12px 30px -16px rgba(0, 0, 0, 0.8);
+      }
     }
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: system-ui, "Segoe UI", Arial, sans-serif; color: var(--ink); background: #f4f8f7; line-height: 1.5; }
-    header { background: var(--deep); color: var(--white); padding: 18px 20px; }
-    header h1 { margin: 0; font-size: 1.25rem; }
-    header p { margin: 2px 0 0; color: #b8d6d3; font-size: 0.9rem; }
-    nav { margin-top: 8px; font-size: 0.9rem; }
-    nav a { color: #ffffff; margin-right: 16px; }
-    main { max-width: 980px; margin: 0 auto; padding: 18px 16px 40px; }
-    .demo { background: var(--amber-bg); border-left: 5px solid var(--amber); padding: 10px 14px; border-radius: 6px; font-size: 0.9rem; margin-bottom: 16px; }
-    .card { background: var(--white); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
-    .card h2 { margin: 0 0 10px; font-size: 1.05rem; color: var(--deep); }
-    .controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
-    label { display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 4px; }
-    input[type=file], button { font: inherit; border-radius: 8px; padding: 10px 12px; }
-    input[type=file] { border: 1px solid var(--line); background: var(--white); }
-    button { border: 0; background: var(--teal); color: var(--white); font-weight: 600; cursor: pointer; }
-    button:hover { background: var(--deep); }
-    button:disabled { background: #8aa4a8; cursor: not-allowed; }
-    .status { margin-top: 12px; padding: 10px 14px; border-radius: 8px; background: var(--sea); display: none; }
-    .status.error { background: var(--red-bg); color: var(--red); display: block; }
-    .status.busy, .status.ok { display: block; }
-    .draft-banner { background: var(--amber-bg); border: 1px solid var(--amber); border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; font-weight: 600; }
-    .grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 16px; align-items: start; }
-    @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
-    img#preview { max-width: 100%; border: 1px solid var(--line); border-radius: 8px; }
-    table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
-    th, td { text-align: left; padding: 8px 6px; border-top: 1px solid var(--line); vertical-align: middle; }
-    th { border-top: 0; color: var(--soft); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.03em; }
-    tr.check td { background: var(--amber-bg); }
-    select { font: inherit; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--white); }
-    input[type=text] { font: inherit; width: 100px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; }
-    .reason { color: var(--amber); font-size: 0.8rem; font-weight: 600; display: block; }
-    .conf { color: var(--soft); font-size: 0.8rem; }
-    details { margin-top: 10px; font-size: 0.85rem; color: var(--soft); }
-    summary { cursor: pointer; }
-    pre { white-space: pre-wrap; background: var(--sea); padding: 10px; border-radius: 6px; margin: 6px 0 0; }
-    .empty { color: var(--soft); font-style: italic; }
-    .meta { color: var(--soft); font-size: 0.82rem; margin-top: 8px; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0; background: var(--bg); color: var(--ink);
+      font-family: "Schibsted Grotesk", system-ui, "Segoe UI", Arial, sans-serif;
+      font-size: 15px; line-height: 1.5; font-variant-numeric: tabular-nums;
+    }
+    button, input, select { font: inherit; color: inherit; }
+    img { display: block; max-width: 100%; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+    .ico { width: 20px; height: 20px; flex: none; }
+    [hidden] { display: none !important; }
+
+    .app { display: grid; grid-template-columns: 232px minmax(0, 1fr); min-height: 100vh; }
+    @media (max-width: 900px) { .app { grid-template-columns: 1fr; } }
+
+    /* ---------- rail ---------- */
+    .rail { background: var(--rail); color: var(--rail-ink); padding: 22px 14px; position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; }
+    @media (max-width: 900px) { .rail { position: static; height: auto; flex-direction: row; align-items: center; gap: 12px; padding: 10px 16px; overflow-x: auto; } }
+    .brand { display: flex; align-items: center; gap: 10px; padding: 0 8px 24px; color: var(--rail-on); font-weight: 600; font-size: 17px; letter-spacing: -0.01em; white-space: nowrap; }
+    .brand img { width: 30px; height: 30px; }
+    @media (max-width: 900px) { .brand { padding: 0 12px 0 0; } }
+    .rail nav { display: flex; flex-direction: column; gap: 2px; }
+    @media (max-width: 900px) { .rail nav { flex-direction: row; } }
+    .rail a { display: flex; align-items: center; gap: 11px; color: var(--rail-ink); text-decoration: none; padding: 9px 12px; border-radius: 10px; font-weight: 500; white-space: nowrap; position: relative; transition: background 0.2s, color 0.2s, transform 0.2s; }
+    .rail a img { opacity: 0.75; transition: opacity 0.2s; }
+    .rail a:hover { background: rgba(255, 255, 255, 0.07); color: var(--rail-on); transform: translateX(3px); }
+    .rail a:hover img { opacity: 1; }
+    .rail a[aria-current="page"] { background: rgba(255, 255, 255, 0.12); color: var(--rail-on); }
+    .rail a[aria-current="page"] img { opacity: 1; }
+    .rail a[aria-current="page"]::before { content: ""; position: absolute; left: -14px; top: 9px; bottom: 9px; width: 3px; border-radius: 0 3px 3px 0; background: var(--accent); }
+    @media (max-width: 900px) { .rail a[aria-current="page"]::before { display: none; } }
+    .rail .foot { margin-top: auto; font-size: 12px; line-height: 1.45; padding: 0 10px; opacity: 0.8; }
+    @media (max-width: 900px) { .rail .foot { display: none; } }
+
+    .main { padding: 18px clamp(14px, 2.6vw, 34px) 56px; min-width: 0; max-width: 1360px; }
+
+    /* ---------- hero with 3 steps ---------- */
+    .hero { position: relative; overflow: hidden; border-radius: 22px; color: #fff; padding: 26px clamp(18px, 3vw, 34px) 24px; margin-bottom: 16px;
+      background: #092e30 url("/static/img/hero-mesh.png") 0% 40% / 150% auto no-repeat; animation: drift 38s ease-in-out infinite alternate; isolation: isolate; }
+    .hero::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+      background: radial-gradient(420px circle at var(--mx, 70%) var(--my, 20%), rgba(255, 255, 255, 0.14), transparent 65%); }
+    .orbs { position: absolute; right: -60px; top: -110px; width: 460px; z-index: -1; pointer-events: none; animation: float 16s ease-in-out infinite alternate; }
+    @media (max-width: 760px) { .orbs { width: 280px; right: -70px; top: -60px; } }
+    .hero h1 { margin: 0; font-size: clamp(28px, 4vw, 40px); font-weight: 600; letter-spacing: -0.03em; line-height: 1.1; }
+    .hero p { margin: 6px 0 22px; color: rgba(255, 255, 255, 0.82); max-width: 560px; }
+    .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    @media (max-width: 700px) { .steps { grid-template-columns: 1fr; } }
+    .step { display: flex; align-items: center; gap: 12px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.18); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-radius: 16px; padding: 12px 16px; color: rgba(255, 255, 255, 0.72); transition: background 0.3s, border-color 0.3s, color 0.3s, transform 0.3s; }
+    .step .n { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-weight: 600; font-size: 14px; background: rgba(255, 255, 255, 0.14); flex: none; transition: background 0.3s, color 0.3s; }
+    .step b { display: block; font-weight: 600; color: inherit; line-height: 1.25; }
+    .step small { font-size: 12.5px; opacity: 0.85; }
+    .step.on { background: rgba(255, 255, 255, 0.18); border-color: rgba(255, 255, 255, 0.5); color: #fff; transform: translateY(-2px); }
+    .step.on .n { background: #fff; color: #0c3b3a; }
+    .step.done .n { background: #5ccb8b; color: #06301b; }
+    .step.done { color: #fff; }
+
+    .note { border-left: 3px solid var(--warn-mark); background: var(--warn-soft); color: var(--ink); padding: 9px 14px; border-radius: 0 10px 10px 0; font-size: 13.5px; margin-bottom: 16px; }
+
+    /* ---------- panels ---------- */
+    .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); padding: 20px 22px; margin-bottom: 16px; transition: box-shadow 0.25s, transform 0.25s; }
+    .panel:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
+    .panel h2 { margin: 0; font-size: 16px; font-weight: 600; letter-spacing: -0.01em; display: flex; align-items: center; gap: 9px; }
+    .panel .sub { margin: 3px 0 14px; color: var(--ink2); font-size: 13.5px; }
+
+    /* ---------- upload zone ---------- */
+    .drop { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 18px; border: 2px dashed var(--line); border-radius: 16px; padding: 22px; background: var(--bg); cursor: pointer; transition: border-color 0.2s, background 0.2s, transform 0.2s; }
+    .drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-soft); }
+    .drop.over { transform: scale(1.01); }
+    .drop input[type=file] { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+    .drop .bubble { width: 56px; height: 56px; border-radius: 16px; background: var(--rail); display: grid; place-items: center; flex: none; animation: bob 3.2s ease-in-out infinite; }
+    .drop .bubble img { width: 28px; height: 28px; }
+    .drop .words b { display: block; font-size: 16px; font-weight: 600; }
+    .drop .words span { color: var(--ink2); font-size: 13.5px; }
+    .drop .thumb { margin-left: auto; width: 74px; height: 74px; object-fit: cover; border-radius: 12px; border: 1px solid var(--line); box-shadow: var(--shadow); }
+    .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 14px; }
+    .btn { border: 0; background: var(--accent); color: #fff; font-weight: 600; padding: 11px 20px; border-radius: 12px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s, background 0.2s; }
+    @media (prefers-color-scheme: dark) { .btn { color: #04201d; } }
+    .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 22px -10px var(--accent); }
+    .btn:active:not(:disabled) { transform: translateY(0); }
+    .btn:disabled { background: var(--line); color: var(--ink3); cursor: not-allowed; }
+    .status { padding: 9px 14px; border-radius: 10px; font-size: 14px; background: var(--accent-soft); color: var(--accent-text); display: none; }
+    .status.busy, .status.ok { display: inline-flex; align-items: center; gap: 10px; }
+    .status.error { display: inline-block; background: var(--bad-soft); color: var(--bad); }
+    .status.ok { background: var(--good-soft); color: var(--good); }
+    .dots { display: inline-flex; gap: 4px; }
+    .dots i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: pulse 1s ease-in-out infinite; }
+    .dots i:nth-child(2) { animation-delay: 0.15s; } .dots i:nth-child(3) { animation-delay: 0.3s; }
+
+    /* ---------- result ---------- */
+    .banner { display: flex; align-items: center; gap: 12px; background: var(--warn-soft); border-left: 3px solid var(--warn-mark); border-radius: 0 12px 12px 0; padding: 11px 16px; margin-bottom: 16px; font-weight: 600; }
+    .banner small { font-weight: 500; color: var(--ink2); display: block; }
+    .grid { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.25fr); gap: 16px; align-items: start; }
+    @media (max-width: 1000px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+    .photo { position: relative; overflow: hidden; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); max-height: 560px; overflow: auto; }
+    .photo img { width: 100%; cursor: zoom-in; transition: transform 0.3s; transform-origin: top left; }
+    .photo.zoom img { transform: scale(1.8); cursor: zoom-out; }
+    .photo.zoom { cursor: grab; }
+    .zoomhint { margin: 8px 0 0; color: var(--ink3); font-size: 12.5px; }
+    .scanning .drop { overflow: hidden; }
+    .scanning .drop::after { content: ""; position: absolute; left: 0; right: 0; height: 70px; top: -70px; background: linear-gradient(to bottom, transparent, rgba(63, 193, 181, 0.45), transparent); animation: scan 1.4s linear infinite; pointer-events: none; }
+
+    .progress { display: flex; align-items: center; gap: 12px; margin: 0 0 14px; color: var(--ink2); font-size: 13.5px; }
+    .progress .track { flex: 1; height: 8px; border-radius: 999px; background: var(--line2); overflow: hidden; }
+    .progress .track i { display: block; height: 100%; width: 0; border-radius: 999px; background: var(--accent); transition: width 0.4s cubic-bezier(0.3, 0.7, 0.2, 1); }
+    .progress.all .track i { background: var(--good); }
+
+    .rows { display: grid; gap: 10px; }
+    .row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 8px 14px; border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; background: var(--surface); transition: border-color 0.2s, background 0.2s, transform 0.2s, box-shadow 0.2s; }
+    @media (max-width: 560px) { .row { grid-template-columns: 1fr auto; } .row .field { grid-column: 1 / -1; order: 3; } }
+    .row:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+    .row.check { border-color: var(--warn-mark); background: var(--warn-soft); }
+    .row.ticked { border-color: var(--good); background: var(--good-soft); }
+    .row .name { font-weight: 600; }
+    .meter { display: flex; align-items: center; gap: 8px; margin-top: 3px; color: var(--ink3); font-size: 12.5px; }
+    .meter .bar { width: 74px; height: 5px; border-radius: 999px; background: var(--line); overflow: hidden; }
+    .meter .bar i { display: block; height: 100%; border-radius: 999px; background: var(--good); transform-origin: left; animation: grow 0.8s cubic-bezier(0.3, 0.7, 0.2, 1) both; }
+    .meter .bar i.mid { background: var(--warn-mark); } .meter .bar i.low { background: var(--bad); }
+    .reason { display: block; margin-top: 4px; color: var(--warn); font-size: 12.5px; font-weight: 600; }
+    .field { display: inline-flex; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; transition: border-color 0.2s, box-shadow 0.2s; }
+    .field:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .field input { border: 0; background: transparent; width: 92px; padding: 8px 10px; font-weight: 600; font-size: 16px; outline: none; }
+    .field span { padding: 0 11px 0 2px; color: var(--ink3); font-size: 13px; white-space: nowrap; }
+
+    .tick { display: inline-flex; align-items: center; gap: 9px; cursor: pointer; user-select: none; font-size: 13.5px; font-weight: 500; color: var(--ink2); }
+    .tick input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+    .tick .box { width: 26px; height: 26px; border-radius: 8px; border: 2px solid var(--line); background: var(--surface); display: grid; place-items: center; transition: background 0.2s, border-color 0.2s, transform 0.2s; }
+    .tick .box::after { content: ""; width: 6px; height: 12px; border: solid #fff; border-width: 0 3px 3px 0; transform: rotate(45deg) scale(0); margin-top: -2px; transition: transform 0.2s cubic-bezier(0.3, 0.7, 0.2, 1); }
+    .tick:hover .box { border-color: var(--accent); transform: scale(1.06); }
+    .tick input:checked + .box { background: var(--good); border-color: var(--good); }
+    .tick input:checked + .box::after { transform: rotate(45deg) scale(1); }
+    .tick input:focus-visible + .box { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .empty { text-align: center; padding: 28px 10px; color: var(--ink2); }
+    .empty img { width: 150px; margin: 0 auto 10px; opacity: 0.9; }
+
+    .savebar { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+    .savebar label { display: block; font-weight: 600; font-size: 12.5px; color: var(--ink2); margin: 0 0 4px 2px; }
+    .savebar select, .savebar input[type=text] { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 10px 12px; min-width: 160px; transition: border-color 0.2s, box-shadow 0.2s; }
+    .savebar select:focus, .savebar input[type=text]:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .saved { margin-top: 12px; }
+    details { margin-top: 14px; font-size: 13.5px; color: var(--ink2); }
+    summary { cursor: pointer; font-weight: 500; }
+    pre { white-space: pre-wrap; background: var(--bg); padding: 12px; border-radius: 10px; margin: 8px 0 0; font-size: 12.5px; }
+    .meta { color: var(--ink3); font-size: 12.5px; margin: 10px 0 0; }
+
+    /* ---------- motion ---------- */
+    @keyframes drift { from { background-position: 0% 35%; } to { background-position: 100% 65%; } }
+    @keyframes float { from { transform: translate3d(0, 0, 0) rotate(0deg); } to { transform: translate3d(-26px, 22px, 0) rotate(7deg); } }
+    @keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+    @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+    @keyframes pulse { 0%, 100% { opacity: 0.3; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.15); } }
+    @keyframes scan { from { top: -70px; } to { top: 100%; } }
+    .go .anim { animation: rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; animation-delay: calc(var(--d, 0) * 80ms); }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Age-Care Intelligence System</h1>
-    <p>Read a health report with OCR (experiment)</p>
-    <nav><a href="/">Guidance</a><a href="/ocr">Health report (OCR)</a></nav>
-  </header>
+  <div class="app">
+    <aside class="rail">
+      <div class="brand"><img src="/static/img/logo-white.png" alt="" width="30" height="30">Age-Care</div>
+      <nav aria-label="Pages">
+        <a href="/"><img class="ico" src="/static/img/ico/grid-white.png" alt="">Dashboard</a>
+        <a href="/guidance"><img class="ico" src="/static/img/ico/doc-white.png" alt="">Guidance</a>
+        <a href="/ocr" aria-current="page"><img class="ico" src="/static/img/ico/scan-white.png" alt="">Health report</a>
+        <a href="/docs"><img class="ico" src="/static/img/ico/code-white.png" alt="">API docs</a>
+      </nav>
+      <div class="foot">Student prototype. Fake residents only. The AI drafts and a nurse decides.</div>
+    </aside>
 
-  <main>
-    <div class="demo"><strong>Demo data only.</strong> Use a photo of a FAKE printed report. OCR can misread numbers, so a nurse must check every value against the photo.</div>
-
-    <section class="card">
-      <h2>1. Choose a photo of a fake health report</h2>
-      <div class="controls">
-        <div>
-          <label for="file">PNG or JPG, under 6 MB</label>
-          <input id="file" type="file" accept="image/png,image/jpeg">
+    <main class="main go" id="page">
+      <section class="hero anim" id="hero">
+        <img class="orbs" src="/static/img/orbs.png" alt="" width="460" height="460">
+        <h1>Health report reader</h1>
+        <p>Take a photo of a printed report. The computer reads the numbers, and a nurse checks every one before it is saved.</p>
+        <div class="steps">
+          <div class="step on" id="s1"><span class="n">1</span><div><b>Add the photo</b><small>PNG or JPG</small></div></div>
+          <div class="step" id="s2"><span class="n">2</span><div><b>Check each value</b><small>Against the photo</small></div></div>
+          <div class="step" id="s3"><span class="n">3</span><div><b>Save</b><small>For one resident</small></div></div>
         </div>
-        <button id="go" type="button">Read the report</button>
-      </div>
-      <div class="status" id="status"></div>
-    </section>
+      </section>
 
-    <div id="result" hidden>
-      <div class="draft-banner">DRAFT VALUES. A nurse must check each value against the photo and tick it.</div>
-      <div class="grid">
-        <section class="card">
-          <h2>The photo</h2>
-          <img id="preview" alt="The report photo you chose">
-        </section>
-        <section class="card">
-          <h2>Values the OCR found</h2>
-          <table>
-            <thead><tr><th>Item</th><th>Value</th><th>Unit</th><th>Checked</th></tr></thead>
-            <tbody id="rows"></tbody>
-          </table>
-          <p id="none" class="empty" hidden>No values were found. Try a clearer, straight-on photo.</p>
-          <div class="controls" style="margin-top:14px">
-            <div>
-              <label for="resident">Resident</label>
-              <select id="resident"></select>
+      <div class="note anim" style="--d:1"><strong>Demo data only.</strong> Use a photo of a FAKE printed report. OCR can misread numbers, so a nurse must check every value.</div>
+
+      <section class="panel anim" style="--d:2">
+        <h2><img class="ico" src="/static/img/ico/scan-teal.png" alt="">Add a photo of a report</h2>
+        <p class="sub">Drag a picture here, or click to choose one. Under 6 MB.</p>
+        <label class="drop" id="drop">
+          <input id="file" type="file" accept="image/png,image/jpeg" aria-label="Choose a photo of a fake health report">
+          <span class="bubble"><img src="/static/img/ico/scan-white.png" alt=""></span>
+          <span class="words"><b id="dropTitle">Drop the report photo here</b><span id="dropHint">or click to browse your files</span></span>
+          <img class="thumb" id="thumb" alt="" hidden>
+        </label>
+        <div class="actions">
+          <button class="btn" id="go" type="button" disabled>Read the report</button>
+          <div class="status" id="status" role="status"></div>
+        </div>
+      </section>
+
+      <div id="result" hidden>
+        <div class="banner anim"><div>Draft values<small>A nurse must check each value against the photo and tick it.</small></div></div>
+        <div class="grid" id="resultGrid">
+          <section class="panel anim" style="--d:1">
+            <h2>The photo</h2>
+            <p class="sub">Compare the numbers on the right with this picture.</p>
+            <div class="photo" id="photoBox"><img id="preview" alt="The report photo you chose"></div>
+            <p class="zoomhint">Click the photo to zoom in or out.</p>
+          </section>
+
+          <section class="panel anim" style="--d:2">
+            <h2>Values found</h2>
+            <p class="sub">Fix any wrong number, then tick it when it matches the photo.</p>
+            <div class="progress" id="progress"><span id="progressText">0 of 0 checked</span><div class="track"><i id="progressBar"></i></div></div>
+            <div class="rows" id="rows"></div>
+            <div class="empty" id="none" hidden>
+              <img src="/static/img/empty-guidance.png" alt="" width="150">
+              No values were found. Try a clearer, straight-on photo.
             </div>
-            <div>
-              <label for="reviewer">Your name (nurse)</label>
-              <input id="reviewer" type="text" style="width:160px" maxlength="60" placeholder="e.g. Nurse Sam">
+
+            <div class="savebar">
+              <div><label for="resident">Resident</label><select id="resident"></select></div>
+              <div><label for="reviewer">Your name (nurse)</label><input id="reviewer" type="text" maxlength="60" placeholder="e.g. Nurse Sam"></div>
+              <button class="btn" id="save" type="button" disabled>Save checked values</button>
             </div>
-            <button id="save" type="button" disabled>Save checked values</button>
-          </div>
-          <div class="status" id="saveNote"></div>
-          <details>
-            <summary>Everything the OCR read (the text)</summary>
-            <pre id="raw"></pre>
-          </details>
-          <p class="meta" id="meta"></p>
-        </section>
+            <div class="saved"><div class="status" id="saveNote" role="status"></div></div>
+
+            <details>
+              <summary>Everything the OCR read (the text)</summary>
+              <pre id="raw"></pre>
+            </details>
+            <p class="meta" id="meta"></p>
+          </section>
+        </div>
       </div>
-    </div>
-  </main>
+    </main>
+  </div>
 
   <script>
     const $ = (id) => document.getElementById(id);
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     // Build elements with textContent only, so text from the server can never run as code.
     function el(tag, className, text) {
@@ -119,21 +282,70 @@
       return node;
     }
 
-    function setStatus(message, kind) {
-      const box = $("status");
-      box.textContent = message || "";
+    function setBox(id, message, kind) {
+      const box = $(id);
+      box.replaceChildren();
       box.className = "status" + (kind ? " " + kind : "");
+      if (kind === "busy") {
+        const dots = el("span", "dots");
+        dots.append(el("i"), el("i"), el("i"));
+        box.append(dots);
+      }
+      if (message) box.append(document.createTextNode(message));
+    }
+    const setStatus = (m, k) => setBox("status", m, k);
+    const setSaveNote = (m, k) => setBox("saveNote", m, k);
+
+    // the three steps at the top of the page
+    function setStep(n, allChecked) {
+      ["s1", "s2", "s3"].forEach((id, i) => {
+        const step = $(id);
+        step.classList.toggle("done", i + 1 < n || (i + 1 === n && n === 3 && allChecked === "saved"));
+        step.classList.toggle("on", i + 1 === n);
+      });
     }
 
-    function updateSave() {
+    // spotlight in the hero follows the pointer
+    $("hero").addEventListener("pointermove", (e) => {
+      if (reduced) return;
+      const r = e.currentTarget.getBoundingClientRect();
+      e.currentTarget.style.setProperty("--mx", (e.clientX - r.left) + "px");
+      e.currentTarget.style.setProperty("--my", (e.clientY - r.top) + "px");
+    });
+
+    // ---------- choosing the file ----------
+    let chosen = null;
+    function chooseFile(file) {
+      if (!file) return;
+      chosen = file;
+      $("dropTitle").textContent = file.name;
+      $("dropHint").textContent = Math.max(1, Math.round(file.size / 1024)) + " KB. Click to choose a different photo.";
+      $("thumb").src = URL.createObjectURL(file);
+      $("thumb").hidden = false;
+      $("go").disabled = false;
+      setStatus("");
+    }
+    $("file").addEventListener("change", () => chooseFile($("file").files[0]));
+    ["dragenter", "dragover"].forEach((name) => $("drop").addEventListener(name, (e) => { e.preventDefault(); $("drop").classList.add("over"); }));
+    ["dragleave", "drop"].forEach((name) => $("drop").addEventListener(name, (e) => { e.preventDefault(); $("drop").classList.remove("over"); }));
+    $("drop").addEventListener("drop", (e) => {
+      const file = e.dataTransfer.files[0];
+      if (file) { try { const t = new DataTransfer(); t.items.add(file); $("file").files = t.files; } catch (err) { /* older browsers */ } chooseFile(file); }
+    });
+
+    $("photoBox").addEventListener("click", () => $("photoBox").classList.toggle("zoom"));
+
+    // ---------- the ticking ----------
+    function updateProgress() {
       const boxes = [...document.querySelectorAll("#rows input[type=checkbox]")];
-      $("save").disabled = boxes.length === 0 || !boxes.every((box) => box.checked);
-    }
-
-    function setSaveNote(message, kind) {
-      const box = $("saveNote");
-      box.textContent = message || "";
-      box.className = "status" + (kind ? " " + kind : "");
+      const done = boxes.filter((b) => b.checked).length;
+      const all = boxes.length > 0 && done === boxes.length;
+      $("progressText").textContent = done + " of " + boxes.length + " checked";
+      $("progressBar").style.width = boxes.length ? (done / boxes.length * 100) + "%" : "0%";
+      $("progress").classList.toggle("all", all);
+      $("progress").hidden = boxes.length === 0;
+      $("save").disabled = !all;
+      if (!$("result").hidden) setStep(all ? 3 : 2);
     }
 
     function render(data) {
@@ -141,68 +353,79 @@
       rows.replaceChildren();
       $("none").hidden = data.readings.length > 0;
 
-      for (const r of data.readings) {
-        const tr = el("tr", r.needs_check ? "check" : "");
-        tr.dataset.key = r.key;
+      data.readings.forEach((r, i) => {
+        const row = el("div", "row anim" + (r.needs_check ? " check" : ""));
+        row.style.setProperty("--d", i + 2);
+        row.dataset.key = r.key;
 
-        const item = el("td");
-        item.append(el("div", "", r.label));
-        item.append(el("span", "conf", "Confidence " + Math.round(r.confidence * 100) + "%"));
-        if (r.needs_check) item.append(el("span", "reason", r.reason));
-        tr.append(item);
+        const left = el("div");
+        left.append(el("div", "name", r.label));
+        const pct = Math.round(r.confidence * 100);
+        const meter = el("div", "meter");
+        const bar = el("span", "bar");
+        const fill = el("i", pct >= 85 ? "" : pct >= 60 ? "mid" : "low");
+        fill.style.width = pct + "%";
+        bar.append(fill);
+        meter.append(bar, el("span", "", "Confidence " + pct + "%"));
+        left.append(meter);
+        if (r.needs_check) left.append(el("span", "reason", r.reason));
+        row.append(left);
 
-        const valueCell = el("td");
+        const field = el("label", "field");
         const input = el("input");
         input.type = "text";
         input.value = r.value;
         input.setAttribute("aria-label", r.label + " value");
-        valueCell.append(input);
-        tr.append(valueCell);
+        field.append(input);
+        if (r.unit) field.append(el("span", "", r.unit));
+        row.append(field);
 
-        tr.append(el("td", "", r.unit));
+        const tick = el("label", "tick");
+        const check = el("input");
+        check.type = "checkbox";
+        check.setAttribute("aria-label", "I checked " + r.label + " against the photo");
+        check.addEventListener("change", () => { row.classList.toggle("ticked", check.checked); updateProgress(); });
+        // changing a number means it must be checked again
+        input.addEventListener("input", () => { if (check.checked) { check.checked = false; row.classList.remove("ticked"); updateProgress(); } });
+        tick.append(check, el("span", "box"), el("span", "", "Checked"));
+        row.append(tick);
 
-        const checkCell = el("td");
-        const tick = el("input");
-        tick.type = "checkbox";
-        tick.setAttribute("aria-label", "I checked " + r.label + " against the photo");
-        tick.addEventListener("change", updateSave);
-        checkCell.append(tick);
-        tr.append(checkCell);
-
-        rows.append(tr);
-      }
+        rows.append(row);
+      });
 
       $("raw").textContent = data.lines.map((l) => l.text + "   (" + Math.round(l.confidence * 100) + "%)").join("\n");
-      $("meta").textContent = "Time: " + data.seconds + " seconds. The OCR runs on this laptop. " + data.status_note;
-      updateSave();
+      $("meta").textContent = "Time: " + data.seconds + " seconds. The OCR runs on this laptop. " + (data.status_note || "");
       $("result").hidden = false;
+      updateProgress();
+      $("result").scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
     }
 
     async function readReport() {
-      const file = $("file").files[0];
-      if (!file) { setStatus("Please choose an image first.", "error"); return; }
-
+      if (!chosen) { setStatus("Please choose an image first.", "error"); return; }
       $("go").disabled = true;
       $("result").hidden = true;
       setSaveNote("");
-      setStatus("Reading the report. The first time can take a few seconds...", "busy");
+      setStep(1);
+      $("preview").src = URL.createObjectURL(chosen);
+      document.body.classList.add("scanning");
+      setStatus("Reading the report. The first time can take a few seconds", "busy");
       try {
         const form = new FormData();
-        form.append("file", file);
+        form.append("file", chosen);
         const response = await fetch("/api/ocr/extract", { method: "POST", body: form });
         const data = await response.json();
         if (!response.ok) throw new Error(data.detail || "Something went wrong.");
-        $("preview").src = URL.createObjectURL(file);
-        setStatus("");
+        setStatus("Done. Now check each value against the photo.", "ok");
         render(data);
       } catch (error) {
         setStatus(error.message, "error");
       } finally {
+        document.body.classList.remove("scanning");
         $("go").disabled = false;
       }
     }
-
     $("go").addEventListener("click", readReport);
+
     async function loadResidents() {
       try {
         const response = await fetch("/api/residents");
@@ -223,11 +446,11 @@
 
       let reportDate = "";
       const readings = [];
-      for (const tr of document.querySelectorAll("#rows tr")) {
-        const value = tr.querySelector("input[type=text]").value.trim();
+      for (const row of document.querySelectorAll("#rows .row")) {
+        const value = row.querySelector("input[type=text]").value.trim();
         if (!value) continue;
-        if (tr.dataset.key === "report_date") reportDate = value;
-        else readings.push({ key: tr.dataset.key, value: value });
+        if (row.dataset.key === "report_date") reportDate = value;
+        else readings.push({ key: row.dataset.key, value: value });
       }
       if (readings.length === 0) { setSaveNote("There is nothing to save.", "error"); return; }
 
@@ -243,12 +466,12 @@
         if (!response.ok) throw new Error(typeof data.detail === "string" ? data.detail : "Please check the values.");
         const name = $("resident").selectedOptions[0].textContent;
         setSaveNote("Saved " + readings.length + " values for " + name + " (audit log updated).", "ok");
+        setStep(3, "saved");
       } catch (error) {
         setSaveNote(error.message, "error");
-        updateSave();
+        updateProgress();
       }
     }
-
     $("save").addEventListener("click", saveValues);
     loadResidents();
   </script>
