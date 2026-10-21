@@ -1,0 +1,829 @@
+{
+  "note": "FAKE records for a student project. Not real people. Phone numbers and names are made up.",
+  "residents": [
+    {
+      "resident_id": 1,
+      "allergies": [
+        "Peanuts"
+      ],
+      "doctor": {
+        "name": "Dr Example Smith",
+        "practice": "Example Medical Centre (fake)",
+        "phone": "000 000 0001 (fake)"
+      },
+      "contacts": [
+        {
+          "name": "Anna T.",
+          "relationship": "Daughter",
+          "phone": "000 000 1001 (fake)"
+        }
+      ],
+      "care_record": [
+        {
+          "task": "Offer a drink",
+          "status": "given",
+          "time": "08:00",
+          "by": "Carer A"
+        },
+        {
+          "task": "Offer a drink",
+          "status": "given",
+          "time": "10:00",
+          "by": "Carer A"
+        },
+        {
+          "task": "Breakfast eaten",
+          "status": "given",
+          "time": "08:30",
+          "by": "Carer A"
+        },
+        {
+          "task": "Lunch eaten",
+          "status": "refused",
+          "time": "12:30",
+          "by": "Carer B"
+        },
+        {
+          "task": "Help to change position",
+          "status": "given",
+          "time": "11:00",
+          "by": "Carer A"
+        },
+        {
+          "task": "Help to change position",
+          "status": "not_done",
+          "time": "14:00",
+          "by": "Carer B"
+        }
+      ],
+      "concerns": [
+        {
+          "type": "Low fluids",
+          "text": "Only had a few sips of tea at lunch.",
+          "time": "12:45"
+        }
+      ],
+      "readings_history": {
+        "pulse": [
+          {
+            "date": "2026-10-14",
+            "value": 72
+          },
+          {
+            "date": "2026-10-15",
+            "value": 74
+          },
+          {
+            "date": "2026-10-16",
+            "value": 76
+          },
+          {
+            "date": "2026-10-17",
+            "value": 75
+          },
+          {
+            "date": "2026-10-18",
+            "value": 78
+          },
+          {
+            "date": "2026-10-19",
+            "value": 80
+          },
+          {
+            "date": "2026-10-20",
+            "value": 84
+          }
+        ],
+        "systolic": [
+          {
+            "date": "2026-10-14",
+            "value": 126
+          },
+          {
+            "date": "2026-10-15",
+            "value": 128
+          },
+          {
+            "date": "2026-10-16",
+            "value": 130
+          },
+          {
+            "date": "2026-10-17",
+            "value": 127
+          },
+          {
+            "date": "2026-10-18",
+            "value": 125
+          },
+          {
+            "date": "2026-10-19",
+            "value": 132
+          },
+          {
+            "date": "2026-10-20",
+            "value": 136
+          }
+        ],
+        "diastolic": [
+          {
+            "date": "2026-10-14",
+            "value": 80
+          },
+          {
+            "date": "2026-10-15",
+            "value": 82
+          },
+          {
+            "date": "2026-10-16",
+            "value": 84
+          },
+          {
+            "date": "2026-10-17",
+            "value": 81
+          },
+          {
+            "date": "2026-10-18",
+            "value": 79
+          },
+          {
+            "date": "2026-10-19",
+            "value": 85
+          },
+          {
+            "date": "2026-10-20",
+            "value": 88
+          }
+        ],
+        "temperature": [
+          {
+            "date": "2026-10-14",
+            "value": 36.6
+          },
+          {
+            "date": "2026-10-15",
+            "value": 36.7
+          },
+          {
+            "date": "2026-10-16",
+            "value": 36.6
+          },
+          {
+            "date": "2026-10-17",
+            "value": 36.8
+          },
+          {
+            "date": "2026-10-18",
+            "value": 36.7
+          },
+          {
+            "date": "2026-10-19",
+            "value": 36.9
+          },
+          {
+            "date": "2026-10-20",
+            "value": 37.1
+          }
+        ],
+        "spo2": [
+          {
+            "date": "2026-10-14",
+            "value": 97
+          },
+          {
+            "date": "2026-10-15",
+            "value": 96
+          },
+          {
+            "date": "2026-10-16",
+            "value": 97
+          },
+          {
+            "date": "2026-10-17",
+            "value": 96
+          },
+          {
+            "date": "2026-10-18",
+            "value": 96
+          },
+          {
+            "date": "2026-10-19",
+            "value": 95
+          },
+          {
+            "date": "2026-10-20",
+            "value": 95
+          }
+        ]
+      }
+    },
+    {
+      "resident_id": 2,
+      "allergies": [
+        "None recorded"
+      ],
+      "doctor": {
+        "name": "Dr Example Smith",
+        "practice": "Example Medical Centre (fake)",
+        "phone": "000 000 0001 (fake)"
+      },
+      "contacts": [
+        {
+          "name": "Peter H.",
+          "relationship": "Son",
+          "phone": "000 000 1002 (fake)"
+        }
+      ],
+      "care_record": [
+        {
+          "task": "Offer a drink",
+          "status": "given",
+          "time": "08:00",
+          "by": "Carer A"
+        },
+        {
+          "task": "Breakfast eaten",
+          "status": "given",
+          "time": "08:15",
+          "by": "Carer A"
+        },
+        {
+          "task": "Walking frame within reach",
+          "status": "given",
+          "time": "09:00",
+          "by": "Carer A"
+        },
+        {
+          "task": "Offer a drink",
+          "status": "given",
+          "time": "10:00",
+          "by": "Carer B"
+        },
+        {
+          "task": "Lunch eaten",
+          "status": "given",
+          "time": "12:30",
+          "by": "Carer B"
+        }
+      ],
+      "concerns": [
+        {
+          "type": "Fall risk",
+          "text": "Nearly slipped when getting out of the chair.",
+          "time": "10:20"
+        }
+      ],
+      "readings_history": {
+        "pulse": [
+          {
+            "date": "2026-10-14",
+            "value": 70
+          },
+          {
+            "date": "2026-10-15",
+            "value": 72
+          },
+          {
+            "date": "2026-10-16",
+            "value": 71
+          },
+          {
+            "date": "2026-10-17",
+            "value": 73
+          },
+          {
+            "date": "2026-10-18",
+            "value": 74
+          },
+          {
+            "date": "2026-10-19",
+            "value": 72
+          },
+          {
+            "date": "2026-10-20",
+            "value": 76
+          }
+        ],
+        "systolic": [
+          {
+            "date": "2026-10-14",
+            "value": 130
+          },
+          {
+            "date": "2026-10-15",
+            "value": 132
+          },
+          {
+            "date": "2026-10-16",
+            "value": 128
+          },
+          {
+            "date": "2026-10-17",
+            "value": 134
+          },
+          {
+            "date": "2026-10-18",
+            "value": 131
+          },
+          {
+            "date": "2026-10-19",
+            "value": 133
+          },
+          {
+            "date": "2026-10-20",
+            "value": 138
+          }
+        ],
+        "diastolic": [
+          {
+            "date": "2026-10-14",
+            "value": 82
+          },
+          {
+            "date": "2026-10-15",
+            "value": 84
+          },
+          {
+            "date": "2026-10-16",
+            "value": 80
+          },
+          {
+            "date": "2026-10-17",
+            "value": 86
+          },
+          {
+            "date": "2026-10-18",
+            "value": 83
+          },
+          {
+            "date": "2026-10-19",
+            "value": 85
+          },
+          {
+            "date": "2026-10-20",
+            "value": 88
+          }
+        ],
+        "temperature": [
+          {
+            "date": "2026-10-14",
+            "value": 36.5
+          },
+          {
+            "date": "2026-10-15",
+            "value": 36.6
+          },
+          {
+            "date": "2026-10-16",
+            "value": 36.5
+          },
+          {
+            "date": "2026-10-17",
+            "value": 36.7
+          },
+          {
+            "date": "2026-10-18",
+            "value": 36.6
+          },
+          {
+            "date": "2026-10-19",
+            "value": 36.6
+          },
+          {
+            "date": "2026-10-20",
+            "value": 36.8
+          }
+        ],
+        "spo2": [
+          {
+            "date": "2026-10-14",
+            "value": 96
+          },
+          {
+            "date": "2026-10-15",
+            "value": 96
+          },
+          {
+            "date": "2026-10-16",
+            "value": 95
+          },
+          {
+            "date": "2026-10-17",
+            "value": 96
+          },
+          {
+            "date": "2026-10-18",
+            "value": 95
+          },
+          {
+            "date": "2026-10-19",
+            "value": 96
+          },
+          {
+            "date": "2026-10-20",
+            "value": 96
+          }
+        ]
+      }
+    },
+    {
+      "resident_id": 3,
+      "allergies": [
+        "Shellfish"
+      ],
+      "doctor": {
+        "name": "Dr Example Jones",
+        "practice": "Sample Health Clinic (fake)",
+        "phone": "000 000 0002 (fake)"
+      },
+      "contacts": [
+        {
+          "name": "Maria P.",
+          "relationship": "Daughter",
+          "phone": "000 000 1003 (fake)"
+        }
+      ],
+      "care_record": [
+        {
+          "task": "Small light breakfast",
+          "status": "refused",
+          "time": "08:00",
+          "by": "Carer A"
+        },
+        {
+          "task": "Offer sips of fluid",
+          "status": "given",
+          "time": "09:00",
+          "by": "Carer A"
+        },
+        {
+          "task": "Offer sips of fluid",
+          "status": "given",
+          "time": "11:00",
+          "by": "Carer B"
+        },
+        {
+          "task": "Small light lunch",
+          "status": "given",
+          "time": "12:30",
+          "by": "Carer B"
+        }
+      ],
+      "concerns": [
+        {
+          "type": "Vomiting",
+          "text": "Vomited once after breakfast at about 8:40, small amount.",
+          "time": "08:45"
+        }
+      ],
+      "readings_history": {
+        "pulse": [
+          {
+            "date": "2026-10-14",
+            "value": 78
+          },
+          {
+            "date": "2026-10-15",
+            "value": 80
+          },
+          {
+            "date": "2026-10-16",
+            "value": 82
+          },
+          {
+            "date": "2026-10-17",
+            "value": 84
+          },
+          {
+            "date": "2026-10-18",
+            "value": 86
+          },
+          {
+            "date": "2026-10-19",
+            "value": 90
+          },
+          {
+            "date": "2026-10-20",
+            "value": 96
+          }
+        ],
+        "systolic": [
+          {
+            "date": "2026-10-14",
+            "value": 118
+          },
+          {
+            "date": "2026-10-15",
+            "value": 120
+          },
+          {
+            "date": "2026-10-16",
+            "value": 116
+          },
+          {
+            "date": "2026-10-17",
+            "value": 114
+          },
+          {
+            "date": "2026-10-18",
+            "value": 112
+          },
+          {
+            "date": "2026-10-19",
+            "value": 110
+          },
+          {
+            "date": "2026-10-20",
+            "value": 108
+          }
+        ],
+        "diastolic": [
+          {
+            "date": "2026-10-14",
+            "value": 74
+          },
+          {
+            "date": "2026-10-15",
+            "value": 76
+          },
+          {
+            "date": "2026-10-16",
+            "value": 72
+          },
+          {
+            "date": "2026-10-17",
+            "value": 70
+          },
+          {
+            "date": "2026-10-18",
+            "value": 70
+          },
+          {
+            "date": "2026-10-19",
+            "value": 68
+          },
+          {
+            "date": "2026-10-20",
+            "value": 66
+          }
+        ],
+        "temperature": [
+          {
+            "date": "2026-10-14",
+            "value": 36.8
+          },
+          {
+            "date": "2026-10-15",
+            "value": 36.9
+          },
+          {
+            "date": "2026-10-16",
+            "value": 37.0
+          },
+          {
+            "date": "2026-10-17",
+            "value": 37.1
+          },
+          {
+            "date": "2026-10-18",
+            "value": 37.3
+          },
+          {
+            "date": "2026-10-19",
+            "value": 37.6
+          },
+          {
+            "date": "2026-10-20",
+            "value": 37.9
+          }
+        ],
+        "spo2": [
+          {
+            "date": "2026-10-14",
+            "value": 96
+          },
+          {
+            "date": "2026-10-15",
+            "value": 96
+          },
+          {
+            "date": "2026-10-16",
+            "value": 95
+          },
+          {
+            "date": "2026-10-17",
+            "value": 95
+          },
+          {
+            "date": "2026-10-18",
+            "value": 94
+          },
+          {
+            "date": "2026-10-19",
+            "value": 94
+          },
+          {
+            "date": "2026-10-20",
+            "value": 93
+          }
+        ]
+      }
+    },
+    {
+      "resident_id": 4,
+      "allergies": [
+        "None recorded"
+      ],
+      "doctor": {
+        "name": "Dr Example Jones",
+        "practice": "Sample Health Clinic (fake)",
+        "phone": "000 000 0002 (fake)"
+      },
+      "contacts": [
+        {
+          "name": "Sara K.",
+          "relationship": "Daughter",
+          "phone": "000 000 1004 (fake)"
+        }
+      ],
+      "care_record": [
+        {
+          "task": "Halal meal label checked",
+          "status": "given",
+          "time": "08:00",
+          "by": "Carer A"
+        },
+        {
+          "task": "Offer a drink",
+          "status": "given",
+          "time": "10:00",
+          "by": "Carer A"
+        },
+        {
+          "task": "Daily garden walk",
+          "status": "given",
+          "time": "10:30",
+          "by": "Carer A"
+        },
+        {
+          "task": "Room kept quiet at midday",
+          "status": "given",
+          "time": "12:00",
+          "by": "Carer B"
+        }
+      ],
+      "concerns": [],
+      "readings_history": {
+        "pulse": [
+          {
+            "date": "2026-10-14",
+            "value": 66
+          },
+          {
+            "date": "2026-10-15",
+            "value": 68
+          },
+          {
+            "date": "2026-10-16",
+            "value": 67
+          },
+          {
+            "date": "2026-10-17",
+            "value": 69
+          },
+          {
+            "date": "2026-10-18",
+            "value": 68
+          },
+          {
+            "date": "2026-10-19",
+            "value": 70
+          },
+          {
+            "date": "2026-10-20",
+            "value": 69
+          }
+        ],
+        "systolic": [
+          {
+            "date": "2026-10-14",
+            "value": 124
+          },
+          {
+            "date": "2026-10-15",
+            "value": 126
+          },
+          {
+            "date": "2026-10-16",
+            "value": 122
+          },
+          {
+            "date": "2026-10-17",
+            "value": 128
+          },
+          {
+            "date": "2026-10-18",
+            "value": 125
+          },
+          {
+            "date": "2026-10-19",
+            "value": 127
+          },
+          {
+            "date": "2026-10-20",
+            "value": 126
+          }
+        ],
+        "diastolic": [
+          {
+            "date": "2026-10-14",
+            "value": 78
+          },
+          {
+            "date": "2026-10-15",
+            "value": 80
+          },
+          {
+            "date": "2026-10-16",
+            "value": 76
+          },
+          {
+            "date": "2026-10-17",
+            "value": 82
+          },
+          {
+            "date": "2026-10-18",
+            "value": 79
+          },
+          {
+            "date": "2026-10-19",
+            "value": 81
+          },
+          {
+            "date": "2026-10-20",
+            "value": 80
+          }
+        ],
+        "temperature": [
+          {
+            "date": "2026-10-14",
+            "value": 36.4
+          },
+          {
+            "date": "2026-10-15",
+            "value": 36.5
+          },
+          {
+            "date": "2026-10-16",
+            "value": 36.5
+          },
+          {
+            "date": "2026-10-17",
+            "value": 36.6
+          },
+          {
+            "date": "2026-10-18",
+            "value": 36.5
+          },
+          {
+            "date": "2026-10-19",
+            "value": 36.6
+          },
+          {
+            "date": "2026-10-20",
+            "value": 36.5
+          }
+        ],
+        "spo2": [
+          {
+            "date": "2026-10-14",
+            "value": 98
+          },
+          {
+            "date": "2026-10-15",
+            "value": 97
+          },
+          {
+            "date": "2026-10-16",
+            "value": 98
+          },
+          {
+            "date": "2026-10-17",
+            "value": 97
+          },
+          {
+            "date": "2026-10-18",
+            "value": 98
+          },
+          {
+            "date": "2026-10-19",
+            "value": 97
+          },
+          {
+            "date": "2026-10-20",
+            "value": 98
+          }
+        ]
+      }
+    }
+  ]
+}

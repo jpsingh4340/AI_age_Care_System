@@ -114,10 +114,9 @@ class GuidanceResponse(BaseModel):
     sources: list[SourceOut]
     model: str
     seconds: float
-    status: str = "draft"  # becomes "approved" only after a nurse approves (next step)
+    draft_id: int  # the saved draft a nurse will review
+    status: str = "draft"  # becomes "approved" only after a nurse approves
     status_note: str = "AI draft from approved sources. A nurse must approve it before anyone else sees it."
-
-
 
 
 # ---------- OCR: read a photo of a fake health report ----------
@@ -142,3 +141,145 @@ class OcrResponse(BaseModel):
     lines: list[OcrLineOut]  # everything the OCR read, so we can show our work
     seconds: float
     status_note: str = "Read by OCR. A nurse must check every value against the photo before it is saved."
+
+
+
+
+# ---------- Nurse approval and audit log ----------
+class StoredLine(BaseModel):
+    text: str
+    source_id: str = ""
+    source: str = ""
+    quote: str = ""
+    edited: bool = False  # True when a nurse wrote or changed the wording
+
+
+class DraftOut(BaseModel):
+    draft_id: int
+    resident_id: int
+    resident: str
+    conditions: list[str]
+    status: str  # draft, approved, rejected or replaced
+    created_at: str
+    model: str
+    reviewed_by: str | None = None
+    reviewed_at: str | None = None
+    review_note: str | None = None
+    watch_for: list[StoredLine]
+    prevention: list[StoredLine]
+    dropped: list[DroppedLine]
+    sources: list[SourceOut]
+
+
+class DraftSummary(BaseModel):
+    draft_id: int
+    resident_id: int
+    resident: str
+    created_at: str
+    lines: int
+
+
+class FinalLine(BaseModel):
+    text: str
+    source_id: str = ""
+    edited: bool = False
+
+
+class DecisionRequest(BaseModel):
+    decision: Literal["approve", "reject"]
+    reviewer: str = Field(min_length=2, max_length=60)  # the nurse's name
+    note: str = Field(default="", max_length=500)
+    # The nurse's final lists. Leave out to approve the draft exactly as it is.
+    watch_for: list[FinalLine] | None = None
+    prevention: list[FinalLine] | None = None
+
+
+class ApprovedOut(BaseModel):
+    draft_id: int
+    resident_id: int
+    resident: str
+    approved_by: str
+    approved_at: str
+    note: str
+    watch_for: list[StoredLine]
+    prevention: list[StoredLine]
+
+
+class AuditOut(BaseModel):
+    id: int
+    at: str
+    actor: str
+    role: str
+    action: str
+    resident_id: int | None
+    draft_id: int | None
+    detail: str
+
+
+    
+
+# ---------- Saved health values and resident records (fake data) ----------
+class ReadingIn(BaseModel):
+    key: str  # for example "pulse"
+    value: str  # the value the nurse checked, for example "76" or "128/82"
+
+
+class SaveReadingsRequest(BaseModel):
+    reviewer: str = Field(min_length=2, max_length=60)  # the nurse who checked the values
+    report_date: str = ""  # the date printed on the report, as the nurse read it
+    readings: list[ReadingIn] = Field(min_length=1, max_length=20)
+
+
+class SavedReading(BaseModel):
+    id: int
+    key: str
+    label: str
+    value: str
+    unit: str
+    report_date: str
+    checked_by: str
+    saved_at: str
+
+
+class Contact(BaseModel):
+    name: str
+    relationship: str
+    phone: str
+
+
+class Doctor(BaseModel):
+    name: str
+    practice: str
+    phone: str
+
+
+class CareTask(BaseModel):
+    task: str
+    status: Literal["given", "refused", "not_done"]
+    time: str
+    by: str
+
+
+class Concern(BaseModel):
+    type: str
+    text: str  # the carer's own words
+    time: str
+
+
+class HistoryPoint(BaseModel):
+    date: str
+    value: float
+
+
+class RecordsOut(BaseModel):
+    resident_id: int
+    name: str
+    conditions: list[str]
+    allergies: list[str]
+    doctor: Doctor
+    contacts: list[Contact]
+    care_plan: list[str]
+    care_record: list[CareTask]
+    concerns: list[Concern]
+    readings_history: dict[str, list[HistoryPoint]]  # fake past values for graphs
+    readings_saved: list[SavedReading]  # values a nurse checked and saved

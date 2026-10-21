@@ -146,3 +146,13 @@ def test_api_404_and_503(monkeypatch):
     monkeypatch.setattr(ollama_client, "chat_json", broken)
     response = client.post("/api/guidance/draft", json={"resident_id": 1})
     assert response.status_code == 503
+
+
+def test_screen_and_resident_list_are_served():
+    client = TestClient(app)
+    page = client.get("/")
+    assert page.status_code == 200
+    assert "Draft guidance" in page.text
+    people = client.get("/api/residents").json()
+    assert [p["name"] for p in people] == ["Margaret T.", "Ron H.", "Joan P.", "Ahmed K."]
+    assert "Falls risk" in people[1]["conditions"]

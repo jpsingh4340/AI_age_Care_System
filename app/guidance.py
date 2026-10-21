@@ -36,6 +36,9 @@ BLOCKED_WORDS = re.compile(
     re.IGNORECASE,
 )
 
+def contains_blocked(text: str) -> bool:
+    """True if the text mentions a medicine, a dose or a diagnosis."""
+    return bool(DOSE_PATTERN.search(text) or BLOCKED_WORDS.search(text))
 
 def _read(name: str) -> dict:
     return json.loads((DATA_DIR / name).read_text(encoding="utf-8"))
@@ -94,7 +97,7 @@ def check_line(line: GuidanceLine, by_id: dict[str, SourceOut]) -> str | None:
         return "The source number does not exist."
     if not evidence_in_note(line.quote, source.text):
         return "The quote is not in the cited source."
-    if DOSE_PATTERN.search(line.text) or BLOCKED_WORDS.search(line.text):
+    if contains_blocked(line.text):
         return "Mentions a medicine, dose or diagnosis."
     if len(line.text) > MAX_LINE_LENGTH or not line.text.strip():
         return "The line is empty or too long."
