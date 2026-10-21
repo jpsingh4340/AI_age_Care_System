@@ -116,3 +116,29 @@ class GuidanceResponse(BaseModel):
     seconds: float
     status: str = "draft"  # becomes "approved" only after a nurse approves (next step)
     status_note: str = "AI draft from approved sources. A nurse must approve it before anyone else sees it."
+
+
+
+
+# ---------- OCR: read a photo of a fake health report ----------
+class OcrLineOut(BaseModel):
+    text: str
+    confidence: float  # 0 to 1: how sure the OCR is about this line
+
+
+class Reading(BaseModel):
+    key: str  # for example "pulse"
+    label: str  # for example "Pulse"
+    value: str  # kept as text exactly as read, for example "128/82"
+    unit: str
+    raw_line: str  # the whole line the OCR read, so a nurse can compare
+    confidence: float
+    needs_check: bool  # True when the OCR is unsure or the number looks unusual
+    reason: str
+
+
+class OcrResponse(BaseModel):
+    readings: list[Reading]
+    lines: list[OcrLineOut]  # everything the OCR read, so we can show our work
+    seconds: float
+    status_note: str = "Read by OCR. A nurse must check every value against the photo before it is saved."

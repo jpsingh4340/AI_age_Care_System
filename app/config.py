@@ -1,5 +1,10 @@
 import os
 
+
+# 0 = run the models on the CPU only. This laptop gives garbage text when Ollama uses the
+# graphics card (GPU), so we stay on the CPU. It is slower but reliable.
+# On a computer where the GPU works well, you can try: $env:NUM_GPU = "99"
+NUM_GPU = int(os.getenv("NUM_GPU", "0"))
 # Where Ollama is running. It starts by itself on your laptop after you install it.
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
 

@@ -47,6 +47,16 @@ def load_resident(resident_id: int) -> dict | None:
             return resident
     return None
 
+def list_residents() -> list[dict]:
+    """The fake residents, with their recorded conditions, for the screen's drop-down."""
+    return [
+        {
+            "resident_id": r["resident_id"],
+            "name": r["name"],
+            "conditions": [c["name"] for c in r["conditions"]],
+        }
+        for r in _read("residents.json")["residents"]
+    ]
 
 def build_sources(resident: dict) -> list[SourceOut]:
     """Collect the approved lines this resident's guidance may use.
