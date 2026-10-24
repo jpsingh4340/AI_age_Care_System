@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Carer page - Age-Care</title>
+  <link rel="stylesheet" href="/static/carer.css">
+</head>
+<body>
+  <div class="topbar">
+    <b>Age-Care</b>
+    <a href="/">Dashboard</a>
+    <a href="/carer" class="active">Carer page</a>
+    <a href="/guidance">Guidance</a>
+  </div>
+
+  <div class="page">
+    <h1>Carer page</h1>
+    <p class="small">Fake residents only. Record what you did during your shift. Anything worrying goes to the nurse.</p>
+
+    <div class="box who">
+      <label>Resident
+        <select id="resident"></select>
+      </label>
+      <label>Your name
+        <input id="carer" placeholder="e.g. Priya">
+      </label>
+    </div>
+
+    <div class="cols">
+      <div>
+        <div class="box">
+          <h2>1. Record a task</h2>
+          <label>Task
+            <select id="task"></select>
+          </label>
+          <div class="radios">
+            <label><input type="radio" name="status" value="given" checked> Given</label>
+            <label><input type="radio" name="status" value="refused"> Refused</label>
+            <label><input type="radio" name="status" value="not_done"> Not done</label>
+          </div>
+          <button id="saveTask">Save task</button>
+          <p class="msg" id="taskMsg"></p>
+        </div>
+
+        <div class="box">
+          <h2>2. Record vitals</h2>
+          <p class="small">Fill in only what you checked.</p>
+          <div class="vitals">
+            <label>Pulse (bpm) <input id="pulse" type="number"></label>
+            <label>BP top <input id="systolic" type="number"></label>
+            <label>BP bottom <input id="diastolic" type="number"></label>
+            <label>Temp (°C) <input id="temperature" type="number" step="0.1"></label>
+            <label>Oxygen (%) <input id="spo2" type="number"></label>
+          </div>
+          <button id="saveVitals">Save vitals</button>
+          <p class="msg" id="vitalsMsg"></p>
+        </div>
+
+        <div class="box">
+          <h2>3. Raise a concern</h2>
+          <label>What kind
+            <select id="ctype"></select>
+          </label>
+          <label>What did you notice?
+            <textarea id="cnote" rows="3" placeholder="Write what you saw, e.g. only had a few sips of tea at lunch"></textarea>
+          </label>
+          <button id="saveConcern">Send to nurse</button>
+          <p class="msg" id="concernMsg"></p>
+        </div>
+      </div>
+
+      <div>
+        <div class="box">
+          <h2>Today for <span id="todayName">-</span></h2>
+          <table>
+            <thead><tr><th>Time</th><th>What</th><th>By</th></tr></thead>
+            <tbody id="todayRows"></tbody>
+          </table>
+        </div>
+
+        <div class="box">
+          <h2>Nurse guidance</h2>
+          <div id="guide" class="small">Loading...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/carer.js"></script>
+  <script src="/ai-bubble.js"></script>
+</body>
+</html>
