@@ -136,6 +136,22 @@ def _ask_model(resident: dict, sources: list[SourceOut], schema: dict, extra: st
         ) from error
 
 
+LIST_LABELS = {"watch_for": "symptoms to watch for", "prevention": "prevention steps"}
+NEAR_DUPLICATE = 0.75  # two lines sharing this much of their words count as the same line
+
+
+def _too_similar(text: str, kept: dict) -> bool:
+    """True if this line says almost the same as a line we already kept."""
+    words = _stems(text)
+    for name in kept:
+        for other in kept[name]:
+            theirs = _stems(other.text)
+            union = words | theirs
+            if union and len(words & theirs) / len(union) >= NEAR_DUPLICATE:
+                return True
+    return False
+
+
 def _keep_checked_lines(draft: GuidanceDraft, by_id: dict[str, SourceOut], kept: dict, dropped: list, seen: set) -> None:
     """Run every automatic check. Lines that pass go into `kept`, the rest into `dropped`."""
     for list_name in ("watch_for", "prevention"):
@@ -144,6 +160,8 @@ def _keep_checked_lines(draft: GuidanceDraft, by_id: dict[str, SourceOut], kept:
             key = re.sub(r"\s+", " ", line.text).strip().lower()
             if reason is None and key in seen:
                 reason = "Duplicate line."
+            elif reason is None and _too_similar(line.text, kept):
+                reason = "Almost the same as another line."
             if reason:
                 dropped.append(
                     DroppedLine(
@@ -166,15 +184,19 @@ def _keep_checked_lines(draft: GuidanceDraft, by_id: dict[str, SourceOut], kept:
             )
 
 
-def uncovered_topics(resident: dict, sources: list[SourceOut], kept: dict) -> list[str]:
-    """Topics of the resident's conditions that no kept line is based on (in condition order)."""
+def uncovered(resident: dict, sources: list[SourceOut], kept: dict) -> list[tuple[str, str]]:
+    """What is still missing: each recorded condition needs a kept line in BOTH lists.
+
+    Returns (topic, list_name) pairs, in condition order.
+    """
     topic_of = {s.id: s.topic for s in sources}
-    covered = {topic_of.get(line.source_id) for name in kept for line in kept[name]}
-    missing: list[str] = []
+    missing: list[tuple[str, str]] = []
     for condition in resident["conditions"]:
         topic = condition["topic"]
-        if topic not in covered and topic not in missing:
-            missing.append(topic)
+        for list_name in ("watch_for", "prevention"):
+            has_line = any(topic_of.get(line.source_id) == topic for line in kept[list_name])
+            if not has_line and (topic, list_name) not in missing:
+                missing.append((topic, list_name))
     return missing
 
 
@@ -185,12 +207,16 @@ def _title_of(sources: list[SourceOut], topic: str) -> str:
     return topic
 
 
+def _gap_names(sources: list[SourceOut], missing: list[tuple[str, str]]) -> list[str]:
+    return [f"{_title_of(sources, topic)} ({LIST_LABELS[list_name]})" for topic, list_name in missing]
+
+
 def draft_guidance(resident_id: int):
     """Ask the small model for guidance, then keep only the lines that pass every check.
 
-    If a recorded condition ends up with no kept line, ask once more using only the sources
-    for that condition. Conditions that are still empty are returned as `gaps`, so the nurse
-    knows to add a line herself.
+    Each recorded condition should have at least one kept line in both lists. If something
+    is missing, ask once more using only the sources for those conditions. Anything still
+    missing is returned as `gaps`, so the nurse knows to add a line herself.
 
     Returns (resident, sources, watch_for, prevention, dropped, gaps), or None if the
     resident does not exist.
@@ -207,17 +233,19 @@ def draft_guidance(resident_id: int):
 
     _keep_checked_lines(_ask_model(resident, sources, _limited_schema()), by_id, kept, dropped, seen)
 
-    missing = uncovered_topics(resident, sources, kept)
+    missing = uncovered(resident, sources, kept)
     if missing:
-        wanted = [s for s in sources if s.topic in missing]
-        titles = ", ".join(_title_of(sources, topic) for topic in missing)
-        note = f"Your first answer left out: {titles}. This time write lines ONLY from the sources below.\n\n"
+        topics = {topic for topic, _ in missing}
+        wanted = [s for s in sources if s.topic in topics]
+        note = (
+            "Your first answer left out: " + ", ".join(_gap_names(sources, missing))
+            + ". This time write lines ONLY from the sources below.\n\n"
+        )
         try:
             more = _ask_model(resident, wanted, _limited_schema(1, 3), note)
             _keep_checked_lines(more, {s.id: s for s in wanted}, kept, dropped, seen)
         except ollama_client.OllamaError:
             pass  # keep the first answer. The gaps are shown to the nurse instead.
-        missing = uncovered_topics(resident, sources, kept)
+        missing = uncovered(resident, sources, kept)
 
-    gaps = [_title_of(sources, topic) for topic in missing]
-    return resident, sources, kept["watch_for"], kept["prevention"], dropped, gaps
+    return resident, sources, kept["watch_for"], kept["prevention"], dropped, _gap_names(sources, missing)

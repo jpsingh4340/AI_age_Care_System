@@ -109,7 +109,7 @@ def test_draft_keeps_good_lines_and_records_removed_ones(monkeypatch):
     assert [line.text for line in kept_prev] == ["Keep the walking frame within reach."]
     assert {d.reason for d in dropped} == {"The source number does not exist.", "Duplicate line."}
     assert kept_prev[0].source == "Reference note: Falls"
-    assert gaps == ["Hydration"]  # Ron's drinking has no kept line, so the nurse is told
+    assert gaps == ["Hydration (symptoms to watch for)", "Hydration (prevention steps)"]  # the nurse is told
 
 
 def test_unknown_resident_returns_none():
@@ -176,7 +176,7 @@ def recording_model(answers):
     def fake_chat_json(system, user, schema):
         asked.append((user, schema))
         return json.dumps(answers[min(len(asked), len(answers)) - 1])
-        
+
     return fake_chat_json, asked
 
 
@@ -199,7 +199,7 @@ def test_a_missing_condition_gets_one_extra_try_using_only_its_sources(monkeypat
 def test_no_extra_try_when_every_condition_is_covered(monkeypatch):
     answer = {
         "watch_for": lines_from(2, "falls") + lines_from(2, "hydration"),
-        "prevention": lines_from(2, "falls", 2)[1:],
+        "prevention": lines_from(2, "falls", 2)[1:] + lines_from(2, "hydration", 2)[1:],
     }
     model, asked = recording_model([answer])
     monkeypatch.setattr(ollama_client, "chat_json", model)
@@ -218,7 +218,7 @@ def test_a_gap_is_reported_when_the_extra_try_also_fails(monkeypatch):
 
     _, _, watch, prevention, dropped, gaps = guidance.draft_guidance(2)
 
-    assert gaps == ["Hydration"]
+    assert gaps == ["Hydration (symptoms to watch for)", "Hydration (prevention steps)"]
     assert watch and prevention  # the falls lines are still kept
     assert any(d.reason == "The source number does not exist." for d in dropped)
 
@@ -238,8 +238,7 @@ def test_a_broken_extra_try_does_not_lose_the_first_answer(monkeypatch):
     _, _, watch, prevention, _, gaps = guidance.draft_guidance(2)
 
     assert len(calls) == 2 and watch and prevention
-    assert gaps == ["Hydration"]
-
+    assert gaps == ["Hydration (symptoms to watch for)", "Hydration (prevention steps)"]
 
 def test_api_tells_the_nurse_about_gaps(monkeypatch):
     first = {"watch_for": lines_from(2, "falls"), "prevention": lines_from(2, "falls", 2)[1:]}
@@ -248,7 +247,44 @@ def test_api_tells_the_nurse_about_gaps(monkeypatch):
     client = TestClient(app)
 
     body = client.post("/api/guidance/draft", json={"resident_id": 2}).json()
-    assert body["gaps"] == ["Hydration"]
+    assert body["gaps"] == ["Hydration (symptoms to watch for)", "Hydration (prevention steps)"]
 
     saved = client.get(f"/api/guidance/draft/{body['draft_id']}", headers={"X-Role": "nurse"}).json()
-    assert saved["gaps"] == ["Hydration"]
+    assert saved["gaps"] == body["gaps"]
+
+
+
+def test_a_condition_with_only_a_watch_line_still_needs_a_prevention_line(monkeypatch):
+    # Ron's falls: the model wrote a "watch for" line but no prevention line. This was the real problem.
+    only_watch = {
+        "watch_for": lines_from(2, "falls") + lines_from(2, "hydration"),
+        "prevention": lines_from(2, "hydration", 2)[1:],
+    }
+    falls_prevention = {"watch_for": [], "prevention": lines_from(2, "falls", 2)[1:]}
+    model, asked = recording_model([only_watch, falls_prevention])
+    monkeypatch.setattr(ollama_client, "chat_json", model)
+
+    _, _, watch, prevention, _, gaps = guidance.draft_guidance(2)
+
+    assert len(asked) == 2
+    assert "Falls (prevention steps)" in asked[1][0]
+    assert any("walking frame" in line.text for line in prevention)
+    assert gaps == []
+
+
+def test_lines_that_say_almost_the_same_thing_are_removed(monkeypatch):
+    sid = source_id_for(4, "dry mouth, dark urine")
+    quote = "dry mouth, dark urine"
+    same_idea = [
+        good("A dry mouth, dark urine, or refusal to drink.", sid, quote),
+        good("Refusal to drink or dark urine.", sid, quote),
+        good("Dark urine or refusal to drink.", sid, quote),
+    ]
+    drink_prevention = lines_from(4, "hydration", 2)[1:]
+    model, _ = recording_model([{"watch_for": same_idea, "prevention": drink_prevention}])
+    monkeypatch.setattr(ollama_client, "chat_json", model)
+
+    _, _, watch, _, dropped, _ = guidance.draft_guidance(4)
+
+    assert [line.text for line in watch] == ["A dry mouth, dark urine, or refusal to drink."]
+    assert [d.reason for d in dropped].count("Almost the same as another line.") == 2
