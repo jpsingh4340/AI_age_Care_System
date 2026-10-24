@@ -1,12 +1,15 @@
 """Ask AI page: nurse asks a question, picks a local Ollama model."""
+from pathlib import Path
+
 import httpx
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Header, HTTPException, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
-from pathlib import Path
+
 from app import config
 
 router = APIRouter()
+
 # full path so it works no matter which folder uvicorn starts from
 STATIC_DIR = Path(__file__).resolve().parents[2] / "static"
 
@@ -32,6 +35,7 @@ GENERAL_PROMPT = (
 class AskIn(BaseModel):
     question: str = Field(min_length=3, max_length=1000)
     model: str | None = None
+    resident_id: int | str | None = None
 
 
 class AskOut(BaseModel):
@@ -41,10 +45,43 @@ class AskOut(BaseModel):
     sources: list[str] = []
 
 
-def get_context(question: str) -> tuple[str, list[str]]:
-    """Hook for Feature A. Return (guidance_text, source_titles).
-    Empty text means nothing approved was found."""
-    return "", []
+async def get_context(request: Request, resident_id, role: str | None) -> tuple[str, list[str]]:
+    """Feature A: get the nurse-approved guidance for this resident.
+    Calls our own guidance API inside the app (no network), so it uses the same rules.
+    Returns (guidance_text, sources). Empty text means nothing approved yet."""
+    if resident_id is None:
+        return "", []
+    headers = {"X-Role": role or "carer"}
+    transport = httpx.ASGITransport(app=request.app)
+    try:
+        async with httpx.AsyncClient(transport=transport, base_url="http://app") as client:
+            approved = await client.get(f"/api/guidance/{resident_id}/approved", headers=headers)
+            people = await client.get("/api/residents", headers=headers)
+    except httpx.HTTPError:
+        return "", []
+    guide = approved.json() if approved.status_code == 200 else None
+    if not guide:
+        return "", []
+
+    name = "this resident"
+    if people.status_code == 200:
+        for person in people.json():
+            if str(person.get("resident_id")) == str(resident_id):
+                name = person.get("name", name)
+    # only the approved lines go to the model, no conditions or diagnosis
+    watch = guide.get("watch_for", [])
+    prevent = guide.get("prevention", [])
+    lines = [f"Resident: {name}", "Signs to watch for:"]
+    lines += [f"- {line['text']}" for line in watch]
+    lines += ["Prevention steps:"]
+    lines += [f"- {line['text']}" for line in prevent]
+
+    sources = [f"Approved by {guide.get('approved_by', 'a nurse')}"]
+    for line in watch + prevent:
+        src = "Written by a nurse" if line.get("edited") else line.get("source")
+        if src and src not in sources:
+            sources.append(src)
+    return "\n".join(lines), sources[:5]
 
 
 async def installed_chat_models() -> list[str]:
@@ -76,6 +113,7 @@ async def ask_ollama(model: str, messages: list[dict]) -> str:
 def ask_page():
     return FileResponse(STATIC_DIR / "ask.html")
 
+
 @router.get("/ai-bubble.js", include_in_schema=False)
 def ai_bubble():
     return FileResponse(STATIC_DIR / "ai-bubble.js", media_type="text/javascript")
@@ -92,7 +130,7 @@ async def list_models():
 
 
 @router.post("/api/ask", response_model=AskOut)
-async def ask(body: AskIn):
+async def ask(body: AskIn, request: Request, x_role: str | None = Header(None)):
     models = await installed_chat_models()
     if not models:
         raise HTTPException(503, "Ollama is not running. Start it with: ollama serve")
@@ -100,7 +138,7 @@ async def ask(body: AskIn):
     if model not in models:
         raise HTTPException(400, f"Model '{model}' is not installed")
 
-    context, sources = get_context(body.question)
+    context, sources = await get_context(request, body.resident_id, x_role)
     system = GROUNDED_PROMPT.format(context=context) if context else GENERAL_PROMPT
     messages = [
         {"role": "system", "content": system},
