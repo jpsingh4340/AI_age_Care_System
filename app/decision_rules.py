@@ -1,75 +1,94 @@
 """Rules layer for the Care Priority Decision feature (written by Tanveer).
 
-This file checks a resident's vital signs with fixed numbers (thresholds).
-There is NO AI in this file, so the same numbers always give the same result,
-and every result can be explained.
+This file checks a resident's vital signs with the New Zealand Early Warning
+Score (NZEWS) bands from the Adult Vital Signs Chart (Te Tāhū Hauora Health
+Quality & Safety Commission). There is NO AI in this file, so the same numbers
+always give the same result, and every result can be explained.
 
-Each vital sign gets a level:
-    Green = inside the normal range
-    Amber = a nurse should check
-    Red   = a nurse should see the resident now
+How it works:
+1. Each vital sign gets an NZEWS score of 0, 1, 2 or 3, or the blue zone
+   (blue = immediately life threatening on the chart).
+2. The scores are added up to give a total.
+3. The total and the zones give one level for the resident:
+       Red   = any vital sign in the red zone (score 3) or blue zone, or total 8 or more
+       Amber = total 1 to 7
+       Green = total 0
 
-IMPORTANT: the numbers in THRESHOLDS below are PROTOTYPE values for testing only.
-They will be replaced with the bands from the New Zealand Early Warning Score
-(NZEWS) vital signs chart (Health Quality & Safety Commission). This is a student
-prototype, not a clinical tool, and all residents are fake.
+Limits: our records only have 4 of the 7 NZEWS vital signs (no respiratory rate,
+supplemental oxygen or level of consciousness), so this is a guide for a student
+prototype, not a clinical tool. All residents are fake.
 """
 
 GREEN = "Green"
 AMBER = "Amber"
 RED = "Red"
+BLUE = "blue"  # blue zone on the NZEWS chart
 
 # Lets us compare levels: Red is the highest.
 LEVEL_RANK = {GREEN: 0, AMBER: 1, RED: 2}
 
-# For each vital sign:
-#   red_low    -> value at or below this is Red
-#   amber_low  -> value at or below this is Amber
-#   amber_high -> value at or above this is Amber
-#   red_high   -> value at or above this is Red
-# None means "no limit on this side".
-THRESHOLDS = {
+# NZEWS bands. Each band is (start value, score). A value gets the score of the
+# last band whose start is at or below the value. The first band starts at
+# minus infinity so every value has a band.
+LOWEST = float("-inf")
+NZEWS_BANDS = {
     "spo2": {
         "label": "Oxygen (SpO2)", "unit": "%",
-        "red_low": 91, "amber_low": 95, "amber_high": None, "red_high": None,
-    },
-    "temperature": {
-        "label": "Temperature", "unit": "°C",
-        "red_low": 35.0, "amber_low": 36.0, "amber_high": 38.1, "red_high": 39.1,
+        "bands": [(LOWEST, 3), (92, 2), (94, 1), (96, 0)],
     },
     "pulse": {
-        "label": "Pulse", "unit": "bpm",
-        "red_low": 40, "amber_low": 50, "amber_high": 91, "red_high": 131,
+        "label": "Heart rate", "unit": "bpm",
+        "bands": [(LOWEST, BLUE), (40, 2), (50, 0), (90, 1), (110, 2), (130, 3), (140, BLUE)],
     },
     "systolic": {
         "label": "Systolic blood pressure", "unit": "mmHg",
-        "red_low": 90, "amber_low": 100, "amber_high": 180, "red_high": 220,
+        "bands": [(LOWEST, BLUE), (70, 3), (90, 2), (100, 1), (110, 0), (220, 3)],
+    },
+    "temperature": {
+        "label": "Temperature", "unit": "°C",
+        "bands": [(LOWEST, 2), (35.0, 1), (36.0, 0), (38.0, 1), (39.0, 2)],
     },
 }
 
 
-def check_vital(key: str, value: float) -> dict:
-    """Check one vital sign and return its level and a plain-English reason."""
-    rule = THRESHOLDS[key]
-    label, unit = rule["label"], rule["unit"]
+def nzews_score(key: str, value: float):
+    """Return the NZEWS score (0 to 3) or BLUE for one vital sign value."""
+    score = None
+    for start, band_score in NZEWS_BANDS[key]["bands"]:
+        if value >= start:
+            score = band_score
+    return score
 
-    if rule["red_low"] is not None and value <= rule["red_low"]:
-        level, why = RED, f"is very low (at or below {rule['red_low']} {unit})"
-    elif rule["red_high"] is not None and value >= rule["red_high"]:
-        level, why = RED, f"is very high (at or above {rule['red_high']} {unit})"
-    elif rule["amber_low"] is not None and value <= rule["amber_low"]:
-        level, why = AMBER, f"is low (at or below {rule['amber_low']} {unit})"
-    elif rule["amber_high"] is not None and value >= rule["amber_high"]:
-        level, why = AMBER, f"is high (at or above {rule['amber_high']} {unit})"
+
+def _level_for_score(score) -> str:
+    """Red for the red or blue zone, Amber for score 1 or 2, Green for 0."""
+    if score == BLUE or score == 3:
+        return RED
+    if score in (1, 2):
+        return AMBER
+    return GREEN
+
+
+def check_vital(key: str, value: float) -> dict:
+    """Check one vital sign and return its NZEWS score, level and a plain-English reason."""
+    info = NZEWS_BANDS[key]
+    label, unit = info["label"], info["unit"]
+    score = nzews_score(key, value)
+
+    if score == BLUE:
+        why = "is in the NZEWS blue zone (immediately life threatening)"
+    elif score == 0:
+        why = "is in the normal range (NZEWS score 0)"
     else:
-        level, why = GREEN, "is in the normal range"
+        why = f"gives NZEWS score {score}"
 
     return {
         "key": key,
         "label": label,
         "value": value,
         "unit": unit,
-        "level": level,
+        "score": score,
+        "level": _level_for_score(score),
         "reason": f"{label} {value} {unit} {why}.",
     }
 
@@ -82,14 +101,14 @@ def latest_readings(readings_history: dict) -> dict:
     """
     latest = {}
     for key, entries in readings_history.items():
-        if key in THRESHOLDS and entries:
+        if key in NZEWS_BANDS and entries:
             newest = max(entries, key=lambda entry: entry["date"])
             latest[key] = {"value": newest["value"], "date": newest["date"]}
     return latest
 
 
 def check_vitals(readings_history: dict) -> list[dict]:
-    """Check the newest value of every vital sign we have rules for.
+    """Check the newest value of every vital sign we have NZEWS bands for.
 
     Each result also keeps the date of the reading, so the nurse can see the source.
     """
@@ -99,6 +118,23 @@ def check_vitals(readings_history: dict) -> list[dict]:
         result["source"] = f"Vital signs record, {reading['date']}"
         results.append(result)
     return results
+
+
+def total_score(results: list[dict]) -> int:
+    """Add up the NZEWS scores. A blue zone counts as 3 in the total."""
+    return sum(3 if r["score"] == BLUE else r["score"] for r in results)
+
+
+def rules_level(results: list[dict]) -> str:
+    """One level for the resident from their vital signs, following the NZEWS chart."""
+    if any(r["level"] == RED for r in results):
+        return RED  # any vital sign in the red or blue zone
+    total = total_score(results)
+    if total >= 8:
+        return RED
+    if total >= 1:
+        return AMBER
+    return GREEN
 
 
 def highest_level(levels: list[str]) -> str:
