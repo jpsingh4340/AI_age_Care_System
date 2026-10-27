@@ -1,12 +1,14 @@
 import re
 import time
 from pathlib import Path
+from app.routers import ask, carer
 
 from fastapi import FastAPI, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.concurrency import run_in_threadpool
+
 
 from . import approval, db, guidance, ocr, ollama_client, rag, records, slm
 from .config import CHAT_MODEL, EMBED_MODEL
@@ -31,6 +33,9 @@ app = FastAPI(
     description="Student project. Fake data only. The AI summarises and flags, and a nurse approves.",
     version="0.1.0",
 )
+
+app.include_router(ask.router)
+app.include_router(carer.router)
 
 # Lets the React dashboard (on localhost, any port) call this API from the browser
 app.add_middleware(
