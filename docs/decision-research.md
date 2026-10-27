@@ -7,7 +7,7 @@ These notes explain why I built the decision feature the way I did. Parts marked
 **TODO** are for me to research and write in my own words.
 
 ---
-  
+
 ## 1. The problem
 
 In New Zealand rest homes, nurses and carers look after many residents at the same time. Every day they have a lot of vital signs (pulse, blood pressure, temperature and oxygen) and many carer notes to read, but very little time. Because of this, an important warning can be missed, for example a low oxygen level or a carer note like "only had a few sips of tea at lunch", and the resident may not get help early enough.
@@ -15,15 +15,13 @@ In New Zealand rest homes, nurses and carers look after many residents at the sa
 My decision feature helps by giving each resident one simple priority: Green (OK), Amber (a nurse should check) or Red (a nurse should see them now). Each priority shows the reason and where it came from, and the nurse always makes the final decision.
 
 ## 2. Options I compared
-
 | Option | Good points | Weak points | My score (1–5) |
 |---|---|---|---|
-| Rules only (fixed numbers) | Same result every time, easy to explain and test | Cannot read carer notes written in normal words | TODO |
-| AI only (Ollama reads everything) | Can read notes in normal words | Can make things up; hard to explain; numbers can be wrong | TODO |
-| Rules + AI (my choice) | Rules handle numbers safely; AI explains notes with exact quotes | More parts to build and test | TODO |
+| Rules only (fixed numbers) | Same result every time, easy to explain and test | Cannot read carer notes written in normal words | 3 |
+| AI only (Ollama reads everything) | Can read notes in normal words | Can make things up, hard to explain, may get numbers wrong | 2 |
+| Rules + AI (my choice) | Rules check the numbers safely, and the AI explains the notes with exact quotes | More parts to build and test | 5 |
 
-**My decision:** TODO – explain in your own words why Rules + AI is the best choice.
-(Our lecturer Ganeshan also recommended a combination of both by email on 26 October.)
+**My decision:** I chose Rules + AI. Numbers like oxygen and temperature are checked by rules, because rules always give the same answer and are easy to explain. The AI is only used to read carer notes and explain them, and my code checks that every quote is really in the note. This keeps the decision safe, because the AI cannot make the final clinical judgement, and the nurse always decides. Our lecturer Ganeshan also recommended a combination of both by email on 26 October 2026.
 
 ## 3. Where the thresholds come from (NZEWS)
 
