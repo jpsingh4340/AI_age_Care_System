@@ -25,23 +25,20 @@ My decision feature helps by giving each resident one simple priority: Green (OK
 
 ## 3. Where the thresholds come from (NZEWS)
 
-Source: Te Tāhū Hauora Health Quality & Safety Commission. *Vital signs chart with
-New Zealand early warning score.*
-https://www.hqsc.govt.nz/resources/resource-library/vital-signs-chart-with-new-zealand-early-warning-score/
+Source: Te Tāhū Hauora Health Quality & Safety Commission. *Adult vital signs chart with New Zealand early warning score.*
 
-TODO: Open the chart PDF and copy the score bands for each vital sign:
+| Vital sign | Score 0 | Score 1 | Score 2 | Score 3 (red zone) | Blue zone |
+|---|---|---|---|---|---|
+| Oxygen (SpO2 %) | 96 or more | 94–95 | 92–93 | 91 or less | – |
+| Heart rate (bpm) | 50–89 | 90–109 | 40–49 or 110–129 | 130–139 | 39 or less, or 140+ |
+| Systolic BP (mmHg) | 110–219 | 100–109 | 90–99 | 70–89 or 220+ | 69 or less |
+| Temperature (°C) | 36.0–37.9 | 35.0–35.9 or 38.0–38.9 | 34.9 or less, or 39.0+ | – | – |
 
-| Vital sign | Score 3 (red zone) | Score 2 | Score 1 | Score 0 (normal) |
-|---|---|---|---|---|
-| Oxygen (SpO2) | TODO | TODO | TODO | TODO |
-| Temperature | TODO | TODO | TODO | TODO |
-| Pulse (heart rate) | TODO | TODO | TODO | TODO |
-| Systolic blood pressure | TODO | TODO | TODO | TODO |
+How I use it in app/decision_rules.py: each vital sign gets its NZEWS score. Any vital sign in the red or blue zone, or a total of 8 or more, gives Red. A total of 1 to 7 gives Amber, and 0 gives Green. This follows the chart's escalation pathway (8–9 or any red zone, 10+ or any blue zone).
 
-TODO: Explain how I turn these bands into Green, Amber and Red in `app/decision_rules.py`.
+The chart also says: "Escalate care for any patient you, they or their family are worried about, regardless of vital signs or EWS." This is why my feature also reads carer notes, not only the numbers.
 
-**Limitation:** NZEWS is designed for hospitals. Our project is a student prototype
-using fake data, so we use it only as a guide.
+**Limitation:** NZEWS is designed for hospitals and uses 7 vital signs. Our fake records only have 4 (no respiratory rate, supplemental oxygen or level of consciousness), so we use it only as a guide for a student prototype.
 
 ## 4. Ethical and legal points
 
