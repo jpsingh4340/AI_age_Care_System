@@ -7,12 +7,12 @@ These notes explain why I built the decision feature the way I did. Parts marked
 **TODO** are for me to research and write in my own words.
 
 ---
-
+  
 ## 1. The problem
 
-TODO: In 2–3 sentences, explain why a nurse in a rest home needs a quick priority
-for each resident (Green, Amber, Red), and what can go wrong if a concern in a
-carer note is missed.
+In New Zealand rest homes, nurses and carers look after many residents at the same time. Every day they have a lot of vital signs (pulse, blood pressure, temperature and oxygen) and many carer notes to read, but very little time. Because of this, an important warning can be missed, for example a low oxygen level or a carer note like "only had a few sips of tea at lunch", and the resident may not get help early enough.
+
+My decision feature helps by giving each resident one simple priority: Green (OK), Amber (a nurse should check) or Red (a nurse should see them now). Each priority shows the reason and where it came from, and the nurse always makes the final decision.
 
 ## 2. Options I compared
 
