@@ -18,7 +18,7 @@ from .schemas import FlagType
 from .slm import evidence_in_note
 
 # My prompt: the instructions we give the small model. Short, strict rules work
-# best for small models. (Version 1 - see the prompt log in docs/decision-research.md)
+# best for small models. (Version 2 - see the prompt log in docs/decision-research.md)
 DECISION_NOTE_SYSTEM = """You help a nurse in a New Zealand rest home decide which carer notes need a nurse to check.
 You get the carer notes about ONE resident. Each note starts with its time in brackets.
 
@@ -27,7 +27,8 @@ Rules:
 - Add a concern only when a note clearly says something worrying happened, for example not eating or drinking, a fall or near fall, pain, vomiting, confusion or low mood.
 - If a note says something did NOT happen (for example "no falls today"), do not add it.
 - "quote" must be words copied exactly from one note, 3 to 15 words long.
-- "reason" is one short sentence in plain English that tells the nurse why it may need checking.
+- "reason" is one short sentence in plain English that says what the carer saw and that a nurse may want to check it.
+- In "reason", describe only what happened. Do not name a condition (for example do not say "dehydrated", "infection" or "stroke") and do not say what treatment or fluids are needed.
 - "needs_check" is true when a nurse should check the resident, and false when it is only for information.
 - Never diagnose. Never name medicines, doses or treatment.
 - If nothing is worrying, return an empty concerns list.
