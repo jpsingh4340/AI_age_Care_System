@@ -144,8 +144,8 @@
 
     .role-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
       margin-top: 6px;
     }
     .role-card {
@@ -328,13 +328,18 @@
         <div class="role-grid">
           <label class="role-card selected" id="cardNurse" onclick="selectRole('nurse')">
             <input type="radio" name="regRole" value="nurse" checked>
-            <div class="role-title">🩺 Nurse (RN)</div>
-            <div class="role-desc">Clinical oversight, AI guidance approval & OCR scans.</div>
+            <div class="role-title">🩺 Nurse</div>
+            <div class="role-desc">Clinical oversight & guidance approvals.</div>
           </label>
           <label class="role-card" id="cardCarer" onclick="selectRole('carer')">
             <input type="radio" name="regRole" value="carer">
             <div class="role-title">📋 Carer</div>
-            <div class="role-desc">Shift care tasks, spot vitals & concern logging.</div>
+            <div class="role-desc">Shift tasks, vitals & concern alerts.</div>
+          </label>
+          <label class="role-card" id="cardPatient" onclick="selectRole('patient')">
+            <input type="radio" name="regRole" value="patient">
+            <div class="role-title">🧓 Resident</div>
+            <div class="role-desc">Bedside schedule, call bell & wellbeing.</div>
           </label>
         </div>
       </div>
@@ -347,10 +352,13 @@
       <div class="demo-title">Quick Demo Logins</div>
       <div class="demo-btn-row">
         <button type="button" class="demo-btn" onclick="quickFill('nurse1', 'password123')">
-          🩺 Nurse Sarah (RN)
+          🩺 Nurse Sarah
         </button>
         <button type="button" class="demo-btn" onclick="quickFill('carer1', 'password123')">
           📋 Carer Priya
+        </button>
+        <button type="button" class="demo-btn" onclick="quickFill('patient1', 'password123')">
+          🧓 Margaret (Room 101)
         </button>
       </div>
     </div>
@@ -388,6 +396,7 @@
       activeRole = role;
       document.getElementById('cardNurse').classList.toggle('selected', role === 'nurse');
       document.getElementById('cardCarer').classList.toggle('selected', role === 'carer');
+      document.getElementById('cardPatient').classList.toggle('selected', role === 'patient');
     }
 
     function showAlert(text, type) {
@@ -432,12 +441,15 @@
         localStorage.setItem('agecare_token', data.token);
         localStorage.setItem('agecare_role', data.role);
         localStorage.setItem('agecare_name', data.full_name);
+        if (data.resident_id) localStorage.setItem('agecare_resident_id', data.resident_id);
 
         showAlert(`Welcome, ${data.full_name}! Redirecting to your workspace...`, 'ok');
 
         setTimeout(() => {
           if (data.role === 'nurse') {
             window.location.href = '/nurse';
+          } else if (data.role === 'patient') {
+            window.location.href = '/patient';
           } else {
             window.location.href = '/carer';
           }
@@ -481,6 +493,8 @@
         setTimeout(() => {
           if (data.role === 'nurse') {
             window.location.href = '/nurse';
+          } else if (data.role === 'patient') {
+            window.location.href = '/patient';
           } else {
             window.location.href = '/carer';
           }

@@ -26,6 +26,7 @@
       <div class="nav-section-title">Shift Navigation</div>
       <nav aria-label="Shift Tools">
         <a href="/carer" class="active"><img src="/static/img/ico/people-white.png" alt="">Today's Shift Care</a>
+        <a href="/patient"><img src="/static/img/ico/people-white.png" alt="">🧓 Bedside Tablet View</a>
         <a href="/ask"><img src="/static/img/ico/doc-white.png" alt="">Ask AI Helper</a>
       </nav>
 
@@ -56,6 +57,17 @@
           <span>📋 Active Carer Shift</span>
         </div>
       </section>
+
+      <!-- Live Resident Call Bell & Bedside Alerts Banner -->
+      <div id="liveAlertsBanner" style="display:none; background:#fae8e7; border:2px solid #b52b24; border-radius:14px; padding:16px 20px; margin-bottom:20px; color:#b52b24; box-shadow:0 4px 14px rgba(181,43,36,0.15);">
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+          <div style="display:flex; align-items:center; gap:12px; font-weight:700; font-size:16px;">
+            <span style="font-size:24px;">🔔</span>
+            <span id="liveAlertText">Resident Alert</span>
+          </div>
+          <button onclick="dismissAlert()" style="background:#b52b24; color:#fff; border:none; padding:7px 16px; border-radius:8px; font-weight:700; cursor:pointer;">Acknowledge / Dismiss</button>
+        </div>
+      </div>
 
       <!-- Resident & Carer Profile -->
       <div class="box who-box who">

@@ -128,6 +128,27 @@ async function loadToday() {
     what.appendChild(badge);
     tr.insertCell().textContent = r.by;
   });
+
+  // Check for live resident call bells or emergency alarms
+  var allToday = await getJSON("/api/carer/today");
+  if (allToday && allToday.concerns) {
+    var urgent = allToday.concerns.find(function(c) {
+      return c.note && (c.note.includes("CALL BELL") || c.note.includes("self-reported") || c.note.includes("Emergency"));
+    });
+    var banner = $("liveAlertsBanner");
+    var alertText = $("liveAlertText");
+    if (urgent && banner && alertText && (!window.dismissedAlert || window.dismissedAlert !== urgent.created_at)) {
+      window.activeAlertTime = urgent.created_at;
+      alertText.textContent = urgent.note + " (" + timeOnly(urgent.created_at) + ")";
+      banner.style.display = "block";
+    }
+  }
+}
+
+function dismissAlert() {
+  window.dismissedAlert = window.activeAlertTime;
+  var banner = $("liveAlertsBanner");
+  if (banner) banner.style.display = "none";
 }
 
 async function loadGuide() {
