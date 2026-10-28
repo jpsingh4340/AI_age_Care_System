@@ -1,6 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
+from app import db
 from app.main import app
 from app.routers import carer
 
@@ -10,7 +11,9 @@ client = TestClient(app)
 @pytest.fixture(autouse=True)
 def temp_db(tmp_path, monkeypatch):
     # use a throwaway db so tests never touch data/agecare.db
-    monkeypatch.setattr(carer, "DB_PATH", tmp_path / "test.db")
+    test_db = tmp_path / "test.db"
+    monkeypatch.setattr(carer, "DB_PATH", test_db)
+    monkeypatch.setattr(db, "DB_PATH", test_db)
 
 
 def test_save_task_shows_today():
@@ -60,3 +63,9 @@ def test_today_only_shows_that_resident():
     client.post("/api/carer/tasks", json={"resident_id": "1", "task": "Lunch eaten", "status": "refused", "carer": "Priya"})
     client.post("/api/carer/tasks", json={"resident_id": "2", "task": "Lunch eaten", "status": "given", "carer": "Priya"})
     assert len(client.get("/api/carer/today?resident_id=1").json()["tasks"]) == 1
+
+
+def test_carer_task_reflected_in_resident_records():
+    client.post("/api/carer/tasks", json={"resident_id": "1", "task": "Assisted with walker", "status": "given", "carer": "Priya"})
+    records = client.get("/api/residents/1/records").json()
+    assert any(t["task"] == "Assisted with walker" and t["by"] == "Priya" for t in records["care_record"])

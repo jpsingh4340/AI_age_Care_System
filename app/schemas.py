@@ -287,3 +287,30 @@ class RecordsOut(BaseModel):
     concerns: list[Concern]
     readings_history: dict[str, list[HistoryPoint]]  # fake past values for graphs
     readings_saved: list[SavedReading]  # values a nurse checked and saved
+
+
+# ---------- Authentication & Roles ----------
+class RegisterRequest(BaseModel):
+    username: str = Field(min_length=3, max_length=50)
+    password: str = Field(min_length=6, max_length=100)
+    full_name: str = Field(min_length=2, max_length=100)
+    role: Literal["nurse", "carer"]
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class UserOut(BaseModel):
+    username: str
+    full_name: str
+    role: str
+
+
+class AuthResponse(BaseModel):
+    token: str
+    username: str
+    full_name: str
+    role: str
+    expires_at: str
