@@ -216,6 +216,35 @@
     .go .marker { animation: arrive 0.34s cubic-bezier(0.3, 0.7, 0.2, 1) both; animation-delay: calc(var(--i) * 50ms + 350ms); }
     .go .bar3 i { animation: grow 0.8s cubic-bezier(0.3, 0.7, 0.2, 1) both; animation-delay: 0.5s; }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+    /* ---------- Care priority card (Tanveer) ---------- */
+    .prio-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .level { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; padding: 6px 16px; font-weight: 700; font-size: 16px; }
+    .level::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: currentColor; }
+    .level.Green { background: var(--good-soft); color: var(--good); }
+    .level.Amber { background: var(--warn-soft); color: var(--warn); }
+    .level.Red { background: var(--bad-soft); color: var(--bad); }
+    .prio-total { color: var(--ink2); font-size: 13.5px; }
+    .prio-step { margin: 10px 0 4px; font-weight: 600; }
+    .reasons { list-style: none; margin: 8px 0 0; padding: 0; }
+    .reasons li { border-top: 1px solid var(--line2); padding: 9px 0; display: flex; gap: 10px; align-items: flex-start; }
+    .reasons li:first-child { border-top: 0; }
+    .reasons .q { display: block; color: var(--ink2); font-style: italic; font-size: 13.5px; }
+    .reasons .src { display: block; color: var(--ink3); font-size: 12.5px; }
+    .dot { flex: none; width: 10px; height: 10px; border-radius: 50%; margin-top: 7px; }
+    .dot.Green { background: var(--good); } .dot.Amber { background: var(--warn-mark); } .dot.Red { background: var(--bad); }
+    .ai-note { font-size: 13px; color: var(--ink2); margin: 8px 0 0; }
+    .ai-note.error { color: var(--bad); }
+    .thinking { display: flex; align-items: center; gap: 8px; color: var(--ink2); font-size: 13.5px; margin: 8px 0 0; }
+    .thinking::before { content: ""; flex: none; width: 14px; height: 14px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: prioSpin 0.9s linear infinite; }
+    @keyframes prioSpin { to { transform: rotate(360deg); } }
+    .review { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .review label { font-size: 13.5px; color: var(--ink2); display: inline-flex; align-items: center; gap: 6px; }
+    .review button { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 14px; cursor: pointer; font-weight: 600; min-height: 44px; }
+    .review button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .review select, .review input, .review textarea { font: inherit; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; background: var(--surface); color: var(--ink); min-height: 44px; }
+    .review textarea { flex: 1 1 100%; min-height: 64px; }
+    .reviewed { font-size: 13.5px; color: var(--ink2); margin: 10px 0 0; }
   </style>
 </head>
 <body>
@@ -277,6 +306,7 @@
 
       <div class="grid">
         <div id="left">
+          <section class="panel anim" id="priority" style="--d:3"></section>
           <section class="panel anim" id="focus" style="--d:3"></section>
           <section class="panel anim" id="care" style="--d:4"></section>
           <section class="panel anim" id="guide" style="--d:5"></section>
@@ -293,7 +323,8 @@
 
   <script>
     const $ = (id) => document.getElementById(id);
-    const state = { role: "nurse", people: [], records: new Map(), approved: new Map(), pending: null, audit: null, selected: null };
+    const state = { role: "nurse", people: [], records: new Map(), approved: new Map(), pending: null, audit: null, selected: null,
+                    decisions: new Map(), thinking: new Set() };
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const charts = new Set(); // the redraw function of every chart on the page
 
@@ -412,6 +443,7 @@
       await addCarerEntries();
       await loadRoleData();
       renderAll(true);
+      loadDecision(state.selected);
     }
 
     // ---------- chart on a canvas (no SVG) ----------
@@ -659,6 +691,87 @@
         e.detail ? h("div", { class: "txt", text: e.detail }) : null))));
     }
 
+
+    // ---------- Care priority: rules + AI, the nurse decides (Tanveer) ----------
+    async function loadDecision(id) {
+      state.thinking.add(id);
+      if (state.selected === id) renderPriority();
+      // 1. rules only: fast, so the nurse sees something at once
+      const quick = await api("/api/residents/" + id + "/decision?use_ai=false");
+      if (quick.ok && !state.decisions.has(id)) state.decisions.set(id, quick.data);
+      if (state.selected === id) renderPriority();
+      // 2. rules + AI reading the carer notes: slower on a laptop
+      const full = await api("/api/residents/" + id + "/decision");
+      state.thinking.delete(id);
+      if (full.ok) state.decisions.set(id, full.data);
+      if (state.selected === id) renderPriority();
+    }
+
+    function renderPriority() {
+      const panel = $("priority");
+      const d = state.decisions.get(state.selected);
+      const head = [title("flag", "Care priority"),
+        h("p", { class: "sub", text: "NZ Early Warning Score rules for vital signs, plus AI reading the carer notes. A nurse makes the final decision." })];
+      if (!d) { panel.replaceChildren(...head, h("p", { class: "thinking", text: "Checking vital signs…" })); return; }
+
+      const reasons = d.reasons.length
+        ? h("ul", { class: "reasons" }, d.reasons.map((r) => h("li", {},
+            h("span", { class: "dot " + r.level, "aria-hidden": "true" }),
+            h("div", {},
+              h("span", { text: r.level + " – " + r.text }),
+              r.quote ? h("span", { class: "q", text: "“" + r.quote + "”" }) : null,
+              h("span", { class: "src", text: r.source + (r.from === "ai" ? " · read by AI, quote checked" : " · NZEWS rule") })))))
+        : h("p", { class: "empty", text: "No vital signs or carer notes need attention." });
+
+      const thinking = state.thinking.has(d.resident_id);
+      const aiLine = thinking
+        ? h("p", { class: "thinking", text: "The AI is reading the carer notes (10–40 seconds on this laptop)…" })
+        : h("p", { class: "ai-note" + (d.ai.status === "error" ? " error" : ""),
+            text: d.ai.message + (d.ai.removed_by_check ? " " + d.ai.removed_by_check + " AI answer(s) removed by the quote check." : "") });
+
+      panel.replaceChildren(...head,
+        h("div", { class: "prio-head" }, h("span", { class: "level " + d.level, text: d.level }),
+          h("span", { class: "prio-total", text: "NZEWS total " + d.rules.nzews_total + " · rules say " + d.rules.level + (thinking ? " · vital signs only so far" : "") })),
+        h("p", { class: "prio-step", text: d.next_step }),
+        reasons, aiLine, reviewPart(d, thinking));
+    }
+
+    function reviewPart(d, thinking) {
+      const r = d.last_review;
+      const done = r ? h("p", { class: "reviewed", text: (r.action === "priority_accepted" ? "Accepted" : "Changed") + " by " + r.actor + ", " + whenText(r.at) + ". " + (r.action === "priority_changed" ? r.detail : "") }) : null;
+      if (state.role !== "nurse") return h("div", {}, done, h("p", { class: "locked", text: "Only a nurse can accept or change the priority." }));
+      if (thinking) return done; // wait for the AI before the nurse decides
+
+      const name = h("input", { type: "text", value: "Nurse", size: 14 });
+      const nameLabel = () => h("label", {}, "Your name", name);
+      const accept = h("button", { type: "button", class: "primary", text: "Accept " + d.level });
+      const change = h("button", { type: "button", text: "Change priority" });
+      const box = h("div", { class: "review" }, nameLabel(), accept, change);
+      accept.addEventListener("click", () => sendReview(d, name.value, d.level, ""));
+      change.addEventListener("click", () => {
+        const pick = h("select", {}, ["Green", "Amber", "Red"].filter((l) => l !== d.level).map((l) => h("option", { value: l, text: l })));
+        const why = h("textarea", { placeholder: "Why did you change it? (required)", "aria-label": "Why did you change the priority?" });
+        const save = h("button", { type: "button", class: "primary", text: "Save change" });
+        save.addEventListener("click", () => { if (!why.value.trim()) { why.focus(); return; } sendReview(d, name.value, pick.value, why.value); });
+        box.replaceChildren(nameLabel(), h("label", {}, "New priority", pick), why, save);
+      });
+      return h("div", {}, done, box);
+    }
+
+    async function sendReview(d, reviewer, final, note) {
+      const response = await fetch("/api/residents/" + d.resident_id + "/decision/review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Role": state.role },
+        body: JSON.stringify({ reviewer: reviewer.trim() || "Nurse", suggested: d.level, final: final, note: note }),
+      });
+      let data = null;
+      try { data = await response.json(); } catch (e) { /* no body */ }
+      if (!response.ok) { alert("Could not save: " + (data && data.detail ? JSON.stringify(data.detail) : response.status)); return; }
+      d.last_review = data;
+      state.audit = await api("/api/audit?limit=8");
+      renderPriority(); renderActivity();
+    }
+
     function replay() { // run the entrance motion again
       const page = $("page");
       page.classList.remove("go"); void page.offsetWidth; page.classList.add("go");
@@ -671,12 +784,13 @@
       charts.clear();
       renderStrip(); renderTabs();
       renderFocus(person, rec); renderCare(person, rec); renderGuide(person);
-      renderNeeds(); renderContacts(rec); renderActivity();
+      renderPriority(); renderNeeds(); renderContacts(rec); renderActivity();
       if (animate) replay();
     }
 
     function select(id) {
       state.selected = id; hideTip(); renderAll(false);
+      if (!state.decisions.has(id) && !state.thinking.has(id)) loadDecision(id);
       const left = $("left"); // the left side comes in again for the new resident
       left.querySelectorAll(".anim").forEach((node, i) => { node.style.animation = "none"; void node.offsetWidth; node.style.animation = ""; node.style.setProperty("--d", i); });
       left.classList.remove("go"); void left.offsetWidth; left.classList.add("go");
