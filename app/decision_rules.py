@@ -89,7 +89,7 @@ def check_vital(key: str, value: float) -> dict:
         "unit": unit,
         "score": score,
         "level": _level_for_score(score),
-        "reason": f"{label} {value} {unit} {why}.",
+        "reason": f"{label} {value:g} {unit} {why}.",  # :g shows 96.0 as 96
     }
 
 
@@ -115,7 +115,8 @@ def check_vitals(readings_history: dict) -> list[dict]:
     results = []
     for key, reading in latest_readings(readings_history).items():
         result = check_vital(key, reading["value"])
-        result["source"] = f"Vital signs record, {reading['date']}"
+        when = reading["date"].replace("T", " ")[:16]  # "2026-10-29T18:00:00" -> "2026-10-29 18:00"
+        result["source"] = f"Vital signs record, {when}"
         results.append(result)
     return results
 
