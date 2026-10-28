@@ -110,3 +110,33 @@ def test_patient_companion_emergency_safety_escalation():
     # Verify that the emergency automatically raised an alarm on the carer feed
     today = client.get("/api/carer/today?resident_id=1").json()
     assert any("Emergency" in c["note"] or "AI Voice Companion" in c["note"] for c in today["concerns"])
+
+
+def test_patient_detailed_day_profile():
+    day = client.get("/api/patient/my-day?resident_id=1").json()
+    assert day["profile_details"] is not None
+    assert day["profile_details"]["preferred_name"] == "Peggy"
+    assert day["profile_details"]["age"] == 82
+    assert "Claire" in day["profile_details"]["emergency_contact"]["name"]
+    assert len(day["meals_today"]) >= 3
+    assert len(day["activities_today"]) >= 2
+    assert len(day["family_messages"]) >= 1
+
+
+def test_patient_log_water_and_family_reply():
+    # Resident logs 1 glass of water
+    w_res = client.post("/api/patient/log-water?resident_id=1", json={"amount_cups": 1})
+    assert w_res.status_code == 200
+
+    # Verify water count shows in day response
+    day = client.get("/api/patient/my-day?resident_id=1").json()
+    assert day["water_cups_logged"] >= 1
+
+    # Verify carer feed sees the drink logged
+    carer_today = client.get("/api/carer/today?resident_id=1").json()
+    assert any(t["task"] == "Offer a drink" for t in carer_today["tasks"])
+
+    # Family reply
+    fam_res = client.post("/api/patient/family-reply?resident_id=1")
+    assert fam_res.status_code == 200
+    assert fam_res.json()["ok"] is True

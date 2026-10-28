@@ -336,6 +336,39 @@ class PatientScheduleItem(BaseModel):
     completed_by: str | None = None
 
 
+class ResidentProfileDetails(BaseModel):
+    full_name: str
+    preferred_name: str
+    age: int
+    wing: str
+    primary_doctor: str
+    assigned_nurse: str
+    mobility_status: str
+    dietary_plan: str
+    emergency_contact: dict
+
+
+class MealPlanItem(BaseModel):
+    meal_type: str
+    dish: str
+    beverage: str
+    dietary_badge: str
+
+
+class ActivityItem(BaseModel):
+    time: str
+    title: str
+    location: str
+    joined: bool = False
+
+
+class FamilyMessage(BaseModel):
+    sender: str
+    relationship: str
+    timestamp: str
+    message: str
+
+
 class PatientDayResponse(BaseModel):
     resident_id: int
     name: str
@@ -343,6 +376,16 @@ class PatientDayResponse(BaseModel):
     schedule: list[PatientScheduleItem]
     approved_guidance: list[str]
     latest_sentiment: str | None = None
+    profile_details: ResidentProfileDetails | None = None
+    meals_today: list[MealPlanItem] = []
+    activities_today: list[ActivityItem] = []
+    family_messages: list[FamilyMessage] = []
+    water_cups_logged: int = 0
+    water_cups_target: int = 6
+
+
+class PatientWaterLogRequest(BaseModel):
+    amount_cups: int = 1
 
 
 class PatientCompanionRequest(BaseModel):

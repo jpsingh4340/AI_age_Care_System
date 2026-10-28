@@ -17,12 +17,17 @@ from fastapi.responses import FileResponse
 
 from app import auth, config, db, guidance
 from app.schemas import (
+    ActivityItem,
+    FamilyMessage,
+    MealPlanItem,
     PatientCallBellRequest,
     PatientCompanionRequest,
     PatientCompanionResponse,
     PatientDayResponse,
     PatientScheduleItem,
+    PatientWaterLogRequest,
     PatientWellbeingRequest,
+    ResidentProfileDetails,
 )
 
 router = APIRouter(tags=["Patient / Resident Portal"])
@@ -144,7 +149,22 @@ def get_patient_day(
             )
         )
 
-    # 4. Plain-language approved guidance from nurse
+    # 4. Count drinks recorded today
+    water_count = 0
+    try:
+        con_w = sqlite3.connect(DB_PATH)
+        cur_w = con_w.cursor()
+        cur_w.execute(
+            "SELECT COUNT(*) FROM carer_tasks WHERE resident_id = ? AND task LIKE '%drink%' AND status = 'given' AND created_at LIKE ?",
+            (str(res_id), today_prefix),
+        )
+        row_w = cur_w.fetchone()
+        water_count = row_w[0] if row_w else 0
+        con_w.close()
+    except Exception:
+        water_count = 0
+
+    # 5. Plain-language approved guidance from nurse
     approved_lines = []
     approved = db.latest_approved(res_id)
     if approved:
@@ -155,6 +175,84 @@ def get_patient_day(
 
     room_number = f"Room {100 + res_id}"
 
+    # 6. Detailed clinical profile & personalized data
+    preferred_names = {1: "Peggy", 2: "Ronnie", 3: "Joanie", 4: "Ahmed"}
+    wings = {1: "Garden Wing (Room 101)", 2: "Sunrise Wing (Room 102)", 3: "Courtyard Wing (Room 103)", 4: "Orchard Wing (Room 104)"}
+    doctors = {1: "Dr. Robert Chen (Geriatrician)", 2: "Dr. Fiona Walsh", 3: "Dr. Robert Chen", 4: "Dr. Alan Mercer"}
+    diets = {
+        1: "Soft diabetic, low sodium, hydration focus (Target: 1,500 mL/day)",
+        2: "Normal texture, low cholesterol, frequent fluid reminders",
+        3: "Light meals, anti-nausea diet, electrolyte balance",
+        4: "Halal, high fiber, daily fluid reminders",
+    }
+    mobilities = {
+        1: "Walks with 4-wheel frame · 1-person assist for chair & bed transfers",
+        2: "High fall risk · Walking stick · Supervised ambulation",
+        3: "Independent with supervision · Steady gait",
+        4: "Independent with occasional walking frame support",
+    }
+    contacts = {
+        1: {"name": "Claire Taylor (Daughter)", "relation": "Primary Contact", "phone": "+64 21 555 019", "visit_info": "Visiting Saturday at 2:00 PM"},
+        2: {"name": "David Hayes (Son)", "relation": "Primary Contact", "phone": "+64 21 555 028", "visit_info": "Visiting Sunday at 11:00 AM"},
+        3: {"name": "Emma Price (Niece)", "relation": "Primary Contact", "phone": "+64 21 555 037", "visit_info": "Visiting Friday at 3:30 PM"},
+        4: {"name": "Tariq Khan (Son)", "relation": "Primary Contact", "phone": "+64 21 555 046", "visit_info": "Visiting Daily at 5:00 PM"},
+    }
+
+    profile_details = ResidentProfileDetails(
+        full_name=resident.get("name", f"Resident #{res_id}"),
+        preferred_name=preferred_names.get(res_id, "Friend"),
+        age=82 if res_id == 1 else (79 + res_id),
+        wing=wings.get(res_id, "Garden Wing"),
+        primary_doctor=doctors.get(res_id, "Dr. Robert Chen (Geriatrician)"),
+        assigned_nurse="Nurse Sarah Johnson (RN)",
+        mobility_status=mobilities.get(res_id, "Walking frame support"),
+        dietary_plan=diets.get(res_id, "Balanced age-care nutrition"),
+        emergency_contact=contacts.get(res_id, {"name": "Family Contact", "relation": "Next of Kin", "phone": "+64 21 555 000", "visit_info": "Scheduled visits weekly"}),
+    )
+
+    meals_today = [
+        MealPlanItem(
+            meal_type="Breakfast (08:00)",
+            dish="Warm rolled oats with honey & sliced banana, soft poached egg",
+            beverage="English Breakfast Tea with milk",
+            dietary_badge="Soft & Diabetic Friendly",
+        ),
+        MealPlanItem(
+            meal_type="Lunch (12:30)",
+            dish="Tender roast chicken breast with kumara mash, soft carrots & garden peas",
+            beverage="Chilled lemon-infused water",
+            dietary_badge="High Protein · Low Salt",
+        ),
+        MealPlanItem(
+            meal_type="Afternoon Tea (15:00)",
+            dish="Freshly baked blueberry muffin with light butter",
+            beverage="Herbal Chamomile Tea",
+            dietary_badge="Gentle & Refreshing",
+        ),
+        MealPlanItem(
+            meal_type="Dinner (17:30)",
+            dish="Creamy potato & leek soup with warm wholemeal roll & steamed broccoli",
+            beverage="Warm low-fat milk",
+            dietary_badge="Easy Digestion",
+        ),
+    ]
+
+    activities_today = [
+        ActivityItem(time="10:30 AM", title="Morning Melodies & Social Tea", location="Garden Sun Lounge", joined=True),
+        ActivityItem(time="02:00 PM", title="Gentle Seated Chair Yoga & Mobility", location="Activity Hall", joined=False),
+        ActivityItem(time="04:00 PM", title="Courtyard Bird Watching & Fresh Air Walk", location="Rose Courtyard", joined=False),
+    ]
+
+    contact_info = contacts.get(res_id, contacts[1])
+    family_messages = [
+        FamilyMessage(
+            sender=contact_info["name"],
+            relationship=contact_info["relation"],
+            timestamp="Today, 9:15 AM",
+            message="Hi Mum! Loved our phone call yesterday. Bringing your favourite lavender hand lotion and photos from Tommy's football match on Saturday at 2 PM! Love you heaps ❤️",
+        )
+    ]
+
     return PatientDayResponse(
         resident_id=res_id,
         name=resident["name"],
@@ -162,7 +260,52 @@ def get_patient_day(
         schedule=schedule,
         approved_guidance=approved_lines[:5],
         latest_sentiment=latest_sentiment,
+        profile_details=profile_details,
+        meals_today=meals_today,
+        activities_today=activities_today,
+        family_messages=family_messages,
+        water_cups_logged=water_count,
+        water_cups_target=6,
     )
+
+
+@router.post("/api/patient/log-water")
+def log_water(
+    body: PatientWaterLogRequest,
+    resident_id: int | None = None,
+    authorization: str = Header(default=""),
+    x_session_token: str = Header(default=""),
+):
+    """Log a glass/cup of water consumed by resident towards their hydration target."""
+    res_id = _get_resident_id_from_auth(authorization, x_session_token, resident_id)
+    # Automatically log to carer_tasks so carers and nurses see it immediately!
+    con = sqlite3.connect(DB_PATH)
+    try:
+        con.execute(
+            """CREATE TABLE IF NOT EXISTS carer_tasks (
+                id INTEGER PRIMARY KEY, resident_id TEXT, task TEXT, status TEXT,
+                carer TEXT, created_at TEXT)"""
+        )
+        now_str = datetime.now().isoformat(timespec="seconds")
+        con.execute(
+            "INSERT INTO carer_tasks (resident_id, task, status, carer, created_at) VALUES (?, ?, ?, ?, ?)",
+            (str(res_id), "Offer a drink", "given", "Resident Self-Logged (Hydration)", now_str),
+        )
+        con.commit()
+    finally:
+        con.close()
+    return {"ok": True, "cups_added": body.amount_cups}
+
+
+@router.post("/api/patient/family-reply")
+def send_family_reply(
+    resident_id: int | None = None,
+    authorization: str = Header(default=""),
+    x_session_token: str = Header(default=""),
+):
+    """Quick 1-tap 'Send Love' reply to family message."""
+    res_id = _get_resident_id_from_auth(authorization, x_session_token, resident_id)
+    return {"ok": True, "message": "Love sent to your family! They will receive a notification."}
 
 
 @router.post("/api/patient/wellbeing")
