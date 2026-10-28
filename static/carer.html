@@ -3,90 +3,190 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Carer page - Age-Care</title>
+  <title>Carer Shift Portal · Age-Care Intelligence</title>
+  <link rel="icon" type="image/png" href="/static/img/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/carer.css">
 </head>
 <body>
-  <div class="topbar">
-    <b>Age-Care</b>
-    <a href="/">Dashboard</a>
-    <a href="/carer" class="active">Carer page</a>
-    <a href="/guidance">Guidance</a>
-  </div>
-
-  <div class="page">
-    <h1>Carer page</h1>
-    <p class="small">Fake residents only. Record what you did during your shift. Anything worrying goes to the nurse.</p>
-
-    <div class="box who">
-      <label>Resident
-        <select id="resident"></select>
-      </label>
-      <label>Your name
-        <input id="carer" placeholder="e.g. Priya">
-      </label>
-    </div>
-
-    <div class="cols">
-      <div>
-        <div class="box">
-          <h2>1. Record a task</h2>
-          <label>Task
-            <select id="task"></select>
-          </label>
-          <div class="radios">
-            <label><input type="radio" name="status" value="given" checked> Given</label>
-            <label><input type="radio" name="status" value="refused"> Refused</label>
-            <label><input type="radio" name="status" value="not_done"> Not done</label>
-          </div>
-          <button id="saveTask">Save task</button>
-          <p class="msg" id="taskMsg"></p>
-        </div>
-
-        <div class="box">
-          <h2>2. Record vitals</h2>
-          <p class="small">Fill in only what you checked.</p>
-          <div class="vitals">
-            <label>Pulse (bpm) <input id="pulse" type="number"></label>
-            <label>BP top <input id="systolic" type="number"></label>
-            <label>BP bottom <input id="diastolic" type="number"></label>
-            <label>Temp (°C) <input id="temperature" type="number" step="0.1"></label>
-            <label>Oxygen (%) <input id="spo2" type="number"></label>
-          </div>
-          <button id="saveVitals">Save vitals</button>
-          <p class="msg" id="vitalsMsg"></p>
-        </div>
-
-        <div class="box">
-          <h2>3. Raise a concern</h2>
-          <label>What kind
-            <select id="ctype"></select>
-          </label>
-          <label>What did you notice?
-            <textarea id="cnote" rows="3" placeholder="Write what you saw, e.g. only had a few sips of tea at lunch"></textarea>
-          </label>
-          <button id="saveConcern">Send to nurse</button>
-          <p class="msg" id="concernMsg"></p>
-        </div>
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="side">
+      <div class="brand">
+        <span class="brand-icon">✳</span>
+        Age-Care
+      </div>
+      <div class="role-tag">
+        <span class="role-dot"></span>
+        Frontline Carer
       </div>
 
-      <div>
-        <div class="box">
-          <h2>Today for <span id="todayName">-</span></h2>
-          <table>
-            <thead><tr><th>Time</th><th>What</th><th>By</th></tr></thead>
-            <tbody id="todayRows"></tbody>
-          </table>
+      <div class="nav-section-title">Shift Navigation</div>
+      <nav aria-label="Shift Tools">
+        <a href="/carer" class="active"><img src="/static/img/ico/people-white.png" alt="">Today's Shift Care</a>
+        <a href="/ask"><img src="/static/img/ico/doc-white.png" alt="">Ask AI Helper</a>
+      </nav>
+
+      <div class="nav-section-title">About System</div>
+      <nav aria-label="Project Information">
+        <a href="/welcome"><img src="/static/img/ico/grid-white.png" alt="">Project Vision</a>
+        <a href="/docs"><img src="/static/img/ico/code-white.png" alt="">API Docs</a>
+      </nav>
+
+      <div class="switch-card">
+        <p>Need clinical controls or nurse guidance approval?</p>
+        <a href="/nurse" class="switch-btn">
+          <span>🩺 Nurse Clinical Portal ↗</span>
+        </a>
+      </div>
+      <p class="side-note">Carer shift mode. Tasks and concerns sync live to the RN dashboard.</p>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="page">
+      <!-- Top Hero Bar -->
+      <section class="carer-hero">
+        <div>
+          <h1>Carer Shift Portal</h1>
+          <p>Record daily care tasks, track spot vitals, and report concerns for immediate nurse attention.</p>
+        </div>
+        <div class="hero-role-badge">
+          <span>📋 Active Carer Shift</span>
+        </div>
+      </section>
+
+      <!-- Resident & Carer Profile -->
+      <div class="box who-box who">
+        <label>
+          Select Resident
+          <select id="resident"></select>
+        </label>
+        <label>
+          Your Name (Carer on Duty)
+          <input id="carer" placeholder="e.g. Priya">
+        </label>
+      </div>
+
+      <!-- Main Columns -->
+      <div class="cols">
+        <!-- Left: Action Forms -->
+        <div>
+          <!-- 1. Task Recording -->
+          <div class="box">
+            <h2><span>1.</span> Record a Care Task</h2>
+            <p class="small">Log daily meal, hydration, or mobility tasks for this resident.</p>
+            
+            <label>
+              Task Item
+              <select id="task"></select>
+            </label>
+
+            <div class="radios-group">
+              <div class="radios-title">Status of task</div>
+              <div class="radios">
+                <label>
+                  <input type="radio" name="status" value="given" checked>
+                  ✓ Given / Done
+                </label>
+                <label>
+                  <input type="radio" name="status" value="refused">
+                  ✕ Refused
+                </label>
+                <label>
+                  <input type="radio" name="status" value="not_done">
+                  – Not done
+                </label>
+              </div>
+            </div>
+
+            <button id="saveTask" class="primary-btn">Save Care Task</button>
+            <p class="msg" id="taskMsg"></p>
+          </div>
+
+          <!-- 2. Spot Vitals -->
+          <div class="box">
+            <h2><span>2.</span> Record Spot Vitals</h2>
+            <p class="small">Fill in only what you checked. Out-of-range readings alert the nurse.</p>
+            
+            <div class="vitals">
+              <label>Pulse (bpm)
+                <input id="pulse" type="number" placeholder="60 - 100">
+              </label>
+              <label>Blood Pressure Top (Systolic)
+                <input id="systolic" type="number" placeholder="100 - 140">
+              </label>
+              <label>Blood Pressure Bottom (Diastolic)
+                <input id="diastolic" type="number" placeholder="60 - 90">
+              </label>
+              <label>Temperature (°C)
+                <input id="temperature" type="number" step="0.1" placeholder="36.5">
+              </label>
+              <label class="vitals-full">Oxygen Saturation (%)
+                <input id="spo2" type="number" placeholder="95 - 100">
+              </label>
+            </div>
+
+            <button id="saveVitals" class="primary-btn" style="margin-top:14px;">Save Vitals</button>
+            <p class="msg" id="vitalsMsg"></p>
+          </div>
+
+          <!-- 3. Raise a Concern -->
+          <div class="box" style="border-left: 5px solid #a9241d;">
+            <h2 style="color: #a9241d;"><span>3.</span> Raise a Concern to Nurse</h2>
+            <p class="small">Immediately alerts the RN on duty if you notice changes or incidents.</p>
+
+            <label>
+              Concern Type
+              <select id="ctype"></select>
+            </label>
+            
+            <label>
+              What did you observe?
+              <textarea id="cnote" rows="3" placeholder="Describe what you saw, e.g. unsteady when standing from chair, or refused breakfast"></textarea>
+            </label>
+
+            <button id="saveConcern" class="danger-btn">Send Alert to Nurse</button>
+            <p class="msg" id="concernMsg"></p>
+          </div>
         </div>
 
-        <div class="box">
-          <h2>Nurse guidance</h2>
-          <div id="guide" class="small">Loading...</div>
+        <!-- Right: Guidance & Today's Shift Feed -->
+        <div>
+          <!-- Nurse-Approved Guidance Card -->
+          <div class="box guidance-box">
+            <h2>Nurse-Approved Guidance</h2>
+            <div class="nurse-approved-badge">
+              <span>🛡️ Approved Clinical Guidance</span>
+            </div>
+            <div id="guide" class="small">Loading clinical guidance...</div>
+          </div>
+
+          <!-- Today's Activity Feed -->
+          <div class="box">
+            <h2>Today's Shift Log: <span id="todayName" style="color: var(--accent); margin-left: 4px;">–</span></h2>
+            <p class="small">Chronological list of everything recorded for this resident today.</p>
+            
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Recorded Action</th>
+                    <th>Carer</th>
+                  </tr>
+                </thead>
+                <tbody id="todayRows"></tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </main>
   </div>
 
+  <script src="/static/auth.js"></script>
   <script src="/static/carer.js"></script>
   <script src="/ai-bubble.js"></script>
 </body>

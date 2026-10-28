@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign In & Register · Age-Care Intelligence</title>
+  <link rel="icon" type="image/png" href="/static/img/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --rail: #0c3b3a;
+      --rail-deep: #082625;
+      --accent: #0a7c73;
+      --accent-hover: #08665f;
+      --mint: #bbf1e3;
+      --cream: #f4f7f6;
+      --surface: #ffffff;
+      --ink: #0f1f1e;
+      --ink2: #4a6160;
+      --line: #d8e2df;
+      --warn: #9a5700;
+      --bad: #b3261e;
+      --good: #1a7f4c;
+      --shadow: 0 18px 45px rgba(12, 59, 58, 0.16), 0 2px 8px rgba(12, 59, 58, 0.08);
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Schibsted Grotesk", system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at 80% 20%, #174f4b 0%, var(--rail) 55%, var(--rail-deep) 100%);
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    .brand-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #fff;
+      margin-bottom: 24px;
+      text-decoration: none;
+    }
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      background: #1c6861;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      font-size: 20px;
+      color: var(--mint);
+    }
+    .brand-name {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .auth-card {
+      width: 100%;
+      max-width: 440px;
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 32px 30px;
+      position: relative;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: #eef3f1;
+      border-radius: 10px;
+      padding: 4px;
+      margin-bottom: 24px;
+      gap: 4px;
+    }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      padding: 9px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink2);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .tab-btn.active {
+      background: #fff;
+      color: var(--rail);
+      box-shadow: 0 2px 6px rgba(12, 59, 58, 0.08);
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--rail);
+      letter-spacing: -0.01em;
+    }
+    p.sub {
+      margin: 0 0 20px;
+      color: var(--ink2);
+      font-size: 13.5px;
+      line-height: 1.45;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: 6px;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px 14px;
+      font-family: inherit;
+      font-size: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(10, 124, 115, 0.14);
+    }
+
+    .role-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .role-card {
+      border: 1.5px solid var(--line);
+      border-radius: 10px;
+      padding: 12px;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      text-align: left;
+      background: #fafcfb;
+    }
+    .role-card:hover {
+      border-color: var(--accent);
+    }
+    .role-card.selected {
+      border-color: var(--accent);
+      background: #e8f6f3;
+    }
+    .role-card input[type="radio"] {
+      display: none;
+    }
+    .role-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--rail);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .role-desc {
+      font-size: 11px;
+      color: var(--ink2);
+      margin-top: 4px;
+      line-height: 1.35;
+    }
+
+    .submit-btn {
+      width: 100%;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.18s, transform 0.18s;
+      margin-top: 8px;
+    }
+    .submit-btn:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    .alert {
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .alert.err {
+      background: #fde8e7;
+      color: var(--bad);
+      border-left: 3px solid var(--bad);
+      display: block;
+    }
+    .alert.ok {
+      background: #e4f6ed;
+      color: var(--good);
+      border-left: 3px solid var(--good);
+      display: block;
+    }
+
+    .demo-accounts {
+      margin-top: 24px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+    }
+    .demo-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--ink2);
+      margin-bottom: 10px;
+    }
+    .demo-btn-row {
+      display: flex;
+      gap: 8px;
+    }
+    .demo-btn {
+      flex: 1;
+      background: #eef5f3;
+      border: 1px solid #c9ded9;
+      color: var(--rail);
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-align: center;
+    }
+    .demo-btn:hover {
+      background: #dff0ec;
+      border-color: var(--accent);
+    }
+
+    footer {
+      margin-top: 24px;
+      color: rgba(255, 255, 255, 0.65);
+      font-size: 12px;
+      text-align: center;
+    }
+    footer a {
+      color: var(--mint);
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <a class="brand-header" href="/welcome">
+    <div class="brand-icon">✳</div>
+    <div class="brand-name">Age-Care Intelligence</div>
+  </a>
+
+  <div class="auth-card">
+    <div class="tabs">
+      <button class="tab-btn active" id="tabLogin" onclick="switchTab('login')">Sign In</button>
+      <button class="tab-btn" id="tabRegister" onclick="switchTab('register')">Register Account</button>
+    </div>
+
+    <div id="alertBox" class="alert"></div>
+
+    <!-- Login Form -->
+    <form id="loginForm" onsubmit="handleLogin(event)">
+      <h1>Welcome back</h1>
+      <p class="sub">Sign in to your registered Nurse or Carer workspace.</p>
+
+      <div class="field">
+        <label for="loginUsername">Username</label>
+        <input type="text" id="loginUsername" required autocomplete="username" placeholder="e.g. nurse1">
+      </div>
+
+      <div class="field">
+        <label for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" required autocomplete="current-password" placeholder="••••••••">
+      </div>
+
+      <button type="submit" class="submit-btn" id="btnLogin">Sign In ➔</button>
+    </form>
+
+    <!-- Register Form -->
+    <form id="registerForm" onsubmit="handleRegister(event)" style="display: none;">
+      <h1>Create account</h1>
+      <p class="sub">Register as a Registered Nurse or Frontline Carer.</p>
+
+      <div class="field">
+        <label for="regFullName">Full Name</label>
+        <input type="text" id="regFullName" required placeholder="e.g. Sarah Johnson">
+      </div>
+
+      <div class="field">
+        <label for="regUsername">Username</label>
+        <input type="text" id="regUsername" required placeholder="Choose a username">
+      </div>
+
+      <div class="field">
+        <label for="regPassword">Password</label>
+        <input type="password" id="regPassword" required placeholder="Min 6 characters">
+      </div>
+
+      <div class="field">
+        <label>Your Role in Age-Care Facility</label>
+        <div class="role-grid">
+          <label class="role-card selected" id="cardNurse" onclick="selectRole('nurse')">
+            <input type="radio" name="regRole" value="nurse" checked>
+            <div class="role-title">🩺 Nurse (RN)</div>
+            <div class="role-desc">Clinical oversight, AI guidance approval & OCR scans.</div>
+          </label>
+          <label class="role-card" id="cardCarer" onclick="selectRole('carer')">
+            <input type="radio" name="regRole" value="carer">
+            <div class="role-title">📋 Carer</div>
+            <div class="role-desc">Shift care tasks, spot vitals & concern logging.</div>
+          </label>
+        </div>
+      </div>
+
+      <button type="submit" class="submit-btn" id="btnRegister">Register & Sign In ➔</button>
+    </form>
+
+    <!-- Quick Demo Logins -->
+    <div class="demo-accounts">
+      <div class="demo-title">Quick Demo Logins</div>
+      <div class="demo-btn-row">
+        <button type="button" class="demo-btn" onclick="quickFill('nurse1', 'password123')">
+          🩺 Nurse Sarah (RN)
+        </button>
+        <button type="button" class="demo-btn" onclick="quickFill('carer1', 'password123')">
+          📋 Carer Priya
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Student Capstone Prototype · Real-world Role-Based Access<br>
+    <a href="/welcome">Learn more about the project</a>
+  </footer>
+
+  <script>
+    let activeRole = 'nurse';
+
+    function switchTab(mode) {
+      const tabLogin = document.getElementById('tabLogin');
+      const tabRegister = document.getElementById('tabRegister');
+      const loginForm = document.getElementById('loginForm');
+      const registerForm = document.getElementById('registerForm');
+      hideAlert();
+
+      if (mode === 'login') {
+        tabLogin.classList.add('active');
+        tabRegister.classList.remove('active');
+        loginForm.style.display = 'block';
+        registerForm.style.display = 'none';
+      } else {
+        tabRegister.classList.add('active');
+        tabLogin.classList.remove('active');
+        loginForm.style.display = 'none';
+        registerForm.style.display = 'block';
+      }
+    }
+
+    function selectRole(role) {
+      activeRole = role;
+      document.getElementById('cardNurse').classList.toggle('selected', role === 'nurse');
+      document.getElementById('cardCarer').classList.toggle('selected', role === 'carer');
+    }
+
+    function showAlert(text, type) {
+      const box = document.getElementById('alertBox');
+      box.textContent = text;
+      box.className = 'alert ' + type;
+    }
+
+    function hideAlert() {
+      const box = document.getElementById('alertBox');
+      box.style.display = 'none';
+    }
+
+    function quickFill(user, pass) {
+      switchTab('login');
+      document.getElementById('loginUsername').value = user;
+      document.getElementById('loginPassword').value = pass;
+      document.getElementById('loginForm').requestSubmit();
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      hideAlert();
+      const btn = document.getElementById('btnLogin');
+      btn.disabled = true;
+      btn.textContent = 'Verifying...';
+
+      const username = document.getElementById('loginUsername').value.trim();
+      const password = document.getElementById('loginPassword').value;
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Login failed.');
+
+        // Save session
+        localStorage.setItem('agecare_session', JSON.stringify(data));
+        localStorage.setItem('agecare_token', data.token);
+        localStorage.setItem('agecare_role', data.role);
+        localStorage.setItem('agecare_name', data.full_name);
+
+        showAlert(`Welcome, ${data.full_name}! Redirecting to your workspace...`, 'ok');
+
+        setTimeout(() => {
+          if (data.role === 'nurse') {
+            window.location.href = '/nurse';
+          } else {
+            window.location.href = '/carer';
+          }
+        }, 600);
+      } catch (err) {
+        showAlert(err.message, 'err');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Sign In ➔';
+      }
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      hideAlert();
+      const btn = document.getElementById('btnRegister');
+      btn.disabled = true;
+      btn.textContent = 'Creating account...';
+
+      const full_name = document.getElementById('regFullName').value.trim();
+      const username = document.getElementById('regUsername').value.trim();
+      const password = document.getElementById('regPassword').value;
+
+      try {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password, full_name, role: activeRole })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Registration failed.');
+
+        // Save session
+        localStorage.setItem('agecare_session', JSON.stringify(data));
+        localStorage.setItem('agecare_token', data.token);
+        localStorage.setItem('agecare_role', data.role);
+        localStorage.setItem('agecare_name', data.full_name);
+
+        showAlert(`Registered successfully as ${data.role.toUpperCase()}! Redirecting...`, 'ok');
+
+        setTimeout(() => {
+          if (data.role === 'nurse') {
+            window.location.href = '/nurse';
+          } else {
+            window.location.href = '/carer';
+          }
+        }, 600);
+      } catch (err) {
+        showAlert(err.message, 'err');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Register & Sign In ➔';
+      }
+    }
+  </script>
+</body>
+</html>

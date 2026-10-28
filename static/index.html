@@ -222,14 +222,27 @@
   <div class="app">
     <aside class="rail">
       <div class="brand"><img src="/static/img/logo-white.png" alt="" width="30" height="30">Age-Care</div>
-      <nav aria-label="Pages">
-        <a href="/" aria-current="page"><img class="ico" src="/static/img/ico/grid-white.png" alt="">Dashboard</a>
-        <a href="/guidance"><img class="ico" src="/static/img/ico/doc-white.png" alt="">Guidance</a>
-        <a href="/carer"><img class="ico" src="/static/img/ico/people-white.png" alt="">Carer page</a>
-        <a href="/ocr"><img class="ico" src="/static/img/ico/scan-white.png" alt="">Health report</a>
-        <a href="/docs"><img class="ico" src="/static/img/ico/code-white.png" alt="">API docs</a>
+      <div style="display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.12); color:#7de8d7; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; padding:4px 10px; border-radius:999px; margin:0 8px 18px;">
+        <span style="width:7px; height:7px; border-radius:50%; background:#39e3c4; box-shadow:0 0 8px #39e3c4;"></span>
+        Registered Nurse (RN)
+      </div>
+      <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#759c98; padding:6px 10px 4px;">Clinical Oversight</div>
+      <nav aria-label="Clinical Tools">
+        <a href="/nurse" aria-current="page"><img class="ico" src="/static/img/ico/grid-white.png" alt="">Clinical Dashboard</a>
+        <a href="/guidance"><img class="ico" src="/static/img/ico/doc-white.png" alt="">Guidance Studio</a>
+        <a href="/ocr"><img class="ico" src="/static/img/ico/scan-white.png" alt="">Health Report OCR</a>
+        <a href="/ask"><img class="ico" src="/static/img/ico/doc-white.png" alt="">Ask AI Assistant</a>
       </nav>
-      <div class="foot">Student prototype. Fake residents only. The AI drafts and a nurse decides.</div>
+      <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#759c98; padding:12px 10px 4px;">Shift Portal</div>
+      <nav aria-label="Carer Tools">
+        <a href="/carer"><img class="ico" src="/static/img/ico/people-white.png" alt="">Carer Shift View ➔</a>
+      </nav>
+      <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#759c98; padding:12px 10px 4px;">System</div>
+      <nav aria-label="System Pages">
+        <a href="/welcome"><img class="ico" src="/static/img/ico/grid-white.png" alt="">Project Vision</a>
+        <a href="/docs"><img class="ico" src="/static/img/ico/code-white.png" alt="">API Docs</a>
+      </nav>
+      <div class="foot">Clinical oversight mode. Supervise residents, review AI guidance drafts & OCR health reports.</div>
     </aside>
 
     <main class="main go" id="page">
@@ -238,13 +251,14 @@
         <div class="hero-top">
           <div>
             <h1 id="greeting">Good morning</h1>
-            <p id="today"></p>
+            <p id="today" style="margin-bottom:6px;"></p>
+            <span style="font-size:12.5px; font-weight:600; color:#b2edd9; background:rgba(255,255,255,0.12); padding:3px 12px; border-radius:999px; display:inline-flex; align-items:center; gap:6px;">🩺 Nurse Clinical Dashboard</span>
           </div>
           <div>
-            <span class="roleLabel" id="roleLabel">Prototype role</span>
+            <span class="roleLabel" id="roleLabel">Switch Portal</span>
             <div class="seg" role="group" aria-labelledby="roleLabel">
-              <button type="button" data-role="nurse" aria-pressed="true">Nurse</button>
-              <button type="button" data-role="carer" aria-pressed="false">Carer</button>
+              <button type="button" data-role="nurse" aria-pressed="true">Nurse View</button>
+              <button type="button" data-role="carer" aria-pressed="false" onclick="window.location.href='/carer'">Carer View ➔</button>
             </div>
           </div>
         </div>
@@ -359,6 +373,26 @@
       state.pending = await api("/api/guidance/pending");
       state.audit = await api("/api/audit?limit=8");
     }
+    // entries from the carer page are saved in their own tables,
+    // so add them to each resident's records here
+    function findRecord(id) {
+      for (const [key, rec] of state.records) {
+        if (String(key) === String(id)) return rec;
+      }
+      return null;
+    }
+    async function addCarerEntries() {
+      const today = await api("/api/carer/today");
+      if (!today.ok) return;
+      for (const t of today.data.tasks) {
+        const rec = findRecord(t.resident_id);
+        if (rec) rec.care_record.push({ time: t.created_at.slice(11, 16), task: t.task, status: t.status, by: t.carer });
+      }
+      for (const c of today.data.concerns) {
+        const rec = findRecord(c.resident_id);
+        if (rec) rec.concerns.push({ time: c.created_at.slice(11, 16), type: c.type, text: c.note + " (" + c.carer + ")" });
+      }
+    }
     async function loadAll() {
       const list = await api("/api/residents");
       if (!list.ok) {
@@ -374,6 +408,7 @@
         state.records.set(p.resident_id, rec.ok ? rec.data : null);
         state.approved.set(p.resident_id, app.ok ? app.data : null);
       }));
+      await addCarerEntries();
       await loadRoleData();
       renderAll(true);
     }
@@ -655,6 +690,10 @@
     });
 
     document.querySelectorAll(".seg button").forEach((button) => button.addEventListener("click", async () => {
+      if (button.dataset.role === "carer") {
+        window.location.href = "/carer";
+        return;
+      }
       state.role = button.dataset.role;
       document.querySelectorAll(".seg button").forEach((b) => b.setAttribute("aria-pressed", String(b === button)));
       await loadRoleData();
@@ -676,6 +715,7 @@
     })();
     loadAll();
   </script>
+  <script src="/static/auth.js"></script>
   <script src="/ai-bubble.js"></script>
 </body>
 </html>
