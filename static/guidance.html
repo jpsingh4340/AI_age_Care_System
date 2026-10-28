@@ -1,14 +1,10 @@
-# run once from the project folder:  python make_guidance_html.py
-# the ~ signs get changed to the right symbol when this runs
-from pathlib import Path
-
-html = """~!doctype html>
-~html lang="en">
-~head>
-  ~meta charset="utf-8">
-  ~meta name="viewport" content="width=device-width, initial-scale=1">
-  ~title>Age-Care Intelligence~/title>
-  ~style>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Age-Care Intelligence</title>
+  <style>
     :root {
       --ink: #17313a; --soft: #4b6670; --teal: #1f6f78; --deep: #0f3f46;
       --sea: #eaf3f2; --line: #c9dad8; --amber: #b7791f; --amber-bg: #fff1d0;
@@ -55,64 +51,64 @@ html = """~!doctype html>
     .meta { color: var(--soft); font-size: 0.82rem; margin-top: 8px; }
     .gap { background: var(--amber-bg); border-left: 5px solid var(--amber); border-radius: 6px; padding: 10px 14px; margin-bottom: 14px; font-weight: 600; }
     .next { color: var(--soft); font-size: 0.85rem; }
-  ~/style>
-~/head>
-~body>
-  ~header>
-    ~h1>Age-Care Intelligence System~/h1>
-    ~p>Feature A: symptoms to watch for and prevention steps~/p>
-    ~nav>~a href="/">Dashboard~/a>~a href="/guidance">Guidance~/a>~a href="/carer">Carer page~/a>~a href="/ocr">Health report (OCR)~/a>~/nav>
-  ~/header>
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Age-Care Intelligence System</h1>
+    <p>Feature A: symptoms to watch for and prevention steps</p>
+    <nav><a href="/">Dashboard</a><a href="/guidance">Guidance</a><a href="/carer">Carer page</a><a href="/ocr">Health report (OCR)</a></nav>
+  </header>
 
-  ~main>
-    ~div class="demo">~strong>Demo data only.~/strong> These residents are fake. This is a student prototype and not a medical tool. The AI never diagnoses or suggests medicines.~/div>
+  <main>
+    <div class="demo"><strong>Demo data only.</strong> These residents are fake. This is a student prototype and not a medical tool. The AI never diagnoses or suggests medicines.</div>
 
-    ~section class="card">
-      ~h2>1. Choose a resident~/h2>
-      ~div class="controls">
-        ~div>
-          ~label for="resident">Resident~/label>
-          ~select id="resident">~option>Loading...~/option>~/select>
-        ~/div>
-        ~button id="go" type="button">Draft guidance~/button>
-      ~/div>
-      ~div class="chips" id="conditions">~/div>
-      ~div class="status" id="status">~/div>
-    ~/section>
+    <section class="card">
+      <h2>1. Choose a resident</h2>
+      <div class="controls">
+        <div>
+          <label for="resident">Resident</label>
+          <select id="resident"><option>Loading...</option></select>
+        </div>
+        <button id="go" type="button">Draft guidance</button>
+      </div>
+      <div class="chips" id="conditions"></div>
+      <div class="status" id="status"></div>
+    </section>
 
-    ~div id="result" hidden>
-      ~div class="draft-banner">AI DRAFT. A nurse must approve this before carers see it. ~span class="next">(Nurse approval is the next step we build.)~/span>~/div>
+    <div id="result" hidden>
+      <div class="draft-banner">AI DRAFT. A nurse must approve this before carers see it. <span class="next">(Nurse approval is the next step we build.)</span></div>
 
-      ~div class="gap" id="gaps" hidden>~/div>
+      <div class="gap" id="gaps" hidden></div>
 
-      ~div class="grid">
-        ~section class="card">
-          ~h2>Symptoms to watch for~/h2>
-          ~ul class="lines" id="watch">~/ul>
-        ~/section>
-        ~section class="card">
-          ~h2>Prevention steps~/h2>
-          ~ul class="lines" id="prevent">~/ul>
-        ~/section>
-      ~/div>
+      <div class="grid">
+        <section class="card">
+          <h2>Symptoms to watch for</h2>
+          <ul class="lines" id="watch"></ul>
+        </section>
+        <section class="card">
+          <h2>Prevention steps</h2>
+          <ul class="lines" id="prevent"></ul>
+        </section>
+      </div>
 
-      ~section class="card removed">
-        ~h2>Removed by the automatic check~/h2>
-        ~p class="next">The AI wrote these, but a check removed them. Nobody else sees them.~/p>
-        ~ul class="lines" id="dropped">~/ul>
-      ~/section>
+      <section class="card removed">
+        <h2>Removed by the automatic check</h2>
+        <p class="next">The AI wrote these, but a check removed them. Nobody else sees them.</p>
+        <ul class="lines" id="dropped"></ul>
+      </section>
 
-      ~section class="card">
-        ~details class="sources">
-          ~summary>~strong>Approved sources the AI was allowed to use~/strong> (click to open)~/summary>
-          ~ul class="lines" id="sources">~/ul>
-        ~/details>
-        ~p class="meta" id="meta">~/p>
-      ~/section>
-    ~/div>
-  ~/main>
+      <section class="card">
+        <details class="sources">
+          <summary><strong>Approved sources the AI was allowed to use</strong> (click to open)</summary>
+          <ul class="lines" id="sources"></ul>
+        </details>
+        <p class="meta" id="meta"></p>
+      </section>
+    </div>
+  </main>
 
-  ~script>
+  <script>
     const $ = (id) => document.getElementById(id);
 
     // Build elements with textContent only, so text from the server can never run as code.
@@ -241,15 +237,6 @@ html = """~!doctype html>
     $("resident").addEventListener("change", showConditions);
     $("go").addEventListener("click", draft);
     loadResidents();
-  ~/script>
-~/body>
-~/html>
-"""
-
-html = html.replace("~", chr(60))
-target = Path("static/guidance.html")
-if not target.exists():
-    print("static/guidance.html not found, check where your guidance page is")
-else:
-    target.write_text(html, encoding="utf-8")
-    print("updated static/guidance.html")
+  </script>
+</body>
+</html>
