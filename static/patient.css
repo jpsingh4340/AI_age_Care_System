@@ -80,6 +80,21 @@ body {
   font-weight: 600;
   color: #c9f5ea;
 }
+.portal-nav-btn {
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #c9f5ea;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.portal-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.28);
+  color: #fff;
+}
 .exit-btn {
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.35);
@@ -100,7 +115,50 @@ body {
 .container {
   max-width: 1120px;
   margin: 0 auto;
-  padding: 24px 20px 80px;
+  padding: 20px 20px 80px;
+}
+
+/* Resident Switcher Bar */
+.resident-switcher-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  background: #ffffff;
+  padding: 10px 18px;
+  border-radius: 14px;
+  border: 1.5px solid var(--line);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+.switcher-label {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.room-pill {
+  background: #f0f5f3;
+  border: 1.5px solid #d4e3df;
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink2);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.room-pill:hover {
+  background: var(--mint-soft);
+  border-color: var(--teal);
+  color: var(--teal);
+}
+.room-pill.active {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(20, 89, 83, 0.25);
 }
 
 /* Detailed Resident Passport & Profile Hero Card */

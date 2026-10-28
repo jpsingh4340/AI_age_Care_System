@@ -19,17 +19,26 @@
     </div>
     <div class="top-clock" id="liveClock">10:00 AM · Loading...</div>
     <div class="top-actions">
-      <div class="role-pill">🧓 Bedside View · Room <span id="topRoomNum">101</span></div>
-      <a href="/login" class="exit-btn">Staff Sign In ➔</a>
+      <a href="/nurse" class="portal-nav-btn">🩺 Nurse View</a>
+      <a href="/carer" class="portal-nav-btn">📋 Carer View</a>
+      <a href="/login" class="exit-btn">Sign Out ➔</a>
     </div>
   </header>
 
   <main class="container">
+    <!-- Resident Switcher Bar -->
+    <div class="resident-switcher-bar">
+      <span class="switcher-label">Bedside Room Kiosk:</span>
+      <button class="room-pill active" onclick="switchResident(1, this)">🧓 Rm 101: Margaret T.</button>
+      <button class="room-pill" onclick="switchResident(2, this)">👴 Rm 102: Ron H.</button>
+      <button class="room-pill" onclick="switchResident(3, this)">👵 Rm 103: Joan P.</button>
+      <button class="room-pill" onclick="switchResident(4, this)">🧓 Rm 104: Ahmed K.</button>
+    </div>
     <!-- Detailed Resident Passport & Profile Card -->
     <section class="resident-profile-card">
       <div class="profile-left">
         <div class="resident-avatar">
-          <span class="avatar-emoji">👵</span>
+          <span class="avatar-emoji" id="residentAvatarEmoji">👵</span>
           <span class="online-indicator" title="Active on tablet"></span>
         </div>
         <div class="profile-identity">

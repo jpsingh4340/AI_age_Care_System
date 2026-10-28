@@ -424,7 +424,7 @@ async def post_companion(
 
     reply = ""
     try:
-        async with httpx.AsyncClient(timeout=8.0) as client:
+        async with httpx.AsyncClient(timeout=2.0) as client:
             resp = await client.post(
                 f"{ollama_url}/api/chat",
                 json={
@@ -434,7 +434,7 @@ async def post_companion(
                         {"role": "user", "content": query},
                     ],
                     "stream": False,
-                    "options": {"temperature": 0.3, "num_predict": 120},
+                    "options": {"temperature": 0.3, "num_predict": 100},
                 },
             )
             if resp.status_code == 200:

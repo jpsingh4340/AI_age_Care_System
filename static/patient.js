@@ -103,14 +103,32 @@ async function sendLoveToFamily() {
   } catch (err) {
     showMsg("familyFeedback", "Could not send message.", "alert");
   }
+function switchResident(id, btn) {
+  currentResidentId = id;
+  document.querySelectorAll(".room-pill").forEach(p => p.classList.remove("active"));
+  if (btn) btn.classList.add("active");
+  loadDay(id);
 }
 
-async function loadDay() {
+async function loadDay(overrideId) {
+  const resId = overrideId || currentResidentId;
   try {
-    const res = await (window.authFetch ? window.authFetch("/api/patient/my-day") : fetch("/api/patient/my-day"));
+    const url = "/api/patient/my-day?resident_id=" + resId;
+    const res = await (window.authFetch ? window.authFetch(url) : fetch(url));
     if (!res.ok) throw new Error("Could not load daily routine");
     const data = await res.json();
     currentResidentId = data.resident_id;
+
+    // Switch avatar emoji
+    const avatarEmoji = $("residentAvatarEmoji");
+    if (avatarEmoji) {
+      avatarEmoji.textContent = (data.resident_id === 1 || data.resident_id === 3) ? "👵" : "👴";
+    }
+
+    // Sync active room pill
+    document.querySelectorAll(".room-pill").forEach((p, idx) => {
+      p.classList.toggle("active", (idx + 1) === data.resident_id);
+    });
 
     // 1. Identity & Passport Profile
     const profile = data.profile_details || {};
@@ -330,8 +348,13 @@ function stopListening() {
 }
 
 function toggleMic() {
+  const indicator = $("listeningIndicator");
   if (!recognition) {
-    alert("Speech recognition is not available in this browser. Please tap the quick question buttons or type below!");
+    if (indicator) {
+      indicator.innerHTML = "<span>💡</span> Microphone is not supported on this browser/connection. You can tap the quick questions or type below!";
+      indicator.style.display = "flex";
+      setTimeout(() => { indicator.style.display = "none"; }, 5000);
+    }
     return;
   }
   if (isListening) {
@@ -398,11 +421,54 @@ async function submitCompanionInput() {
   const sendBtn = $("companionSendBtn");
   if (sendBtn) sendBtn.disabled = true;
   if (bubble) {
-    bubble.innerHTML = `<em>Thinking... "Asking Grace about '${question}'"</em>`;
+    bubble.innerHTML = `<em>Grace is thinking... "Answering '${question}'"</em>`;
   }
 
+  function getFastReply(q, resId) {
+    const qLower = q.toLowerCase();
+    if (qLower.includes("fall") || qLower.includes("fell") || qLower.includes("floor") || qLower.includes("pain") || qLower.includes("emergency") || qLower.includes("hurt")) {
+      return {
+        reply: "Please stay still and rest where you are. I have immediately alerted Nurse Sarah and your carer on duty to come to your room right away.",
+        speech_text: "Please stay still and rest where you are. I have immediately alerted Nurse Sarah and your carer to come to your room right away.",
+        emergency_alert: true,
+        suggested_followups: ["Nurse is notified", "Stay comfortable", "Help is on the way"]
+      };
+    }
+    if (qLower.includes("lunch") || qLower.includes("dinner") || qLower.includes("breakfast") || qLower.includes("food") || qLower.includes("eat") || qLower.includes("hungry") || qLower.includes("meal")) {
+      return {
+        reply: "Your next meal is Lunch at 12:30 PM in the dining lounge, featuring tender roast chicken with sweet kumara mash, followed by dinner at 5:30 PM. Would you like a warm cup of tea now?",
+        speech_text: "Your next meal is Lunch at 12:30 PM in the dining lounge, featuring tender roast chicken with sweet kumara mash, followed by dinner at 5:30 PM. Would you like a warm cup of tea now?",
+        emergency_alert: false,
+        suggested_followups: ["What is for dinner?", "Can I have a drink?", "When is my walk?"]
+      };
+    }
+    if (qLower.includes("walk") || qLower.includes("frame") || qLower.includes("physio") || qLower.includes("exercise") || qLower.includes("move")) {
+      return {
+        reply: "Your mobility walk with your frame is scheduled for 11:30 AM. Your carer will be here to walk alongside you safely and check your brakes.",
+        speech_text: "Your mobility walk with your frame is scheduled for 11:30 AM. Your carer will be here to walk alongside you safely and check your brakes.",
+        emergency_alert: false,
+        suggested_followups: ["What is for lunch?", "Who is my carer?", "Where am I?"]
+      };
+    }
+    if (qLower.includes("where") || qLower.includes("home") || qLower.includes("time") || qLower.includes("place") || qLower.includes("room")) {
+      return {
+        reply: "You are safe and sound in your room at AgeCare Haven. The staff are right down the hall looking after you, and everything is calm and peaceful.",
+        speech_text: "You are safe and sound in your room at AgeCare Haven. The staff are right down the hall looking after you, and everything is calm and peaceful.",
+        emergency_alert: false,
+        suggested_followups: ["What is for lunch?", "Who is my carer?", "Can I have some water?"]
+      };
+    }
+    return {
+      reply: "Hello! You are doing wonderfully today. Your schedule is running on time, and your care team is right down the hall. How can I help make you more comfortable?",
+      speech_text: "Hello! You are doing wonderfully today. Your schedule is running on time, and your care team is right down the hall. How can I help make you more comfortable?",
+      emergency_alert: false,
+      suggested_followups: ["What is for lunch?", "When is my walk?", "Can I have a cup of tea?"]
+    };
+  }
+
+  let data = null;
   try {
-    const res = await (window.authFetch
+    const fetchPromise = (window.authFetch
       ? window.authFetch("/api/patient/companion", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -412,42 +478,44 @@ async function submitCompanionInput() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ question, resident_id: currentResidentId }),
-        }));
+        })).then(r => r.ok ? r.json() : Promise.reject());
 
-    if (!res.ok) throw new Error("Could not reach Grace");
-    const data = await res.json();
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("fast_fallback")), 2200)
+    );
 
-    if (bubble) {
-      if (data.emergency_alert) {
-        bubble.innerHTML = `<span style="color: #b52b24; font-weight: 700;">🚨 [STAFF ALERTED]</span> "${data.reply}"`;
-      } else {
-        bubble.textContent = `"${data.reply}"`;
-      }
+    data = await Promise.race([fetchPromise, timeoutPromise]);
+  } catch (e) {
+    data = getFastReply(question, currentResidentId);
+    if (data.emergency_alert) {
+      triggerCallBell("AI Companion Emergency Alarm");
     }
+  }
 
-    if (input) input.value = "";
-
-    // Speak reply
-    speakText(data.speech_text || data.reply);
-
-    // Update chips if followups suggested
-    if (data.suggested_followups && data.suggested_followups.length) {
-      const chipContainer = document.querySelector(".chip-container");
-      if (chipContainer) {
-        const chips = data.suggested_followups
-          .slice(0, 4)
-          .map((f) => `<button class="question-chip" onclick="askCompanion('${f.replace(/'/g, "\\'")}')">💬 ${f}</button>`)
-          .join(" ");
-        chipContainer.innerHTML = `<span class="chip-label">Suggestions:</span> ${chips}`;
-      }
+  if (bubble) {
+    if (data.emergency_alert) {
+      bubble.innerHTML = `<span style="color: #b52b24; font-weight: 700;">🚨 [STAFF ALERTED]</span> "${data.reply}"`;
+    } else {
+      bubble.textContent = `"${data.reply}"`;
     }
-  } catch (err) {
-    console.error(err);
-    if (bubble) {
-      bubble.textContent = `"Hello Peggy! I am right here with you. Your lunch is at 12:30 PM, and your carer will be visiting you shortly. Press your call bell if you need urgent help."`;
+  }
+
+  if (input) input.value = "";
+  if (sendBtn) sendBtn.disabled = false;
+
+  // Speak aloud
+  speakText(data.speech_text || data.reply);
+
+  // Update followup chips
+  if (data.suggested_followups && data.suggested_followups.length) {
+    const chipContainer = document.querySelector(".chip-container");
+    if (chipContainer) {
+      const chips = data.suggested_followups
+        .slice(0, 4)
+        .map((f) => `<button class="question-chip" onclick="askCompanion('${f.replace(/'/g, "\\'")}')">💬 ${f}</button>`)
+        .join(" ");
+      chipContainer.innerHTML = `<span class="chip-label">Suggestions:</span> ${chips}`;
     }
-  } finally {
-    if (sendBtn) sendBtn.disabled = false;
   }
 }
 

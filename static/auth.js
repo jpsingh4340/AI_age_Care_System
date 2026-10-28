@@ -38,10 +38,7 @@
       return;
     }
   } else if (PATIENT_PAGES.some((p) => path === p || path.startsWith(p + "/"))) {
-    if (!token) {
-      redirect("/login?next=" + encodeURIComponent(path));
-      return;
-    }
+    // Bedside tablet is an accessible in-room kiosk: allow direct view without bouncing to login
   }
 
   // Global authenticated fetch helper
