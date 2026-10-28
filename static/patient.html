@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Resident Bedside Tablet · Age-Care Intelligence</title>
+  <link rel="icon" type="image/png" href="/static/img/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/patient.css">
+</head>
+<body>
+  <!-- Global Toast Notification Hub -->
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+  <!-- Top Navigation Header -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-icon">✳</div>
+      <div class="brand-text">
+        <span class="brand-title">Age-Care Intelligence</span>
+        <span class="brand-sub">Bedside Senior Tablet · Serene Haven</span>
+      </div>
+    </div>
+
+    <div class="top-clock" id="liveClock">10:00 AM · Loading...</div>
+
+    <div class="top-nav-links">
+      <a href="/carer" class="nav-chip carer-chip">
+        <span class="chip-dot"></span>
+        📋 Carer Portal
+      </a>
+      <a href="/nurse" class="nav-chip nurse-chip">
+        <span class="chip-dot nurse-dot"></span>
+        🩺 Nurse Dashboard
+      </a>
+      <a href="/login" class="nav-chip signout-chip" title="Sign out / switch account">
+        🚪 Sign Out
+      </a>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Room & Resident Kiosk Switcher Bar -->
+    <div class="kiosk-bar">
+      <div class="kiosk-bar-label">
+        <span class="kiosk-icon">🚪</span>
+        <strong>Bedside Room:</strong>
+      </div>
+      <div class="room-selector-group">
+        <button class="room-pill active" onclick="switchResident(1, this)" id="pillRes1">
+          <span class="pill-avatar">👵</span>
+          <span class="pill-room">Rm 101</span>
+          <span class="pill-name">Margaret T.</span>
+        </button>
+        <button class="room-pill" onclick="switchResident(2, this)" id="pillRes2">
+          <span class="pill-avatar">👴</span>
+          <span class="pill-room">Rm 102</span>
+          <span class="pill-name">Ron H.</span>
+        </button>
+        <button class="room-pill" onclick="switchResident(3, this)" id="pillRes3">
+          <span class="pill-avatar">👵</span>
+          <span class="pill-room">Rm 103</span>
+          <span class="pill-name">Joan P.</span>
+        </button>
+        <button class="room-pill" onclick="switchResident(4, this)" id="pillRes4">
+          <span class="pill-avatar">🧓</span>
+          <span class="pill-room">Rm 104</span>
+          <span class="pill-name">Ahmed K.</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Resident Medical Passport & Identity Card -->
+    <section class="passport-hero">
+      <div class="passport-left">
+        <div class="resident-photo-frame">
+          <span class="resident-emoji" id="residentAvatarEmoji">👵</span>
+          <span class="live-status-dot" title="Online on tablet"></span>
+        </div>
+        <div class="resident-details">
+          <div class="title-row">
+            <h1 id="greetingTitle">Margaret "Peggy" Taylor</h1>
+            <span class="tag-age" id="residentAge">82 yrs</span>
+            <span class="tag-room" id="tagRoom">Garden Wing · Rm 101</span>
+          </div>
+          <p class="passport-condition-line" id="passportConditions">Loading health plan & care conditions...</p>
+          <div class="passport-chips">
+            <div class="m-chip doctor-chip">
+              <span class="m-icon">🩺</span>
+              <div>
+                <small>Geriatrician</small>
+                <strong id="doctorName">Dr. Robert Chen</strong>
+              </div>
+            </div>
+            <div class="m-chip nurse-chip">
+              <span class="m-icon">👩‍⚕️</span>
+              <div>
+                <small>Assigned RN</small>
+                <strong id="nurseName">Nurse Sarah (RN)</strong>
+              </div>
+            </div>
+            <div class="m-chip mobility-chip">
+              <span class="m-icon">🚶</span>
+              <div>
+                <small>Mobility</small>
+                <strong id="mobilityStatus">4-Wheel Frame</strong>
+              </div>
+            </div>
+            <div class="m-chip diet-chip">
+              <span class="m-icon">🥗</span>
+              <div>
+                <small>Nutrition</small>
+                <strong id="dietaryBadge">Soft Diabetic</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="passport-right">
+        <div class="nok-card">
+          <div class="nok-badge">❤️ Next of Kin</div>
+          <div class="nok-name" id="familyContactName">Claire Taylor (Daughter)</div>
+          <div class="nok-meta" id="familyContactInfo">Visiting Saturday at 2:00 PM</div>
+          <div class="nok-phone" id="familyContactPhone">📞 +64 21 555 019</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AI Bedside Conversational Companion ("Grace") -->
+    <section class="card grace-card">
+      <div class="grace-header">
+        <div class="grace-avatar-wrap">
+          <div class="grace-avatar">🧓💬</div>
+          <div class="voice-wave" id="voiceWaveIndicator">
+            <span></span><span></span><span></span><span></span>
+          </div>
+        </div>
+        <div class="grace-intro">
+          <h2>Grace · Bedside AI Voice Companion</h2>
+          <p class="sub">Talk or tap below to ask Grace about meals, activities, or who is looking after you today.</p>
+        </div>
+        <div class="grace-controls">
+          <button id="voiceToggleBtn" class="voice-btn" onclick="toggleSpeech()" title="Toggle voice audio">
+            <span id="voiceIcon">🔊</span> <span id="voiceLabel">Voice Audio: On</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Speech Bubble -->
+      <div class="grace-bubble" id="companionSpeech">
+        "Hello Peggy! I am Grace, your bedside companion. How are you feeling today, or what would you like to know about your routine?"
+      </div>
+
+      <!-- Quick Conversation Chips -->
+      <div class="prompt-chips-wrap">
+        <span class="prompt-label">Quick Questions:</span>
+        <div class="chips-flex" id="quickChipsContainer">
+          <button class="q-chip" onclick="askCompanion('What is for lunch today?')">🥪 What is for lunch?</button>
+          <button class="q-chip" onclick="askCompanion('When is my walk with my frame?')">🚶 When is my walk?</button>
+          <button class="q-chip" onclick="askCompanion('Who is my carer today?')">🩺 Who is looking after me?</button>
+          <button class="q-chip" onclick="askCompanion('Where am I right now?')">💙 Where am I right now?</button>
+          <button class="q-chip" onclick="askCompanion('How much water should I drink?')">💧 Hydration target</button>
+          <button class="q-chip" onclick="askCompanion('Tell me a comforting thought')">🌸 Comforting thought</button>
+        </div>
+      </div>
+
+      <!-- Interactive Input (Microphone + Input) -->
+      <form class="grace-input-form" onsubmit="event.preventDefault(); submitCompanionInput();">
+        <button type="button" id="micBtn" class="mic-toggle-btn" onclick="toggleMic()" title="Tap to speak with voice">
+          <span id="micIcon">🎙️</span> <span id="micText">Tap to Speak</span>
+        </button>
+        <input type="text" id="companionInput" class="grace-text-input" placeholder="Or type a question for Grace here..." maxlength="200" />
+        <button type="submit" id="companionSendBtn" class="grace-send-btn">
+          <span>Ask Grace</span> ➔
+        </button>
+      </form>
+      <div id="listeningIndicator" class="listening-banner" style="display: none;">
+        <span class="pulsing-mic-dot"></span> Listening... Please speak clearly into your tablet microphone!
+      </div>
+    </section>
+
+    <!-- Two-Column Tablet Layout -->
+    <div class="dashboard-grid">
+      <!-- Left Column: Wellbeing, Hydration, Call Bell & Family -->
+      <div class="col-left">
+        <!-- 1. Wellbeing & Sentiment Check-In -->
+        <section class="card widget-card">
+          <div class="card-header-flex">
+            <h2><span>❤️</span> Daily Wellbeing Check-In</h2>
+            <span class="status-indicator-pill">Live Staff Link</span>
+          </div>
+          <p class="sub">Tap a feeling face to share your comfort level with your nurse and carer.</p>
+
+          <div class="sentiment-grid">
+            <button class="sentiment-btn" data-sentiment="great" onclick="checkInSentiment('great')">
+              <span class="s-emoji">😊</span>
+              <strong class="s-title">Feeling Great</strong>
+              <small class="s-desc">Rested & comfortable</small>
+            </button>
+            <button class="sentiment-btn" data-sentiment="okay" onclick="checkInSentiment('okay')">
+              <span class="s-emoji">😐</span>
+              <strong class="s-title">Doing Okay</strong>
+              <small class="s-desc">Normal day</small>
+            </button>
+            <button class="sentiment-btn discomfort" data-sentiment="uncomfortable" onclick="checkInSentiment('uncomfortable')">
+              <span class="s-emoji">😟</span>
+              <strong class="s-title">Stiff / Tired</strong>
+              <small class="s-desc">Mild discomfort</small>
+            </button>
+            <button class="sentiment-btn pain" data-sentiment="in_pain" onclick="checkInSentiment('in_pain')">
+              <span class="s-emoji">😣</span>
+              <strong class="s-title">In Pain</strong>
+              <small class="s-desc">Auto-alerts Nurse</small>
+            </button>
+          </div>
+          <div id="wellbeingFeedback" class="action-feedback"></div>
+        </section>
+
+        <!-- 2. Interactive Hydration Tracker Widget -->
+        <section class="card widget-card hydration-widget">
+          <div class="card-header-flex">
+            <h2><span>💧</span> Hydration Goal Tracker</h2>
+            <span class="status-indicator-pill good">Target: 6 Glasses (1,500 mL)</span>
+          </div>
+          <p class="sub">Frequent hydration protects your kidneys, prevents falls, and keeps skin healthy.</p>
+
+          <div class="hydration-body">
+            <div class="hydration-glasses-track" id="waterGlassesRow">
+              <!-- Rendered dynamically -->
+            </div>
+            <div class="hydration-summary-row">
+              <div class="hydration-metric">
+                <span class="current-cups" id="waterCupsCount">0</span>
+                <span class="total-cups">/ 6 glasses completed</span>
+              </div>
+              <button class="btn-log-water" onclick="logWaterGlass()">
+                <span>➕</span> Log 1 Glass of Water
+              </button>
+            </div>
+            <div class="hydration-progress-bar">
+              <div class="hydration-progress-fill" id="hydrationProgressFill" style="width: 0%;"></div>
+            </div>
+          </div>
+          <div id="waterFeedback" class="action-feedback"></div>
+        </section>
+
+        <!-- 3. Bedside Room Services & Digital Call Bell -->
+        <section class="card widget-card call-bell-widget">
+          <div class="card-header-flex">
+            <h2 style="color: #9c211a;"><span>🔔</span> Bedside Call Bell & Room Services</h2>
+            <span class="status-indicator-pill urgent">Direct Staff Alert</span>
+          </div>
+          <p class="sub">Need help in your room? Tap any button for immediate care staff response.</p>
+
+          <div class="call-bell-actions-grid">
+            <button class="call-action-btn urgent-btn" onclick="triggerCallBell('Urgent Carer Assistance to Room')">
+              <span class="bell-emoji">🚨</span>
+              <div class="bell-label-group">
+                <strong>Urgent Carer Call</strong>
+                <small>Immediate bedside response</small>
+              </div>
+            </button>
+            <button class="call-action-btn" onclick="triggerCallBell('Need fresh drinking water')">
+              <span class="bell-emoji">🚰</span>
+              <div class="bell-label-group">
+                <strong>Fresh Water</strong>
+                <small>Bring warm or cold drink</small>
+              </div>
+            </button>
+            <button class="call-action-btn" onclick="triggerCallBell('Help standing / walking with frame')">
+              <span class="bell-emoji">🚶</span>
+              <div class="bell-label-group">
+                <strong>Help Standing / Walk</strong>
+                <small>Transfer assistance</small>
+              </div>
+            </button>
+            <button class="call-action-btn" onclick="triggerCallBell('Assistance to the bathroom')">
+              <span class="bell-emoji">🚽</span>
+              <div class="bell-label-group">
+                <strong>Bathroom Assist</strong>
+                <small>Toilet & personal care</small>
+              </div>
+            </button>
+            <button class="call-action-btn" onclick="triggerCallBell('Help repositioning in bed or chair')">
+              <span class="bell-emoji">🛋️</span>
+              <div class="bell-label-group">
+                <strong>Repositioning</strong>
+                <small>Comfort in bed or chair</small>
+              </div>
+            </button>
+            <button class="call-action-btn" onclick="triggerCallBell('Extra warm blanket or pillow')">
+              <span class="bell-emoji">🛏️</span>
+              <div class="bell-label-group">
+                <strong>Warm Blanket</strong>
+                <small>Extra blanket or pillow</small>
+              </div>
+            </button>
+          </div>
+          <div id="callBellFeedback" class="action-feedback"></div>
+        </section>
+
+        <!-- 4. Family Messages & Love Card -->
+        <section class="card widget-card family-widget">
+          <div class="card-header-flex">
+            <h2><span>💌</span> Family Love & Photo Messages</h2>
+            <span class="status-indicator-pill" id="familySenderBadge">From Daughter Claire</span>
+          </div>
+          <div class="family-message-card">
+            <div class="family-header-row">
+              <span class="fam-avatar-emoji">👩</span>
+              <div class="fam-info">
+                <strong id="familyMsgSender">Claire Taylor (Daughter)</strong>
+                <span class="fam-time" id="familyMsgDate">Today at 9:15 AM</span>
+              </div>
+            </div>
+            <p class="fam-quote" id="familyMsgText">
+              "Hi Mum! Loved our phone call yesterday. Bringing your favourite lavender hand lotion and photos from Tommy's football match on Saturday at 2 PM! Love you heaps ❤️"
+            </p>
+            <div class="family-action-row">
+              <button class="btn-send-love" onclick="sendLoveToFamily()">
+                <span>❤️</span> Send Love Back to Claire
+              </button>
+              <span class="fam-reply-status" id="famReplyStatus">Tap to send reassurance</span>
+            </div>
+          </div>
+          <div id="familyFeedback" class="action-feedback"></div>
+        </section>
+      </div>
+
+      <!-- Right Column: Tabs (Schedule, Chef Menu, Activities) & Care Guidance -->
+      <div class="col-right">
+        <!-- Interactive Tab Navigation Header -->
+        <div class="tab-pill-bar">
+          <button class="tab-pill-btn active" onclick="switchRightTab('scheduleTab', this)" id="btnTabSchedule">
+            <span>📅</span> Routine Schedule
+          </button>
+          <button class="tab-pill-btn" onclick="switchRightTab('menuTab', this)" id="btnTabMenu">
+            <span>🍲</span> Chef's Menu
+          </button>
+          <button class="tab-pill-btn" onclick="switchRightTab('activitiesTab', this)" id="btnTabActivities">
+            <span>🎨</span> Activities
+          </button>
+        </div>
+
+        <!-- Tab Panel 1: Routine Schedule -->
+        <section class="card tab-panel active" id="scheduleTab">
+          <div class="card-header-flex">
+            <h2><span>📅</span> Today's Routine Schedule</h2>
+            <span class="status-indicator-pill good">Live Carer Sync</span>
+          </div>
+          <p class="sub">Items update automatically as your carer on duty completes them.</p>
+
+          <div class="schedule-timeline" id="scheduleList">
+            <!-- Populated via JavaScript -->
+          </div>
+        </section>
+
+        <!-- Tab Panel 2: Chef's Dining Menu -->
+        <section class="card tab-panel" id="menuTab" style="display: none;">
+          <div class="card-header-flex">
+            <h2><span>🍲</span> Today's Dining Menu</h2>
+            <span class="status-indicator-pill good">Prepared Fresh Daily</span>
+          </div>
+          <p class="sub">Tailored to your dietary preferences (Soft texture, Low Sodium).</p>
+
+          <div class="menu-cards-wrap" id="menuList">
+            <!-- Populated via JavaScript -->
+          </div>
+        </section>
+
+        <!-- Tab Panel 3: Facility Social Activities -->
+        <section class="card tab-panel" id="activitiesTab" style="display: none;">
+          <div class="card-header-flex">
+            <h2><span>🎨</span> Social & Wellness Activities</h2>
+            <span class="status-indicator-pill">Garden Sun Lounge</span>
+          </div>
+          <p class="sub">Join our warm, supportive group sessions anytime you feel up to it!</p>
+
+          <div class="activities-cards-wrap" id="activitiesList">
+            <!-- Populated via JavaScript -->
+          </div>
+        </section>
+
+        <!-- 6. Nurse-Approved Clinical Care Guidance -->
+        <section class="card widget-card clinical-guidance-card">
+          <div class="card-header-flex">
+            <h2><span>🛡️</span> My Care Reminders & Safety Tips</h2>
+            <span class="status-indicator-pill">RN Sarah Approved</span>
+          </div>
+          <p class="sub">Simple, clinical safety instructions approved by your Registered Nurse.</p>
+
+          <ul class="clinical-guidance-list" id="adviceList">
+            <!-- Populated via JavaScript -->
+          </ul>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- Sticky Bottom Quick Emergency Bar (Visible on mobile/tablet) -->
+  <div class="mobile-sticky-bar">
+    <button class="mobile-urgent-btn" onclick="triggerCallBell('Urgent Bedside Emergency')">
+      <span>🚨</span> Press for Urgent Carer Help
+    </button>
+    <button class="mobile-water-btn" onclick="logWaterGlass()">
+      <span>💧</span> +1 Water
+    </button>
+  </div>
+
+  <script src="/static/auth.js"></script>
+  <script src="/static/patient.js"></script>
+</body>
+</html>
