@@ -1,7 +1,7 @@
 import re
 import time
 from pathlib import Path
-from app.routers import ask, carer, vision
+from app.routers import ask, carer, patient, vision
 
 from fastapi import FastAPI, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -42,6 +42,7 @@ app = FastAPI(
 
 app.include_router(ask.router)
 app.include_router(carer.router)
+app.include_router(patient.router)
 app.include_router(vision.router)
 
 # Lets the React dashboard (on localhost, any port) call this API from the browser

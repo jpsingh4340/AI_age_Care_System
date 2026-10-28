@@ -294,7 +294,8 @@ class RegisterRequest(BaseModel):
     username: str = Field(min_length=3, max_length=50)
     password: str = Field(min_length=6, max_length=100)
     full_name: str = Field(min_length=2, max_length=100)
-    role: Literal["nurse", "carer"]
+    role: Literal["nurse", "carer", "patient"]
+    resident_id: int | None = None
 
 
 class LoginRequest(BaseModel):
@@ -306,6 +307,7 @@ class UserOut(BaseModel):
     username: str
     full_name: str
     role: str
+    resident_id: int | None = None
 
 
 class AuthResponse(BaseModel):
@@ -313,4 +315,31 @@ class AuthResponse(BaseModel):
     username: str
     full_name: str
     role: str
+    resident_id: int | None = None
     expires_at: str
+
+
+# ---------- Patient / Resident Portal Schemas ----------
+class PatientWellbeingRequest(BaseModel):
+    sentiment: Literal["great", "okay", "uncomfortable", "in_pain"]
+    note: str = ""
+
+
+class PatientCallBellRequest(BaseModel):
+    request_type: str = Field(min_length=2, max_length=100)
+
+
+class PatientScheduleItem(BaseModel):
+    time: str
+    title: str
+    status: str
+    completed_by: str | None = None
+
+
+class PatientDayResponse(BaseModel):
+    resident_id: int
+    name: str
+    room: str
+    schedule: list[PatientScheduleItem]
+    approved_guidance: list[str]
+    latest_sentiment: str | None = None

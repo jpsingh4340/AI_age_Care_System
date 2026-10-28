@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Resident Portal · Age-Care Intelligence</title>
+  <link rel="icon" type="image/png" href="/static/img/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/patient.css">
+</head>
+<body>
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-icon">✳</div>
+      Age-Care Resident Portal
+    </div>
+    <div class="top-actions">
+      <div class="role-pill">🧓 Bedside Tablet View</div>
+      <a href="/login" class="exit-btn">Staff Sign In ➔</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Hero Greeting -->
+    <section class="hero-card">
+      <div class="hero-greeting">
+        <h1 id="greetingTitle">Good morning, Margaret</h1>
+        <p id="todayDate">Loading date...</p>
+      </div>
+      <div class="room-badge">
+        <div class="num" id="roomNumber">101</div>
+        <div class="lbl">Your Room</div>
+      </div>
+    </section>
+
+    <div class="grid">
+      <!-- Left Column: Check-in & Call Bell -->
+      <div>
+        <!-- 1. Wellbeing Check-in -->
+        <section class="card">
+          <h2><span>❤️</span> How are you feeling right now?</h2>
+          <p class="sub">Tap a face to let your nurse and carer know how you feel today.</p>
+
+          <div class="feeling-grid">
+            <button class="feeling-btn" data-sentiment="great" onclick="checkInSentiment('great')">
+              <span class="emoji">😊</span>
+              <span class="label">Feeling Great</span>
+            </button>
+            <button class="feeling-btn" data-sentiment="okay" onclick="checkInSentiment('okay')">
+              <span class="emoji">😐</span>
+              <span class="label">Doing Okay</span>
+            </button>
+            <button class="feeling-btn discomfort" data-sentiment="in_pain" onclick="checkInSentiment('in_pain')">
+              <span class="emoji">😟</span>
+              <span class="label">In Pain / Need Help</span>
+            </button>
+          </div>
+
+          <div id="wellbeingFeedback" class="feedback-msg"></div>
+        </section>
+
+        <!-- 2. Call Bell -->
+        <section class="card call-bell-card">
+          <h2 style="color: #9c211a;"><span>🔔</span> Call for Assistance</h2>
+          <p class="sub">Press a button below if you need a carer to visit your room.</p>
+
+          <div class="call-bell-grid">
+            <button class="call-btn" onclick="triggerCallBell('Need a drink / water')">
+              <span>🚰</span> Need a Drink
+            </button>
+            <button class="call-btn" onclick="triggerCallBell('Help to chair or walking')">
+              <span>🚶</span> Help Standing
+            </button>
+            <button class="call-btn urgent" onclick="triggerCallBell('Bedside Call Bell (General Assistance)')">
+              <span>🚨</span> Call Carer to Room
+            </button>
+          </div>
+
+          <div id="callBellFeedback" class="feedback-msg"></div>
+        </section>
+      </div>
+
+      <!-- Right Column: Today's Schedule & Health Reminders -->
+      <div>
+        <!-- 3. Daily Schedule -->
+        <section class="card">
+          <h2><span>📅</span> Today's Routine & Schedule</h2>
+          <p class="sub">Your daily meals, activities, and care visits for today.</p>
+
+          <div id="scheduleList" class="schedule-list">
+            <!-- Dynamically populated from /api/patient/my-day -->
+          </div>
+        </section>
+
+        <!-- 4. Health Reminders -->
+        <section class="card advice-card">
+          <h2><span>🛡️</span> My Care Reminders</h2>
+          <p class="sub">Simple, helpful tips approved by your Registered Nurse.</p>
+
+          <ul id="adviceList" class="advice-list">
+            <!-- Dynamically populated from approved guidance -->
+          </ul>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script src="/static/auth.js"></script>
+  <script src="/static/patient.js"></script>
+</body>
+</html>

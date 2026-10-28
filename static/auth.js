@@ -7,8 +7,10 @@
 
   // Pages requiring Nurse role
   const NURSE_PAGES = ["/nurse", "/guidance", "/ocr"];
-  // Pages requiring at least Carer role
+  // Pages requiring Carer role
   const CARER_PAGES = ["/carer"];
+  // Pages requiring Patient role
+  const PATIENT_PAGES = ["/patient"];
 
   function redirect(url) {
     window.location.replace(url);
@@ -21,11 +23,21 @@
       return;
     }
     if (role !== "nurse") {
-      alert("Access Denied: This clinical section requires Registered Nurse (RN) credentials. Redirecting to your Carer Shift Portal.");
-      redirect("/carer");
+      const dest = role === "patient" ? "/patient" : "/carer";
+      alert("Access Denied: This clinical section requires Registered Nurse (RN) credentials.");
+      redirect(dest);
       return;
     }
   } else if (CARER_PAGES.some((p) => path === p || path.startsWith(p + "/"))) {
+    if (!token) {
+      redirect("/login?next=" + encodeURIComponent(path));
+      return;
+    }
+    if (role === "patient") {
+      redirect("/patient");
+      return;
+    }
+  } else if (PATIENT_PAGES.some((p) => path === p || path.startsWith(p + "/"))) {
     if (!token) {
       redirect("/login?next=" + encodeURIComponent(path));
       return;
@@ -74,7 +86,7 @@
     userBox.style.cssText = "margin-top:auto; padding:12px; background:rgba(255,255,255,0.08); border-radius:10px; margin-bottom:12px; font-size:12.5px;";
     userBox.innerHTML = `
       <div style="color:#b2edd9; font-weight:700; margin-bottom:2px; display:flex; align-items:center; justify-content:space-between;">
-        <span>${role === 'nurse' ? '🩺 Nurse' : '📋 Carer'}</span>
+        <span>${role === 'nurse' ? '🩺 Nurse' : role === 'patient' ? '🧓 Resident' : '📋 Carer'}</span>
         <button onclick="logout()" style="background:transparent; border:none; color:#f6a8a3; font-size:11.5px; font-weight:600; cursor:pointer; text-decoration:underline; padding:0;">Sign Out</button>
       </div>
       <div style="color:#ffffff; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${name || 'Staff Member'}</div>
