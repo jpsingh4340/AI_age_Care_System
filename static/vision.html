@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Face and room check</title>
+  <link rel="icon" type="image/png" href="/static/img/favicon.png">
+  <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #edf0ee; --surface: #ffffff; --ink: #0f1f1e; --ink2: #44595a; --ink3: #566b6c; --line: #d9e0de;
+      --rail: #0c3b3a; --rail-ink: #cfe3e1; --rail-on: #ffffff;
+      --accent: #0a7c73; --accent-soft: #dff1ee;
+      --warn: #9a5700; --warn-soft: #fff1d6; --warn-mark: #c27a12;
+      --bad: #b3261e; --bad-soft: #fce8e6; --good: #1f7a4a; --good-soft: #e3f3e9;
+      --shadow: 0 1px 2px rgba(15, 31, 30, 0.05), 0 8px 24px -12px rgba(15, 31, 30, 0.12);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1514; --surface: #122120; --ink: #e6efee; --ink2: #a7bdbb; --ink3: #869f9d; --line: #243836;
+        --rail: #081110; --rail-ink: #9fb9b6; --accent: #3fc1b5; --accent-soft: #14312f;
+        --warn: #eba64a; --warn-soft: #33260f; --warn-mark: #eba64a;
+        --bad: #f2766e; --bad-soft: #3a1917; --good: #5ccb8b; --good-soft: #12301f; --shadow: none;
+      }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 "Schibsted Grotesk", system-ui, "Segoe UI", Arial, sans-serif; }
+    button, input, select, textarea { font: inherit; color: inherit; }
+    .ico { width: 20px; height: 20px; flex: none; }
+    [hidden] { display: none !important; }
+
+    .app { display: grid; grid-template-columns: 232px minmax(0, 1fr); min-height: 100vh; }
+    .rail { background: var(--rail); color: var(--rail-ink); padding: 22px 14px; position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; }
+    .brand { display: flex; align-items: center; gap: 10px; padding: 0 8px 24px; color: var(--rail-on); font-weight: 600; font-size: 17px; }
+    .brand img { width: 30px; height: 30px; }
+    .rail nav { display: flex; flex-direction: column; gap: 2px; }
+    .rail a { display: flex; align-items: center; gap: 11px; color: var(--rail-ink); text-decoration: none; padding: 9px 12px; border-radius: 10px; font-weight: 500; white-space: nowrap; }
+    .rail a:hover { background: rgba(255, 255, 255, 0.07); color: var(--rail-on); }
+    .rail a[aria-current="page"] { background: rgba(255, 255, 255, 0.12); color: var(--rail-on); }
+    .rail .foot { margin-top: auto; font-size: 12px; padding: 0 10px; opacity: 0.8; }
+    @media (max-width: 900px) {
+      .app { grid-template-columns: 1fr; }
+      .rail { position: static; height: auto; flex-direction: row; align-items: center; gap: 12px; padding: 10px 16px; overflow-x: auto; }
+      .rail nav { flex-direction: row; } .brand { padding: 0; } .rail .foot { display: none; }
+    }
+
+    .main { padding: 18px clamp(14px, 2.6vw, 34px) 56px; min-width: 0; max-width: 1360px; }
+    .hero { border-radius: 22px; color: #fff; padding: 26px clamp(18px, 3vw, 34px); margin-bottom: 16px; background: #092e30 url("/static/img/hero-mesh.png") 0% 40% / 150% auto no-repeat; }
+    .hero h1 { margin: 0; font-size: clamp(28px, 4vw, 40px); font-weight: 600; letter-spacing: -0.03em; }
+    .hero p { margin: 6px 0 18px; color: rgba(255, 255, 255, 0.82); max-width: 620px; }
+    .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    @media (max-width: 700px) { .steps { grid-template-columns: 1fr; } }
+    .step { display: flex; align-items: center; gap: 12px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 16px; padding: 12px 16px; }
+    .step .n { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-weight: 600; background: #fff; color: #0c3b3a; flex: none; }
+    .step small { display: block; opacity: 0.85; font-size: 12.5px; }
+    .note { border-left: 3px solid var(--warn-mark); background: var(--warn-soft); padding: 9px 14px; border-radius: 0 10px 10px 0; font-size: 13.5px; margin-bottom: 16px; }
+
+    .cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    @media (max-width: 1000px) { .cols { grid-template-columns: minmax(0, 1fr); } }
+    .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); padding: 20px 22px; margin-bottom: 16px; }
+    .panel h2 { margin: 0; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 9px; }
+    .sub { margin: 3px 0 14px; color: var(--ink2); font-size: 13.5px; }
+    label { display: block; font-weight: 600; font-size: 12.5px; color: var(--ink2); margin: 12px 0 4px; }
+    select, input[type=text], input[type=number], textarea { width: 100%; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 9px 12px; }
+    input[type=file] { width: 100%; padding: 14px; border: 2px dashed var(--line); border-radius: 12px; background: var(--bg); cursor: pointer; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+    .btn { border: 0; background: var(--accent); color: #fff; font-weight: 600; padding: 10px 18px; border-radius: 12px; cursor: pointer; }
+    .btn.light { background: var(--accent-soft); color: var(--accent); }
+    .btn.red { background: var(--bad); }
+    .btn:disabled { background: var(--line); color: var(--ink3); cursor: not-allowed; }
+    .status { margin-top: 12px; padding: 9px 14px; border-radius: 10px; font-size: 14px; background: var(--accent-soft); }
+    .status.error { background: var(--bad-soft); color: var(--bad); }
+
+    .level { display: inline-block; padding: 3px 12px; border-radius: 999px; font-weight: 700; text-transform: uppercase; font-size: 13px; }
+    .level.low { background: var(--good-soft); color: var(--good); }
+    .level.medium { background: var(--warn-soft); color: var(--warn); }
+    .level.high { background: var(--bad-soft); color: var(--bad); }
+    .cue { display: grid; grid-template-columns: 170px 1fr 42px; align-items: center; gap: 10px; font-size: 13px; margin-top: 6px; }
+    .bar { height: 7px; border-radius: 999px; background: var(--line); overflow: hidden; }
+    .bar i { display: block; height: 100%; background: var(--accent); }
+
+    .alert { border: 1px solid var(--line); border-left: 4px solid var(--bad); border-radius: 12px; padding: 14px 16px; margin-top: 12px; }
+    .alert.done { border-left-color: var(--good); opacity: 0.85; }
+    .alert .top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
+    .alert .msg { font-weight: 600; }
+    .alert .meta { color: var(--ink3); font-size: 12.5px; }
+    .outcomes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .outcomes .btn { padding: 8px 14px; font-size: 13.5px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="rail">
+      <div class="brand"><img src="/static/img/logo-white.png" alt="">Age-Care</div>
+      <nav aria-label="Pages">
+        <a href="/nurse"><img class="ico" src="/static/img/ico/grid-white.png" alt="">Dashboard</a>
+        <a href="/guidance"><img class="ico" src="/static/img/ico/doc-white.png" alt="">Guidance</a>
+        <a href="/ocr"><img class="ico" src="/static/img/ico/scan-white.png" alt="">Health report</a>
+        <a href="/vision" aria-current="page"><img class="ico" src="/static/img/ico/shield-white.png" alt="">Face and room check</a>
+        <a href="/docs"><img class="ico" src="/static/img/ico/code-white.png" alt="">API docs</a>
+      </nav>
+      <div class="foot">Student prototype. Photos and video are never saved. A nurse decides every alert.</div>
+    </aside>
+
+    <main class="main">
+      <section class="hero">
+        <h1>Face and room check</h1>
+        <p>The computer looks for signs that a resident may need help, and asks a nurse to check. It never names a disease, and it never saves a photo or video.</p>
+        <div class="steps">
+          <div class="step"><span class="n">1</span><div><b>Check</b><small>A face photo or a room video</small></div></div>
+          <div class="step"><span class="n">2</span><div><b>Alert</b><small>Goes to the nurse on shift</small></div></div>
+          <div class="step"><span class="n">3</span><div><b>Nurse decides</b><small>And the outcome is logged</small></div></div>
+        </div>
+      </section>
+
+      <div class="note"><strong>Demo only.</strong> Use photos and videos of team members who agreed to take part. Never use real residents.</div>
+
+      <label for="resident">Resident</label>
+      <select id="resident" style="max-width:320px"></select>
+
+      <div class="cols" style="margin-top:16px">
+        <section class="panel">
+          <h2><img class="ico" src="/static/img/ico/people-teal.png" alt="">Face cue check</h2>
+          <p class="sub">Looks at facial movements linked to discomfort and gives low, medium or high.</p>
+          <input id="photo" type="file" accept="image/png,image/jpeg" aria-label="Choose a face photo">
+          <div class="actions"><button class="btn" id="checkBtn" type="button">Check the photo</button></div>
+          <div id="cueOut"></div>
+        </section>
+
+        <section class="panel">
+          <h2><img class="ico" src="/static/img/ico/pulse-teal.png" alt="">Room monitor (YOLO)</h2>
+          <p class="sub">Looks for a possible fall, or no movement for a long time.</p>
+          <input id="clip" type="file" accept="video/*" aria-label="Choose a test video">
+          <label for="still">Alert after this many seconds without movement</label>
+          <input id="still" type="number" value="20" min="5" max="3600">
+          <div class="actions">
+            <button class="btn" id="clipBtn" type="button">Check the video</button>
+            <button class="btn light" id="startBtn" type="button">Start live camera</button>
+            <button class="btn light" id="stopBtn" type="button">Stop camera</button>
+          </div>
+          <div id="roomOut"></div>
+        </section>
+      </div>
+
+      <section class="panel">
+        <h2><img class="ico" src="/static/img/ico/flag-teal.png" alt="">Alerts for the nurse</h2>
+        <p class="sub">Check on the resident, then record what happened. Only a nurse can do this.</p>
+        <label for="nurse">Your name</label>
+        <input id="nurse" type="text" maxlength="60" placeholder="e.g. Nurse Sam" style="max-width:320px">
+        <div id="alerts"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/static/auth.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const CUE_NAMES = { brow_lowering: "Brow lowering", eye_narrowing: "Eye narrowing",
+      nose_wrinkle_or_lip_raise: "Nose wrinkle or lip raise", eyes_closed: "Eyes closed" };
+    const TYPE_NAMES = { high_cue: "Face check", possible_fall: "Possible fall", no_movement: "No movement" };
+    const OUTCOME_LABELS = { fine: "Resident is fine", action_taken: "I helped them",
+      false_alarm: "False alarm", escalated: "Escalate" };
+    let residents = {};
+
+    function el(tag, cls, text) {
+      const e = document.createElement(tag);
+      if (cls) e.className = cls;
+      if (text !== undefined) e.textContent = text;
+      return e;
+    }
+    function say(box, text, isError) {
+      box.replaceChildren(el("div", "status" + (isError ? " error" : ""), text));
+    }
+    // Sends the login token when there is one, otherwise the prototype role header.
+    function send(url, options) {
+      options = options || {};
+      if (window.authFetch && localStorage.getItem("agecare_token")) return window.authFetch(url, options);
+      options.headers = Object.assign({ "X-Role": localStorage.getItem("agecare_role") || "" }, options.headers || {});
+      return fetch(url, options);
+    }
+    async function readJson(r) {
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(typeof d.detail === "string" ? d.detail : "Something went wrong.");
+      return d;
+    }
+    function residentForm(file) {
+      const form = new FormData();
+      form.append("file", file);
+      if ($("resident").value) form.append("resident_id", $("resident").value);
+      return form;
+    }
+
+    async function loadResidents() {
+      const list = await (await fetch("/api/residents")).json();
+      $("resident").append(new Option("No resident (practice)", ""));
+      for (const p of list) {
+        residents[p.resident_id] = p.name;
+        $("resident").append(new Option(p.name, p.resident_id));
+      }
+    }
+
+    $("checkBtn").onclick = async () => {
+      const file = $("photo").files[0];
+      if (!file) return say($("cueOut"), "Choose a photo first.", true);
+      $("checkBtn").disabled = true;
+      say($("cueOut"), "Checking the photo...");
+      try {
+        const d = await readJson(await fetch("/api/vision/cue-check", { method: "POST", body: residentForm(file) }));
+        const out = $("cueOut");
+        out.replaceChildren();
+        if (d.status !== "ok") return say(out, d.message, true);
+        const head = el("p");
+        head.append("Level: ", el("span", "level " + d.level, d.level), " (score " + d.score + ")");
+        out.append(head, el("p", "msg", d.message));
+        for (const [key, value] of Object.entries(d.cues)) {
+          const row = el("div", "cue");
+          const bar = el("div", "bar");
+          const fill = el("i");
+          fill.style.width = Math.round(value * 100) + "%";
+          bar.append(fill);
+          row.append(el("span", "", CUE_NAMES[key] || key), bar, el("span", "", value.toFixed(2)));
+          out.append(row);
+        }
+        if (d.alert_id) out.append(el("div", "status", "An alert was sent to the nurse (see below)."));
+        loadAlerts();
+      } catch (error) {
+        say($("cueOut"), error.message, true);
+      } finally {
+        $("checkBtn").disabled = false;
+      }
+    };
+
+    $("clipBtn").onclick = async () => {
+      const file = $("clip").files[0];
+      if (!file) return say($("roomOut"), "Choose a video first.", true);
+      const form = residentForm(file);
+      form.append("still_seconds", $("still").value);
+      $("clipBtn").disabled = true;
+      say($("roomOut"), "Checking the video. On a laptop this takes about as long as the video.");
+      try {
+        const d = await readJson(await fetch("/api/vision/monitor/clip", { method: "POST", body: form }));
+        say($("roomOut"), d.count ? d.count + " alert(s) found. See the alerts below." : "Nothing found in this video.");
+        loadAlerts();
+      } catch (error) {
+        say($("roomOut"), error.message, true);
+      } finally {
+        $("clipBtn").disabled = false;
+      }
+    };
+
+    $("startBtn").onclick = async () => {
+      const body = { camera_index: 0, still_seconds: Number($("still").value),
+                     resident_id: $("resident").value ? Number($("resident").value) : null };
+      try {
+        await readJson(await send("/api/vision/monitor/start", { method: "POST",
+          headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }));
+        say($("roomOut"), "Live camera is on. Nothing is recorded. Alerts appear below.");
+      } catch (error) {
+        say($("roomOut"), error.message, true);
+      }
+    };
+
+    $("stopBtn").onclick = async () => {
+      try {
+        await readJson(await send("/api/vision/monitor/stop", { method: "POST" }));
+        say($("roomOut"), "Live camera is off.");
+      } catch (error) {
+        say($("roomOut"), error.message, true);
+      }
+    };
+
+    async function decide(alert, outcome, noteBox, msgBox) {
+      try {
+        await readJson(await send("/api/vision/alerts/" + alert.id + "/decision", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ outcome: outcome, note: noteBox.value, nurse: $("nurse").value }) }));
+        loadAlerts(true);
+      } catch (error) {
+        say(msgBox, error.message, true);
+      }
+    }
+
+    function alertCard(a) {
+      const card = el("div", "alert" + (a.outcome ? " done" : ""));
+      const top = el("div", "top");
+      top.append(el("span", "msg", (TYPE_NAMES[a.alert_type] || a.alert_type) + ": " + a.message));
+      const where = a.resident_id ? residents[a.resident_id] || "Resident " + a.resident_id : a.camera || "No resident";
+      top.append(el("span", "meta", where + " · " + a.created_at.replace("T", " ").replace("+00:00", " UTC")));
+      card.append(top);
+      if (a.outcome) {
+        let text = "Decided by " + a.decided_by + ": " + OUTCOME_LABELS[a.outcome];
+        if (a.outcome_note) text += ". " + a.outcome_note;
+        card.append(el("p", "meta", text));
+        return card;
+      }
+      const note = el("textarea");
+      note.rows = 2;
+      note.maxLength = 300;
+      note.placeholder = "What did you do? Needed for 'I helped them' and 'Escalate'.";
+      const msg = el("div");
+      const buttons = el("div", "outcomes");
+      for (const [key, label] of Object.entries(OUTCOME_LABELS)) {
+        const b = el("button", "btn" + (key === "escalated" ? " red" : key === "false_alarm" ? " light" : ""), label);
+        b.type = "button";
+        b.onclick = () => decide(a, key, note, msg);
+        buttons.append(b);
+      }
+      card.append(note, buttons, msg);
+      return card;
+    }
+
+    async function loadAlerts(force) {
+      // Do not redraw while the nurse is typing a note.
+      if (!force && document.activeElement && document.activeElement.tagName === "TEXTAREA") return;
+      const list = await (await fetch("/api/vision/alerts")).json();
+      const box = $("alerts");
+      box.replaceChildren();
+      if (!list.length) return box.append(el("p", "sub", "No alerts yet."));
+      for (const a of list) box.append(alertCard(a));
+    }
+
+    $("nurse").value = localStorage.getItem("agecare_name") || "";
+    loadResidents().then(() => loadAlerts(true));
+    setInterval(loadAlerts, 5000);
+  </script>
+</body>
+</html>
