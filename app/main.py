@@ -63,6 +63,12 @@ def home():
     return FileResponse(STATIC_DIR / "index.html")
 
 
+@app.get("/nurse", include_in_schema=False)
+def nurse_page():
+    """The nurse clinical dashboard."""
+    return FileResponse(STATIC_DIR / "index.html")
+
+
 @app.get("/welcome", include_in_schema=False)
 def welcome_page():
     """The landing page that explains the project."""

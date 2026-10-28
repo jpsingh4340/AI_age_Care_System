@@ -122,8 +122,10 @@ async function loadToday() {
     var tr = body.insertRow();
     tr.insertCell().textContent = timeOnly(r.time);
     var what = tr.insertCell();
-    what.textContent = r.what;
-    what.className = r.cls;
+    var badge = document.createElement("span");
+    badge.textContent = r.what;
+    if (r.cls) badge.className = "tag-" + r.cls.replace("_", "-");
+    what.appendChild(badge);
     tr.insertCell().textContent = r.by;
   });
 }
@@ -132,14 +134,15 @@ async function loadGuide() {
   var box = $("guide");
   var g = await getJSON("/api/guidance/" + state.selected + "/approved");
   if (!g) {
-    box.textContent = "No approved guidance for this resident yet. Ask the nurse.";
+    box.innerHTML = "<p class='small' style='color:#758a8a; font-style:italic;'>No approved guidance for this resident yet. An RN will prepare and approve instructions.</p>";
     return;
   }
   box.innerHTML = "";
-  addList(box, "Watch for", g.watch_for);
-  addList(box, "What to do", g.prevention);
-  var by = document.createElement("p");
-  by.textContent = "Approved by " + g.approved_by;
+  addList(box, "Signs to watch for", g.watch_for);
+  addList(box, "Daily prevention steps", g.prevention);
+  var by = document.createElement("div");
+  by.className = "approved-footer";
+  by.textContent = "Approved by " + g.approved_by + " · Clinical oversight";
   box.appendChild(by);
 }
 
