@@ -1,7 +1,7 @@
 import re
 import time
 from pathlib import Path
-from app.routers import ask, carer
+from app.routers import ask, carer, vision
 
 from fastapi import FastAPI, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,32 +10,39 @@ from fastapi.staticfiles import StaticFiles
 from starlette.concurrency import run_in_threadpool
 
 
-from . import approval, db, guidance, ocr, ollama_client, rag, records, slm
+from . import approval, auth, db, guidance, ocr, ollama_client, rag, records, slm
 from .config import CHAT_MODEL, EMBED_MODEL
 from .schemas import (
     AnalyseRequest,
     AnalyseResponse,
     ApprovedOut,
     AuditOut,
+    AuthResponse,
     DecisionRequest,
     DraftOut,
     DraftSummary,
     GuidanceRequest,
     GuidanceResponse,
+    LoginRequest,
     OcrResponse,
     RecordsOut,
+    RegisterRequest,
     SavedReading,
     SaveReadingsRequest,
+    UserOut,
 )
+
+auth.init_auth_db()
 
 app = FastAPI(
     title="Age-Care Intelligence API",
-    description="Student project. Fake data only. The AI summarises and flags, and a nurse approves.",
-    version="0.1.0",
+    description="Student project. The AI summarises and flags, and a nurse approves.",
+    version="0.2.0",
 )
 
 app.include_router(ask.router)
 app.include_router(carer.router)
+app.include_router(vision.router)
 
 # Lets the React dashboard (on localhost, any port) call this API from the browser
 app.add_middleware(
@@ -49,17 +56,39 @@ STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")  # pictures used by the pages
 
 
-def need_nurse(x_role: str) -> None:
-    """Prototype role check. It is NOT real login: anyone could send this header.
-    It shows how roles will work. Real login is a Studio 6 job."""
-    if x_role.strip().lower() != "nurse":
-        raise HTTPException(status_code=403, detail="Only a nurse can do this.")
+def need_nurse(
+    x_role: str = "",
+    authorization: str = "",
+    x_session_token: str = "",
+) -> None:
+    """Verifies that the caller has Registered Nurse privileges via role header or session token."""
+    if isinstance(x_role, str) and x_role.strip().lower() == "nurse":
+        return
+
+    token = ""
+    if isinstance(x_session_token, str) and x_session_token:
+        token = x_session_token.strip()
+    elif isinstance(authorization, str) and authorization.startswith("Bearer "):
+        token = authorization[7:].strip()
+
+    if token:
+        sess = auth.get_session(token)
+        if sess and sess["role"] == "nurse":
+            return
+
+    raise HTTPException(status_code=403, detail="Only a nurse can do this.")
 
 
 # ---------- Pages ----------
 @app.get("/", include_in_schema=False)
 def home():
     """The dashboard. Open http://127.0.0.1:8000 in the browser."""
+    return FileResponse(STATIC_DIR / "index.html")
+
+
+@app.get("/nurse", include_in_schema=False)
+def nurse_page():
+    """The nurse clinical dashboard."""
     return FileResponse(STATIC_DIR / "index.html")
 
 
@@ -79,6 +108,66 @@ def guidance_page():
 def ocr_page():
     """The health report screen."""
     return FileResponse(STATIC_DIR / "ocr.html")
+
+
+@app.get("/login", include_in_schema=False)
+def login_page():
+    """Authentication and registration page."""
+    return FileResponse(STATIC_DIR / "login.html")
+
+
+# ---------- Authentication & Registration API ----------
+@app.post("/api/auth/register", response_model=AuthResponse)
+def auth_register(request: RegisterRequest):
+    """Register a new user as either a nurse or carer."""
+    try:
+        user = auth.register_user(request.username, request.password, request.full_name, request.role)
+    except ValueError as err:
+        raise HTTPException(status_code=400, detail=str(err))
+    return auth.create_session(user)
+
+
+@app.post("/api/auth/login", response_model=AuthResponse)
+def auth_login(request: LoginRequest):
+    """Authenticate with username and password, returning a session token."""
+    user = auth.authenticate_user(request.username, request.password)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid username or password.")
+    return auth.create_session(user)
+
+
+@app.get("/api/auth/me", response_model=UserOut)
+def auth_me(
+    authorization: str = Header(default=""),
+    x_session_token: str = Header(default=""),
+):
+    """Get current authenticated user profile."""
+    token = x_session_token.strip() if x_session_token else ""
+    if not token and authorization.startswith("Bearer "):
+        token = authorization[7:].strip()
+
+    sess = auth.get_session(token) if token else None
+    if not sess:
+        raise HTTPException(status_code=401, detail="Not authenticated.")
+    return UserOut(
+        username=sess["username"],
+        full_name=sess["full_name"],
+        role=sess["role"],
+    )
+
+
+@app.post("/api/auth/logout")
+def auth_logout(
+    authorization: str = Header(default=""),
+    x_session_token: str = Header(default=""),
+):
+    """Invalidate session token."""
+    token = x_session_token.strip() if x_session_token else ""
+    if not token and authorization.startswith("Bearer "):
+        token = authorization[7:].strip()
+    if token:
+        auth.delete_session(token)
+    return {"ok": True}
 
 
 # ---------- Basic API ----------
@@ -199,9 +288,13 @@ async def ocr_extract(file: UploadFile):
 
 # ---------- Nurse approval ----------
 @app.get("/api/guidance/pending", response_model=list[DraftSummary])
-def pending_drafts(x_role: str = Header(default="")):
+def pending_drafts(
+    x_role: str = Header(default=""),
+    authorization: str = Header(default=""),
+    x_session_token: str = Header(default=""),
+):
     """Drafts waiting for a nurse. Nurse only."""
-    need_nurse(x_role)
+    need_nurse(x_role, authorization, x_session_token)
     return [
         DraftSummary(
             draft_id=d["draft_id"],
@@ -215,9 +308,14 @@ def pending_drafts(x_role: str = Header(default="")):
 
 
 @app.get("/api/guidance/draft/{draft_id}", response_model=DraftOut)
-def get_draft(draft_id: int, x_role: str = Header(default="")):
+def get_draft(
+    draft_id: int,
+    x_role: str = Header(default=""),
+    authorization: str = Header(default=""),
+    x_session_token: str = Header(default=""),
+):
     """One saved draft. Nurse only."""
-    need_nurse(x_role)
+    need_nurse(x_role, authorization, x_session_token)
     draft = db.get_draft(draft_id)
     if draft is None:
         raise HTTPException(status_code=404, detail="Draft not found.")
@@ -225,9 +323,15 @@ def get_draft(draft_id: int, x_role: str = Header(default="")):
 
 
 @app.post("/api/guidance/draft/{draft_id}/decision", response_model=DraftOut)
-def decide_draft(draft_id: int, request: DecisionRequest, x_role: str = Header(default="")):
+def decide_draft(
+    draft_id: int,
+    request: DecisionRequest,
+    x_role: str = Header(default=""),
+    authorization: str = Header(default=""),
+    x_session_token: str = Header(default=""),
+):
     """A nurse approves (optionally with edits) or rejects a draft."""
-    need_nurse(x_role)
+    need_nurse(x_role, authorization, x_session_token)
     draft = db.get_draft(draft_id)
     if draft is None:
         raise HTTPException(status_code=404, detail="Draft not found.")
@@ -269,17 +373,28 @@ def approved_guidance(resident_id: int):
 
 
 @app.get("/api/audit", response_model=list[AuditOut])
-def audit_log(limit: int = 50, x_role: str = Header(default="")):
+def audit_log(
+    limit: int = 50,
+    x_role: str = Header(default=""),
+    authorization: str = Header(default=""),
+    x_session_token: str = Header(default=""),
+):
     """Who did what, and when. Nurse only."""
-    need_nurse(x_role)
+    need_nurse(x_role, authorization, x_session_token)
     return db.audit_entries(min(max(limit, 1), 200))
 
 
 # ---------- Saved health values and resident records ----------
 @app.post("/api/residents/{resident_id}/readings", response_model=list[SavedReading])
-def save_readings(resident_id: int, request: SaveReadingsRequest, x_role: str = Header(default="")):
+def save_readings(
+    resident_id: int,
+    request: SaveReadingsRequest,
+    x_role: str = Header(default=""),
+    authorization: str = Header(default=""),
+    x_session_token: str = Header(default=""),
+):
     """Save values a nurse has checked against the photo. Only a nurse can save."""
-    need_nurse(x_role)
+    need_nurse(x_role, authorization, x_session_token)
     if guidance.load_resident(resident_id) is None:
         raise HTTPException(status_code=404, detail="There is no resident with that number.")
 

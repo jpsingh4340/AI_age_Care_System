@@ -134,7 +134,7 @@ async def ask(body: AskIn, request: Request, x_role: str | None = Header(None)):
     models = await installed_chat_models()
     if not models:
         raise HTTPException(503, "Ollama is not running. Start it with: ollama serve")
-    model = body.model or config.CHAT_MODEL
+    model = body.model or (config.CHAT_MODEL if config.CHAT_MODEL in models else models[0])
     if model not in models:
         raise HTTPException(400, f"Model '{model}' is not installed")
 
