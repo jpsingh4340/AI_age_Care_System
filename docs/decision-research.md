@@ -42,35 +42,32 @@ The chart also says: "Escalate care for any patient you, they or their family ar
 
 ## 4. Ethical and legal points
 
-TODO: Write 1–2 sentences for each:
+- **Privacy Act 2020:** This law has 13 privacy principles about how personal information is collected, stored, used and shared. Our project uses only fake residents, so no real personal information is collected. If the system was used for real, we would only collect what is needed and keep it safe.
 
-- **Privacy Act 2020:** TODO
-- **Health Information Privacy Code 2020:** TODO
-- **Algorithm Charter for Aotearoa New Zealand:** TODO (why the AI must be explainable
-  and a human must decide)
-- **Safety:** the feature never diagnoses or suggests medicines; the nurse makes the
-  final decision; every decision is saved in the audit log.
+- **Health Information Privacy Code 2020:** This code has 13 rules for health information, which is extra sensitive. In our system, only staff with the right role can see the decision, carers cannot change it, and every nurse decision is saved in the audit log, so we can see who did what and when.
 
-## 5. Risks and how I reduce them
+- **Algorithm Charter for Aotearoa New Zealand:** This charter is signed by NZ government agencies and asks them to make algorithms transparent, explainable and checked by a human. Our project is not a government system, but we follow it as good practice: every priority shows its reason and source, the rules are based on a published chart (NZEWS), and a nurse always makes the final decision.
 
-| Risk | How I reduce it |
-|---|---|
-| The AI makes up a concern | My code removes any quote that is not really in the note |
-| The AI makes something look more serious than it is | The AI can only raise a note to Amber; only the rules can give Red |
-| Wrong thresholds | Use the NZEWS chart and test every threshold |
-| TODO | TODO |
+- **Safety:** The feature only gives a priority and a suggested check. It never diagnoses, never names medicines or doses, and the AI can only raise a note to Amber, never Red. Only the NZEWS rules can give Red.
 
-## 6. Prompt log (for the AI part, Week 5)
+- **Honesty about limits:** This is a student prototype with fake data. NZEWS is made for hospitals and we only have 4 of its 7 vital signs, so the results are a guide, not a clinical decision.
 
-| Version | Date | What I changed | Result on the fake residents |
+## 5. References (APA)
+Department of Internal Affairs & Stats NZ. (2020). *Algorithm charter for Aotearoa New Zealand*. https://data.govt.nz/toolkit/data-ethics/government-algorithm-transparency-and-accountability/algorithm-charter/
+
+Privacy Act 2020. https://www.legislation.govt.nz/act/public/2020/0031/latest/whole.html
+
+Privacy Commissioner. (2020). *Health information privacy code 2020*. https://www.privacy.org.nz/privacy-act-2020/codes-of-practice/hipc2020/
+
+Te Tāhū Hauora Health Quality & Safety Commission. (2021). *Vital signs chart with New Zealand early warning score*. https://www.hqsc.govt.nz/resources/resource-library/vital-signs-chart-with-new-zealand-early-warning-score/
+
+## 6. Prompt log
+
+Tested on our 4 fake residents with llama3.2:3b on my laptop (Intel i3, 8 GB RAM, CPU only).
+
+| Version | Date | What I changed | Result |
 |---|---|---|---|
-| v1 | TODO | First prompt | TODO |
+| v1 | 29 Oct 2026 | First prompt: use only the notes, copy exact quotes, never diagnose or name medicines | Ron H. went from Green to Amber because of "Nearly slipped when getting out of the chair". All quotes were real. But the AI wrote "Resident may be dehydrated" (sounds like a diagnosis) and "may need fluids and monitoring" (sounds like treatment advice). Time: 41.9 s for the first resident (model loading), then about 8 s each. |
+| v2 | 29 Oct 2026 | Added a rule: describe only what happened, do not name a condition or say what treatment or fluids are needed | The reasons now only describe what happened: "Did not have enough fluids", "Lost balance while getting out of chair", "Vomited after breakfast". Ron H. is still Amber. All quotes were real. Time: 27.0 s for the first resident, then about 8–9 s each. |
 
-## References (APA)
-
-Te Tāhū Hauora Health Quality & Safety Commission. (2021). *Vital signs chart with New
-Zealand early warning score* [Interactive chart].
-https://www.hqsc.govt.nz/resources/resource-library/vital-signs-chart-with-new-zealand-early-warning-score/
-
-TODO: add the Privacy Act 2020, the Health Information Privacy Code 2020 and the
-Algorithm Charter.
+**What I learned:** small models follow short, specific rules better than general ones. "Never diagnose" was not enough, so I had to give examples of words not to use. My code checks still matter, because a prompt cannot fully control the AI.

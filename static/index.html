@@ -3,302 +3,99 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Care dashboard</title>
+  <title>Nurse dashboard</title>
   <link rel="icon" type="image/png" href="/static/img/favicon.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #edf0ee; --surface: #ffffff; --ink: #0f1f1e; --ink2: #44595a; --ink3: #566b6c;
-      --line: #d9e0de; --line2: #e8edeb;
-      --rail: #0c3b3a; --rail-ink: #cfe3e1; --rail-on: #ffffff;
-      --accent: #0a7c73; --accent-text: #08706a; --accent-soft: #dff1ee;
-      --warn: #9a5700; --warn-soft: #fff1d6; --warn-mark: #c27a12;
-      --bad: #b3261e; --bad-soft: #fce8e6;
-      --good: #1f7a4a; --good-soft: #e3f3e9;
-      --shadow: 0 1px 2px rgba(15, 31, 30, 0.05), 0 8px 24px -12px rgba(15, 31, 30, 0.12);
-      --shadow-hover: 0 2px 4px rgba(15, 31, 30, 0.06), 0 16px 32px -14px rgba(15, 31, 30, 0.22);
+      --bg: #f4f6f5; --card: #ffffff; --ink: #1a2423; --muted: #5b6b6a; --line: #dde3e1;
+      --accent: #0a7c73; --green: #1f7a4a; --amber: #9a5700; --red: #b3261e;
+      --green-bg: #e3f3e9; --amber-bg: #fff1d6; --red-bg: #fce8e6;
     }
     @media (prefers-color-scheme: dark) {
       :root {
-        --bg: #0b1514; --surface: #122120; --ink: #e6efee; --ink2: #a7bdbb; --ink3: #869f9d;
-        --line: #243836; --line2: #1b2d2b;
-        --rail: #081110; --rail-ink: #9fb9b6; --rail-on: #ffffff;
-        --accent: #3fc1b5; --accent-text: #3fc1b5; --accent-soft: #14312f;
-        --warn: #eba64a; --warn-soft: #33260f; --warn-mark: #eba64a;
-        --bad: #f2766e; --bad-soft: #3a1917;
-        --good: #5ccb8b; --good-soft: #12301f;
-        --shadow: none; --shadow-hover: 0 12px 30px -16px rgba(0, 0, 0, 0.8);
+        --bg: #0f1716; --card: #172221; --ink: #e6efee; --muted: #9fb3b1; --line: #2a3b39;
+        --accent: #3fc1b5; --green: #5ccb8b; --amber: #eba64a; --red: #f2766e;
+        --green-bg: #12301f; --amber-bg: #33260f; --red-bg: #3a1917;
       }
     }
     * { box-sizing: border-box; }
-    html { -webkit-text-size-adjust: 100%; }
-    body {
-      margin: 0; background: var(--bg); color: var(--ink);
-      font-family: "Schibsted Grotesk", system-ui, "Segoe UI", Arial, sans-serif;
-      font-size: 15px; line-height: 1.5; font-variant-numeric: tabular-nums;
-    }
-    button { font: inherit; color: inherit; }
-    a { color: var(--accent-text); }
-    img { display: block; max-width: 100%; }
-    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
-    .ico { width: 20px; height: 20px; flex: none; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, "Segoe UI", Arial, sans-serif; }
+    a { color: var(--accent); }
+    header { background: var(--card); border-bottom: 1px solid var(--line); padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+    header strong { font-size: 17px; margin-right: auto; }
+    header nav { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 14px; }
+    main { max-width: 1100px; margin: 0 auto; padding: 16px; }
+    .demo { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+    .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+    .tabs button { font: inherit; border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 8px; padding: 8px 14px; cursor: pointer; min-height: 40px; }
+    .tabs button[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+    @media (min-width: 900px) { .grid { grid-template-columns: 3fr 2fr; } }
+    .col { display: grid; gap: 16px; align-content: start; }
+    section { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+    h2 { font-size: 16px; margin: 0 0 8px; }
+    p { margin: 4px 0; }
+    ul { margin: 4px 0; padding-left: 20px; }
+    li { margin: 4px 0; }
+    .muted, .src { color: var(--muted); font-size: 13px; }
+    .src { display: block; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: left; padding: 5px 6px; border-bottom: 1px solid var(--line); }
+    th { color: var(--muted); font-weight: 600; }
+    .refused, .not_done { color: var(--red); }
 
-    .app { display: grid; grid-template-columns: 232px minmax(0, 1fr); min-height: 100vh; }
-    @media (max-width: 900px) { .app { grid-template-columns: 1fr; } }
-
-    /* ---------- rail ---------- */
-    .rail { background: var(--rail); color: var(--rail-ink); padding: 22px 14px; position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; }
-    @media (max-width: 900px) { .rail { position: static; height: auto; flex-direction: row; align-items: center; gap: 12px; padding: 10px 16px; overflow-x: auto; } }
-    .brand { display: flex; align-items: center; gap: 10px; padding: 0 8px 24px; color: var(--rail-on); font-weight: 600; font-size: 17px; letter-spacing: -0.01em; white-space: nowrap; }
-    .brand img { width: 30px; height: 30px; }
-    @media (max-width: 900px) { .brand { padding: 0 12px 0 0; } }
-    .rail nav { display: flex; flex-direction: column; gap: 2px; }
-    @media (max-width: 900px) { .rail nav { flex-direction: row; } }
-    .rail a { display: flex; align-items: center; gap: 11px; color: var(--rail-ink); text-decoration: none; padding: 9px 12px; border-radius: 10px; font-weight: 500; white-space: nowrap; position: relative; transition: background 0.2s, color 0.2s, transform 0.2s; }
-    .rail a img { opacity: 0.75; transition: opacity 0.2s; }
-    .rail a:hover { background: rgba(255, 255, 255, 0.07); color: var(--rail-on); transform: translateX(3px); }
-    .rail a:hover img { opacity: 1; }
-    .rail a[aria-current="page"] { background: rgba(255, 255, 255, 0.12); color: var(--rail-on); }
-    .rail a[aria-current="page"] img { opacity: 1; }
-    .rail a[aria-current="page"]::before { content: ""; position: absolute; left: -14px; top: 9px; bottom: 9px; width: 3px; border-radius: 0 3px 3px 0; background: var(--accent); }
-    @media (max-width: 900px) { .rail a[aria-current="page"]::before { display: none; } }
-    .rail .foot { margin-top: auto; font-size: 12px; line-height: 1.45; padding: 0 10px; opacity: 0.8; }
-    @media (max-width: 900px) { .rail .foot { display: none; } }
-
-    /* ---------- main ---------- */
-    .main { padding: 18px clamp(14px, 2.6vw, 34px) 56px; min-width: 0; max-width: 1360px; }
-
-    /* ---------- hero: moving colour, floating shapes, glass cards ---------- */
-    .hero { position: relative; overflow: hidden; border-radius: 22px; color: #fff; padding: 26px clamp(18px, 3vw, 34px) 24px; margin-bottom: 16px;
-      background: #092e30 url("/static/img/hero-mesh.png") 0% 40% / 150% auto no-repeat; animation: drift 38s ease-in-out infinite alternate; isolation: isolate; }
-    .hero::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
-      background: radial-gradient(420px circle at var(--mx, 70%) var(--my, 20%), rgba(255, 255, 255, 0.14), transparent 65%); }
-    .orbs { position: absolute; right: -60px; top: -110px; width: 460px; z-index: -1; pointer-events: none; animation: float 16s ease-in-out infinite alternate; }
-    @media (max-width: 760px) { .orbs { width: 280px; right: -70px; top: -60px; } }
-    .hero-top { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 22px; }
-    .hero h1 { margin: 0; font-size: clamp(28px, 4vw, 40px); font-weight: 600; letter-spacing: -0.03em; line-height: 1.1; }
-    .hero p { margin: 6px 0 0; color: rgba(255, 255, 255, 0.82); }
-    .roleLabel { display: block; font-size: 12px; color: rgba(255, 255, 255, 0.75); margin: 0 0 4px 3px; }
-    .seg { display: inline-flex; background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.22); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 12px; padding: 3px; gap: 2px; }
-    .seg button { border: 0; background: transparent; color: rgba(255, 255, 255, 0.88); padding: 6px 16px; border-radius: 9px; cursor: pointer; font-weight: 500; transition: background 0.2s, color 0.2s; }
-    .seg button:hover { background: rgba(255, 255, 255, 0.12); }
-    .seg button[aria-pressed="true"] { background: #fff; color: #0c3b3a; }
-    .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-    @media (max-width: 860px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    .glass { display: flex; flex-direction: column; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-radius: 16px; padding: 14px 16px; transition: transform 0.25s, background 0.25s; }
-    .glass:hover { transform: translateY(-3px); background: rgba(255, 255, 255, 0.16); }
-    .glass .top { min-height: 40px; align-items: flex-start !important; display: flex; align-items: center; justify-content: space-between; color: rgba(255, 255, 255, 0.85); font-size: 13px; }
-    .glass .num { font-size: 36px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.1; margin-top: auto; }
-    .glass.alert { border-color: rgba(255, 207, 122, 0.55); }
-
-    .note { border-left: 3px solid var(--warn-mark); background: var(--warn-soft); color: var(--ink); padding: 9px 14px; border-radius: 0 10px 10px 0; font-size: 13.5px; margin-bottom: 16px; }
-    .fail { border-left-color: var(--bad); background: var(--bad-soft); }
-
-    /* ---------- resident tabs ---------- */
-    .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
-    .tab { display: flex; align-items: center; gap: 9px; background: transparent; border: 1px solid transparent; border-radius: 999px; padding: 5px 15px 5px 5px; cursor: pointer; color: var(--ink2); font-weight: 500; transition: background 0.2s, border-color 0.2s, transform 0.2s; }
-    .tab:hover { background: var(--surface); transform: translateY(-1px); }
-    .tab[aria-selected="true"] { background: var(--surface); border-color: var(--line); color: var(--ink); box-shadow: var(--shadow); }
-    .avatar { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 600; background: var(--accent-soft); color: var(--accent-text); transition: background 0.2s, color 0.2s; }
-    .tab[aria-selected="true"] .avatar { background: var(--rail); color: #fff; }
-
-    /* ---------- layout ---------- */
-    .grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
-    @media (max-width: 1100px) { .grid { grid-template-columns: minmax(0, 1fr); } }
-    .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); padding: 20px 22px; margin-bottom: 16px; transition: box-shadow 0.25s, transform 0.25s; }
-    .panel:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
-    .panel h2 { margin: 0; font-size: 16px; font-weight: 600; letter-spacing: -0.01em; display: flex; align-items: center; gap: 9px; }
-    .panel .sub { margin: 3px 0 14px; color: var(--ink2); font-size: 13.5px; }
-    .quiet { background: transparent; border: 0; box-shadow: none; padding: 0 4px; }
-    .quiet:hover { box-shadow: none; transform: none; }
-    .quiet .sub { margin-bottom: 8px; }
-
-    /* focus resident */
-    .who { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; align-items: start; }
-    .who h2 { font-size: 30px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.15; display: block; }
-    .who .conds { margin: 4px 0 0; color: var(--ink2); }
-    .allergy { display: inline-flex; align-items: center; gap: 8px; background: var(--bad-soft); color: var(--bad); border-radius: 10px; padding: 6px 12px; font-weight: 600; font-size: 14px; }
-    .allergy.none { background: var(--accent-soft); color: var(--accent-text); font-weight: 500; }
-    .allergy small { font-weight: 500; opacity: 0.85; }
-
-    .vitals { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 20px; border-top: 1px solid var(--line); }
-    @media (max-width: 900px) { .vitals { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    .vital { padding: 14px 16px 6px 0; }
-    .vital + .vital { padding-left: 16px; border-left: 1px solid var(--line); }
-    @media (max-width: 900px) { .vital:nth-child(3) { border-left: 0; padding-left: 0; } .vital:nth-child(n+3) { border-top: 1px solid var(--line); } }
-    .vital .lab { color: var(--ink2); font-size: 13px; }
-    .vital .val { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.2; }
-    .vital .val small { font-size: 12.5px; font-weight: 500; color: var(--ink2); margin-left: 3px; letter-spacing: 0; }
-    .vital .delta { color: var(--ink2); font-size: 12.5px; }
-    canvas.spark { display: block; width: 100%; height: 52px; margin-top: 4px; cursor: crosshair; touch-action: none; }
-    .trendnote { margin: 8px 0 0; color: var(--ink3); font-size: 12.5px; }
-
-    /* timeline: marks are plain CSS shapes */
-    .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; color: var(--ink2); font-size: 13px; margin: 0 0 12px; }
-    .legend span { display: inline-flex; align-items: center; gap: 7px; }
-    .tl-head, .tl-row { display: grid; grid-template-columns: 150px minmax(0, 1fr); align-items: center; }
-    @media (max-width: 560px) { .tl-head, .tl-row { grid-template-columns: 96px minmax(0, 1fr); } }
-    .tl-axis { position: relative; height: 20px; }
-    .tl-axis span { position: absolute; transform: translateX(-50%); font-size: 12px; color: var(--ink3); }
-    .tl-axis span:first-child { transform: none; }
-    .tl-axis span:last-child { transform: translateX(-100%); }
-    .tl-label { color: var(--ink2); font-size: 13.5px; padding-right: 10px; }
-    .tl-track { position: relative; height: 42px; border-top: 1px solid var(--line2); background-image: linear-gradient(to right, var(--line2) 1px, transparent 1px); background-size: calc(100% / var(--seg)) 100%; border-right: 1px solid var(--line2); }
-    .tl-row:last-child .tl-track { border-bottom: 1px solid var(--line2); }
-    .marker { position: absolute; top: 50%; left: var(--x); transform: translate(-50%, -50%); width: 28px; height: 28px; padding: 0; border: 0; background: none; cursor: pointer; display: grid; place-items: center; }
-    .shape { width: 20px; height: 20px; position: relative; display: block; transition: transform 0.15s, box-shadow 0.15s; }
-    .shape::before, .shape::after { content: ""; position: absolute; background: #fff; border-radius: 2px; }
-    .m-given .shape { background: var(--accent); border-radius: 50%; }
-    .m-given .shape::before { left: 7px; top: 3.5px; width: 5px; height: 10px; background: none; border: solid #fff; border-width: 0 2.2px 2.2px 0; border-radius: 0; transform: rotate(45deg); }
-    .m-given .shape::after { display: none; }
-    .m-refused .shape { background: var(--warn-mark); border-radius: 5px; transform: rotate(45deg) scale(0.86); }
-    .m-refused .shape::before { left: 4.5px; top: 9px; width: 11px; height: 2.2px; transform: rotate(-45deg); }
-    .m-refused .shape::after { display: none; }
-    .m-not_done .shape { background: var(--bad); border-radius: 6px; }
-    .m-not_done .shape::before, .m-not_done .shape::after { left: 4.5px; top: 9px; width: 11px; height: 2.2px; }
-    .m-not_done .shape::before { transform: rotate(45deg); } .m-not_done .shape::after { transform: rotate(-45deg); }
-    .marker:hover .shape, .marker:focus-visible .shape { transform: scale(1.2); box-shadow: 0 4px 10px -3px rgba(0, 0, 0, 0.35); }
-    .marker:hover.m-refused .shape, .marker:focus-visible.m-refused .shape { transform: rotate(45deg) scale(1.02); }
-    .legend .shape { width: 16px; height: 16px; }
-    .legend .m-given .shape::before { left: 5.5px; top: 2.5px; width: 4px; height: 8px; border-width: 0 2px 2px 0; }
-    .legend .m-refused .shape::before { left: 3.5px; top: 7px; width: 9px; }
-    .legend .m-not_done .shape::before, .legend .m-not_done .shape::after { left: 3.5px; top: 7px; width: 9px; }
-    .done { margin-top: 20px; }
-    .done strong { font-size: 15px; font-weight: 600; display: block; margin-bottom: 8px; }
-    .bar3 { display: flex; gap: 2px; height: 12px; }
-    .bar3 i { display: block; border-radius: 4px; min-width: 6px; transform-origin: left; }
-    .bar3 .g { background: var(--accent); } .bar3 .r { background: var(--warn-mark); } .bar3 .n { background: var(--bad); }
-    .done .key { display: flex; flex-wrap: wrap; gap: 4px 18px; margin-top: 8px; color: var(--ink2); font-size: 13px; }
-
-    /* approved guidance */
-    .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 32px; }
-    @media (max-width: 700px) { .two { grid-template-columns: 1fr; } }
-    .two h3 { margin: 0 0 6px; font-size: 13.5px; font-weight: 600; color: var(--ink2); }
-    ul.lines { list-style: none; margin: 0; padding: 0; }
-    ul.lines li { padding: 9px 0; border-top: 1px solid var(--line2); }
-    ul.lines li:first-child { border-top: 0; padding-top: 2px; }
-    .src { display: block; margin-top: 2px; color: var(--ink3); font-size: 12.5px; }
-    .empty { color: var(--ink2); }
-    .empty a { font-weight: 500; }
-    .blank { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 22px; }
-    .blank img { width: 200px; flex: none; }
-    .blank p { margin: 0; flex: 1 1 220px; }
-
-    /* side lists */
-    ul.feed { list-style: none; margin: 0; padding: 0; }
-    ul.feed li { padding: 11px 0; border-top: 1px solid var(--line); }
-    ul.feed li:first-child { border-top: 0; padding-top: 2px; }
-    .rowt { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
-    .nm { font-weight: 600; }
-    .when { color: var(--ink3); font-size: 12.5px; white-space: nowrap; }
-    .txt { color: var(--ink2); font-size: 13.5px; margin-top: 1px; }
-    .tag { display: inline-block; border-radius: 6px; padding: 0 8px; font-size: 12px; font-weight: 600; margin-right: 6px; }
-    .tag.warn { background: var(--warn-soft); color: var(--warn); }
-    .tag.ok { background: var(--good-soft); color: var(--good); }
-    .locked { background: var(--bad-soft); color: var(--bad); border-radius: 10px; padding: 8px 12px; font-size: 13.5px; }
-    .call { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; font-size: 14px; }
-    .call .k { color: var(--ink2); }
-    .call .gap { grid-column: 1 / -1; height: 8px; }
-
-    .tip { position: fixed; z-index: 20; pointer-events: none; background: var(--rail); color: #fff; padding: 6px 10px; border-radius: 8px; font-size: 12.5px; line-height: 1.4; max-width: 240px; opacity: 0; transition: opacity 0.1s; }
-    .tip.on { opacity: 1; }
-    .tip b { font-weight: 600; }
-
-    /* ---------- motion ---------- */
-    @keyframes drift { from { background-position: 0% 35%; } to { background-position: 100% 65%; } }
-    @keyframes float { from { transform: translate3d(0, 0, 0) rotate(0deg); } to { transform: translate3d(-26px, 22px, 0) rotate(7deg); } }
-    @keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes arrive { from { transform: translate(-50%, -50%) scale(0); } to { transform: translate(-50%, -50%) scale(1); } }
-    @keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-    .go .anim { animation: rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; animation-delay: calc(var(--d, 0) * 80ms); }
-    .go .marker { animation: arrive 0.34s cubic-bezier(0.3, 0.7, 0.2, 1) both; animation-delay: calc(var(--i) * 50ms + 350ms); }
-    .go .bar3 i { animation: grow 0.8s cubic-bezier(0.3, 0.7, 0.2, 1) both; animation-delay: 0.5s; }
-    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+    /* Care priority card (Tanveer) */
+    .top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .level { font-weight: 700; padding: 3px 12px; border-radius: 999px; }
+    .level.Green { color: var(--green); background: var(--green-bg); }
+    .level.Amber { color: var(--amber); background: var(--amber-bg); }
+    .level.Red { color: var(--red); background: var(--red-bg); }
+    .step { font-weight: 600; }
+    .error { color: var(--red); font-size: 14px; }
+    .review { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+    .review button, .review select, .review textarea { font: inherit; border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px; background: var(--card); color: var(--ink); min-height: 40px; }
+    .review button { cursor: pointer; font-weight: 600; }
+    .review button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .review textarea { flex: 1 1 100%; min-height: 56px; }
   </style>
 </head>
 <body>
-  <div class="app">
-    <aside class="rail">
-      <div class="brand"><img src="/static/img/logo-white.png" alt="" width="30" height="30">Age-Care</div>
-      <div style="display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.12); color:#7de8d7; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; padding:4px 10px; border-radius:999px; margin:0 8px 18px;">
-        <span style="width:7px; height:7px; border-radius:50%; background:#39e3c4; box-shadow:0 0 8px #39e3c4;"></span>
-        Registered Nurse (RN)
+  <header>
+    <strong>Age-Care · Nurse dashboard</strong>
+    <nav aria-label="Pages">
+      <a href="/guidance">Guidance</a>
+      <a href="/ocr">Health report OCR</a>
+      <a href="/ask">Ask AI</a>
+      <a href="/vision">Face and room check</a>
+      <a href="/carer">Carer view</a>
+    </nav>
+  </header>
+
+  <main>
+    <p class="demo" id="banner">Demo data only. All residents are fake.</p>
+    <div class="tabs" id="tabs" role="tablist" aria-label="Residents"></div>
+
+    <div class="grid">
+      <div class="col">
+        <section id="priority"></section>
+        <section id="resident"></section>
+        <section id="care"></section>
+        <section id="guide"></section>
       </div>
-      <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#759c98; padding:6px 10px 4px;">Clinical Oversight</div>
-      <nav aria-label="Clinical Tools">
-        <a href="/nurse" aria-current="page"><img class="ico" src="/static/img/ico/grid-white.png" alt="">Clinical Dashboard</a>
-        <a href="/guidance"><img class="ico" src="/static/img/ico/doc-white.png" alt="">Guidance Studio</a>
-        <a href="/ocr"><img class="ico" src="/static/img/ico/scan-white.png" alt="">Health Report OCR</a>
-        <a href="/ask"><img class="ico" src="/static/img/ico/doc-white.png" alt="">Ask AI Assistant</a>
-        <a href="/vision"><img class="ico" src="/static/img/ico/shield-white.png" alt="">Face and room check</a>
-      </nav>
-      <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#759c98; padding:12px 10px 4px;">Role Portals</div>
-      <nav aria-label="Portals">
-        <a href="/carer"><img class="ico" src="/static/img/ico/people-white.png" alt="">Carer Shift View ➔</a>
-        <a href="/patient"><img class="ico" src="/static/img/ico/people-white.png" alt="">🧓 Bedside Tablet ➔</a>
-      </nav>
-      <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#759c98; padding:12px 10px 4px;">System</div>
-      <nav aria-label="System Pages">
-        <a href="/welcome"><img class="ico" src="/static/img/ico/grid-white.png" alt="">Project Vision</a>
-        <a href="/docs"><img class="ico" src="/static/img/ico/code-white.png" alt="">API Docs</a>
-      </nav>
-      <div class="foot">Clinical oversight mode. Supervise residents, review AI guidance drafts & OCR health reports.</div>
-    </aside>
-
-    <main class="main go" id="page">
-      <section class="hero" id="hero">
-        <img class="orbs" src="/static/img/orbs.png" alt="" width="460" height="460">
-        <div class="hero-top">
-          <div>
-            <h1 id="greeting">Good morning</h1>
-            <p id="today" style="margin-bottom:6px;"></p>
-            <span style="font-size:12.5px; font-weight:600; color:#b2edd9; background:rgba(255,255,255,0.12); padding:3px 12px; border-radius:999px; display:inline-flex; align-items:center; gap:6px;">🩺 Nurse Clinical Dashboard</span>
-          </div>
-          <div>
-            <span class="roleLabel" id="roleLabel">Switch Portal</span>
-            <div class="seg" role="group" aria-labelledby="roleLabel">
-              <button type="button" data-role="nurse" aria-pressed="true">Nurse View</button>
-              <button type="button" data-role="carer" aria-pressed="false" onclick="window.location.href='/carer'">Carer View ➔</button>
-            </div>
-          </div>
-        </div>
-        <div class="stats">
-          <div class="glass"><div class="top">Residents<img class="ico" src="/static/img/ico/people-white.png" alt=""></div><div class="num" id="nResidents">–</div></div>
-          <div class="glass alert"><div class="top">Drafts waiting for a nurse<img class="ico" src="/static/img/ico/clipboard-white.png" alt=""></div><div class="num" id="nWaiting">–</div></div>
-          <div class="glass"><div class="top">Residents with approved guidance<img class="ico" src="/static/img/ico/shield-white.png" alt=""></div><div class="num" id="nApproved">–</div></div>
-          <div class="glass"><div class="top">Concerns raised today<img class="ico" src="/static/img/ico/flag-white.png" alt=""></div><div class="num" id="nConcerns">–</div></div>
-        </div>
-      </section>
-
-      <div class="note anim" id="banner" style="--d:1"><strong>Demo data only.</strong> The role switch is a prototype and is not real login. Trends show change over time and are not risk scores.</div>
-
-      <div class="tabs anim" id="tabs" role="tablist" aria-label="Residents" style="--d:2"></div>
-
-      <div class="grid">
-        <div id="left">
-          <section class="panel anim" id="focus" style="--d:3"></section>
-          <section class="panel anim" id="care" style="--d:4"></section>
-          <section class="panel anim" id="guide" style="--d:5"></section>
-        </div>
-        <div>
-          <section class="panel anim" id="needs" style="--d:4"></section>
-          <section class="panel anim" id="contacts" style="--d:5"></section>
-          <section class="panel quiet anim" id="activity" style="--d:6"></section>
-        </div>
+      <div class="col">
+        <section id="needs"></section>
+        <section id="contacts"></section>
+        <section id="activity"></section>
       </div>
-    </main>
-  </div>
-  <div class="tip" id="tip" role="tooltip"></div>
+    </div>
+  </main>
 
   <script>
     const $ = (id) => document.getElementById(id);
-    const state = { role: "nurse", people: [], records: new Map(), approved: new Map(), pending: null, audit: null, selected: null };
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const charts = new Set(); // the redraw function of every chart on the page
+    const state = { role: "nurse", people: [], records: new Map(), approved: new Map(), pending: null, audit: null,
+                    selected: null, decisions: new Map(), thinking: new Set() };
 
-    // Build elements with text nodes only, so text from the server can never run as code.
+    // Build elements with text only, so text from the server can never run as code.
     function h(tag, props, ...kids) {
       const node = document.createElement(tag);
       for (const [key, value] of Object.entries(props || {})) {
@@ -313,408 +110,227 @@
       }
       return node;
     }
-
-    // PNG icons: a teal one for light mode, a lighter one for dark mode.
-    function icon(name) {
-      return h("picture", {},
-        h("source", { media: "(prefers-color-scheme: dark)", srcset: "/static/img/ico/" + name + "-mint.png" }),
-        h("img", { class: "ico", src: "/static/img/ico/" + name + "-teal.png", alt: "", width: 20, height: 20 }));
-    }
-    const title = (iconName, text) => h("h2", {}, icon(iconName), text);
-    const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-    function withAlpha(hex, a) {
-      const n = parseInt(hex.replace("#", ""), 16);
-      return "rgba(" + (n >> 16) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + a + ")";
-    }
-
-    const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    function shortDate(iso) {
-      const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || "");
-      return m ? Number(m[3]) + " " + MONTHS[Number(m[2]) - 1] : iso;
-    }
+    function fill(id, ...kids) { $(id).replaceChildren(...kids.flat().filter(Boolean)); }
     function whenText(iso) {
       const d = new Date(iso);
       return isNaN(d) ? iso : d.toLocaleString([], { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
     }
-    const initials = (name) => name.replace(/[^A-Za-z ]/g, " ").split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join("");
-    function clock(text) {
-      const m = /^(\d{1,2}):(\d{2})$/.exec(text || "");
-      return m ? Number(m[1]) + Number(m[2]) / 60 : null;
-    }
-
-    // numbers count up from zero
-    function countUp(node, target) {
-      if (typeof target !== "number" || reduced) { node.textContent = target; return; }
-      const t0 = performance.now(), ms = 900;
-      (function step(now) {
-        const t = Math.min(1, (now - t0) / ms);
-        node.textContent = Math.round(target * (1 - Math.pow(1 - t, 3)));
-        if (t < 1) requestAnimationFrame(step);
-      })(t0);
-    }
-
-    // ---------- tooltip ----------
-    const tip = $("tip");
-    function showTip(parts, x, y) {
-      tip.replaceChildren(...parts);
-      tip.classList.add("on");
-      const w = tip.offsetWidth, hgt = tip.offsetHeight;
-      tip.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, x - w / 2)) + "px";
-      tip.style.top = Math.max(8, y - hgt - 12) + "px";
-    }
-    const hideTip = () => tip.classList.remove("on");
 
     // ---------- data ----------
     async function api(path) {
-      const response = await fetch(path, { headers: { "X-Role": state.role } });
+      const headers = { "X-Role": state.role };
+      try { const token = localStorage.getItem("agecare_token"); if (token) headers["X-Session-Token"] = token; } catch (e) { /* no storage */ }
+      const response = await fetch(path, { headers: headers });
       let data = null;
       try { data = await response.json(); } catch (e) { /* no body */ }
       return { ok: response.ok, status: response.status, data: data };
     }
-    async function loadRoleData() {
-      state.pending = await api("/api/guidance/pending");
-      state.audit = await api("/api/audit?limit=8");
-    }
-    // entries from the carer page are saved in their own tables,
-    // so add them to each resident's records here
-    function findRecord(id) {
-      for (const [key, rec] of state.records) {
-        if (String(key) === String(id)) return rec;
-      }
-      return null;
-    }
+
+    // entries from the carer page are saved in their own tables, so add them here
     async function addCarerEntries() {
       const today = await api("/api/carer/today");
       if (!today.ok) return;
+      const find = (id) => { for (const [k, r] of state.records) if (String(k) === String(id)) return r; return null; };
       for (const t of today.data.tasks) {
-        const rec = findRecord(t.resident_id);
+        const rec = find(t.resident_id);
         if (rec) rec.care_record.push({ time: t.created_at.slice(11, 16), task: t.task, status: t.status, by: t.carer });
       }
       for (const c of today.data.concerns) {
-        const rec = findRecord(c.resident_id);
+        const rec = find(c.resident_id);
         if (rec) rec.concerns.push({ time: c.created_at.slice(11, 16), type: c.type, text: c.note + " (" + c.carer + ")" });
       }
     }
+
     async function loadAll() {
       const list = await api("/api/residents");
       if (!list.ok) {
-        const banner = $("banner");
-        banner.className = "note fail";
-        banner.textContent = "Can't reach the server. Start it with: python -m uvicorn app.main:app --reload";
+        $("banner").className = "error";
+        $("banner").textContent = "Can't reach the server. Start it with: python -m uvicorn app.main:app --reload";
         return;
       }
       state.people = list.data;
       state.selected = state.people[0] && state.people[0].resident_id;
       await Promise.all(state.people.map(async (p) => {
-        const [rec, app] = await Promise.all([api("/api/residents/" + p.resident_id + "/records"), api("/api/guidance/" + p.resident_id + "/approved")]);
+        const [rec, ok] = await Promise.all([api("/api/residents/" + p.resident_id + "/records"), api("/api/guidance/" + p.resident_id + "/approved")]);
         state.records.set(p.resident_id, rec.ok ? rec.data : null);
-        state.approved.set(p.resident_id, app.ok ? app.data : null);
+        state.approved.set(p.resident_id, ok.ok ? ok.data : null);
       }));
       await addCarerEntries();
-      await loadRoleData();
-      renderAll(true);
+      state.pending = await api("/api/guidance/pending");
+      state.audit = await api("/api/audit?limit=8");
+      renderAll();
+      loadDecision(state.selected);
     }
 
-    // ---------- chart on a canvas (no SVG) ----------
-    function spark(series, opt, order) {
-      const vals = series.map((p) => p.value);
-      let lo = Math.min(...vals), hi = Math.max(...vals);
-      const mid = (lo + hi) / 2, span = Math.max(hi - lo, opt.minSpan); // a flat series stays flat
-      lo = mid - span / 2; hi = mid + span / 2;
-      const canvas = h("canvas", { class: "spark", role: "img", "aria-label": opt.label + " over " + series.length + " days: " + vals.join(", ") + " " + opt.unit });
-      const ctx = canvas.getContext("2d");
-      const view = { progress: 0, hover: -1 };
-      const pad = 6, H = 52;
-      let W = 0;
-      const X = (i) => pad + (W - 2 * pad) * (series.length === 1 ? 0.5 : i / (series.length - 1));
-      const Y = (v) => 7 + (H - 14) * (1 - (v - lo) / (hi - lo));
-
-      function draw() {
-        if (!W) return;
-        const dpr = window.devicePixelRatio || 1;
-        canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
-        const accent = cssVar("--accent"), line = cssVar("--line"), surface = cssVar("--surface"), ink3 = cssVar("--ink3");
-        ctx.strokeStyle = line; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
-        ctx.beginPath(); ctx.moveTo(pad, Y(vals[0])); ctx.lineTo(W - pad, Y(vals[0])); ctx.stroke(); ctx.setLineDash([]);
-
-        const last = series.length - 1, reach = view.progress * last, pts = [];
-        for (let i = 0; i <= last; i++) {
-          if (i <= reach) pts.push([X(i), Y(vals[i])]);
-          else { const t = reach - (i - 1); if (t > 0) pts.push([X(i - 1) + (X(i) - X(i - 1)) * t, Y(vals[i - 1]) + (Y(vals[i]) - Y(vals[i - 1])) * t]); break; }
-        }
-        if (pts.length > 1) {
-          const fill = ctx.createLinearGradient(0, 0, 0, H);
-          fill.addColorStop(0, withAlpha(accent, 0.24)); fill.addColorStop(1, withAlpha(accent, 0));
-          ctx.beginPath(); ctx.moveTo(pts[0][0], H);
-          pts.forEach((p) => ctx.lineTo(p[0], p[1]));
-          ctx.lineTo(pts[pts.length - 1][0], H); ctx.closePath(); ctx.fillStyle = fill; ctx.fill();
-          ctx.beginPath(); pts.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])));
-          ctx.strokeStyle = accent; ctx.lineWidth = 2; ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.stroke();
-        }
-        if (view.hover >= 0) { ctx.strokeStyle = ink3; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(X(view.hover), 2); ctx.lineTo(X(view.hover), H - 2); ctx.stroke(); }
-        if (view.progress >= 1 || view.hover >= 0) {
-          const i = view.hover >= 0 ? view.hover : last;
-          ctx.beginPath(); ctx.arc(X(i), Y(vals[i]), 4, 0, Math.PI * 2); ctx.fillStyle = accent; ctx.fill();
-          ctx.lineWidth = 2; ctx.strokeStyle = surface; ctx.stroke();
-        }
-      }
-      function play(delay) {
-        if (reduced) { view.progress = 1; draw(); return; }
-        const t0 = performance.now() + delay;
-        (function step(now) {
-          const t = Math.min(1, Math.max(0, (now - t0) / 1000));
-          view.progress = 1 - Math.pow(1 - t, 3); draw();
-          if (t < 1) requestAnimationFrame(step);
-        })(performance.now());
-      }
-      new ResizeObserver(() => {
-        const w = canvas.clientWidth;
-        if (w && w !== W) { const first = !W; W = w; if (first) play(order * 90 + 250); else draw(); }
-      }).observe(canvas);
-      charts.add(draw);
-
-      canvas.addEventListener("pointermove", (event) => {
-        const box = canvas.getBoundingClientRect(), px = event.clientX - box.left;
-        let best = 0;
-        for (let i = 1; i < series.length; i++) if (Math.abs(X(i) - px) < Math.abs(X(best) - px)) best = i;
-        view.hover = best; draw();
-        showTip([h("b", { text: opt.fmt(series[best]) + " " + opt.unit }), document.createElement("br"), shortDate(series[best].date)], event.clientX, event.clientY);
-      });
-      canvas.addEventListener("pointerleave", () => { view.hover = -1; draw(); hideTip(); });
-      return canvas;
-    }
-    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => charts.forEach((redraw) => redraw()));
-
-    // ---------- timeline marks (CSS shapes) ----------
-    const STATUS = { given: "Given", refused: "Refused", not_done: "Not done" };
-    function marker(status, task, time, by, index, leftPct) {
-      const button = h("button", { type: "button", class: "marker m-" + status, style: "--x:" + leftPct + "%;--i:" + index,
-        "aria-label": STATUS[status] + ": " + task + " at " + time + ", " + by }, h("span", { class: "shape" }));
-      const show = () => { const r = button.getBoundingClientRect(); showTip([h("b", { text: STATUS[status] + " · " + time }), document.createElement("br"), task + " · " + by], r.left + r.width / 2, r.top); };
-      button.addEventListener("pointerenter", show); button.addEventListener("focus", show);
-      button.addEventListener("pointerleave", hideTip); button.addEventListener("blur", hideTip);
-      return button;
-    }
-    const legendItem = (status) => h("span", { class: "m-" + status }, h("span", { class: "shape" }), STATUS[status]);
-
-    // ---------- render ----------
-    function renderStrip() {
-      let approved = 0, concerns = 0;
-      for (const p of state.people) {
-        if (state.approved.get(p.resident_id)) approved += 1;
-        const rec = state.records.get(p.resident_id);
-        if (rec) concerns += rec.concerns.length;
-      }
-      countUp($("nResidents"), state.people.length);
-      countUp($("nWaiting"), state.pending && state.pending.ok ? state.pending.data.length : "–");
-      countUp($("nApproved"), approved);
-      countUp($("nConcerns"), concerns);
-    }
-
+    // ---------- sections ----------
     function renderTabs() {
-      $("tabs").replaceChildren(...state.people.map((p) => {
-        const tab = h("button", { type: "button", class: "tab", role: "tab", id: "tab" + p.resident_id,
-          "aria-selected": String(p.resident_id === state.selected), tabindex: p.resident_id === state.selected ? "0" : "-1" },
-          h("span", { class: "avatar", "aria-hidden": "true", text: initials(p.name) }), p.name);
+      fill("tabs", state.people.map((p) => {
+        const tab = h("button", { type: "button", role: "tab", "aria-selected": String(p.resident_id === state.selected), text: p.name });
         tab.addEventListener("click", () => select(p.resident_id));
         return tab;
       }));
     }
 
-    function renderFocus(person, rec) {
-      const allergyText = rec ? rec.allergies.join(", ") : "";
-      const hasAllergy = rec && allergyText && !/^none/i.test(allergyText);
-      const head = h("div", { class: "who" },
-        h("div", {}, h("h2", { text: person.name }), h("p", { class: "conds", text: person.conditions.join(" · ") })),
-        rec ? h("div", { class: "allergy" + (hasAllergy ? "" : " none") }, h("small", { text: "Allergies" }), hasAllergy ? allergyText : "None recorded") : null);
-
-      const vitals = h("div", { class: "vitals" });
-      let order = 0;
-      if (rec) {
-        const hist = rec.readings_history;
-        const delta = (series, digits, unit) => {
-          const diff = series[series.length - 1].value - series[0].value;
-          return (diff > 0 ? "+" : diff < 0 ? "−" : "") + Math.abs(diff).toFixed(digits) + " " + unit + " over " + series.length + " days";
-        };
-        const card = (label, unit, series, lastText, digits, minSpan, fmt) => h("div", { class: "vital" },
-          h("div", { class: "lab", text: label }),
-          h("div", { class: "val" }, lastText, h("small", { text: unit })),
-          spark(series, { label: label, unit: unit, minSpan: minSpan, fmt: fmt }, order++),
-          h("div", { class: "delta", text: delta(series, digits, unit) }));
-        const n = (series) => series[series.length - 1].value;
-        if (hist.pulse) vitals.append(card("Pulse", "bpm", hist.pulse, String(n(hist.pulse)), 0, 24, (p) => String(p.value)));
-        if (hist.systolic && hist.diastolic) vitals.append(card("Blood pressure", "mmHg", hist.systolic, n(hist.systolic) + "/" + n(hist.diastolic), 0, 40,
-          (p) => p.value + "/" + hist.diastolic[hist.systolic.indexOf(p)].value));
-        if (hist.temperature) vitals.append(card("Temperature", "°C", hist.temperature, n(hist.temperature).toFixed(1), 1, 1.4, (p) => p.value.toFixed(1)));
-        if (hist.spo2) vitals.append(card("Oxygen", "%", hist.spo2, String(n(hist.spo2)), 0, 8, (p) => String(p.value)));
-      } else {
-        vitals.append(h("p", { class: "empty", text: "No records found for this resident." }));
-      }
-
-      const latest = [], seen = new Set();
-      for (const r of rec ? rec.readings_saved : []) { if (!seen.has(r.key) && r.key !== "report_date") { seen.add(r.key); latest.push(r); } }
-      const foot = h("p", { class: "trendnote" }, "Trends show change over time and are not risk scores. ",
-        latest.length ? "Last values a nurse checked: " + latest.slice(0, 4).map((r) => r.label + " " + r.value + " " + r.unit).join(", ") + " (" + latest[0].checked_by + ")." : "No values saved from a health report yet.");
-      $("focus").replaceChildren(head, vitals, foot);
+    function renderResident(person, rec) {
+      if (!rec) { fill("resident", h("h2", { text: person.name }), h("p", { class: "muted", text: "No records found." })); return; }
+      const hist = rec.readings_history;
+      const last = (key) => hist[key] && hist[key].length ? hist[key][hist[key].length - 1].value : null;
+      const rows = [
+        ["Pulse", last("pulse"), "bpm"],
+        ["Blood pressure", last("systolic") != null && last("diastolic") != null ? last("systolic") + "/" + last("diastolic") : null, "mmHg"],
+        ["Temperature", last("temperature"), "°C"],
+        ["Oxygen", last("spo2"), "%"],
+      ].filter((r) => r[1] != null);
+      const allergies = rec.allergies.join(", ") || "None recorded";
+      fill("resident",
+        h("h2", { text: person.name }),
+        h("p", { text: person.conditions.join(" · ") }),
+        h("p", {}, h("strong", { text: "Allergies: " }), allergies),
+        rows.length ? h("table", {},
+          h("tr", {}, h("th", { text: "Latest vital signs" }), h("th", { text: "Value" })),
+          rows.map((r) => h("tr", {}, h("td", { text: r[0] }), h("td", { text: r[1] + " " + r[2] })))) : null);
     }
 
     function renderCare(person, rec) {
-      const panel = $("care");
-      if (!rec || !rec.care_record.length) { panel.replaceChildren(title("clock", "Today's care"), h("p", { class: "empty", text: "Nothing recorded yet today." })); return; }
-      const items = rec.care_record.map((c) => ({ ...c, at: clock(c.time) })).filter((c) => c.at !== null);
-      let start = 7, end = 19;
-      const lo = Math.min(...items.map((c) => c.at)), hi = Math.max(...items.map((c) => c.at));
-      if (lo < start + 0.5) start = Math.max(0, Math.floor((lo - 0.5) / 2) * 2);
-      if (hi > end - 0.5) end = Math.min(24, Math.ceil((hi + 0.5) / 2) * 2);
-      const pos = (t) => ((t - start) / (end - start)) * 100;
-
-      const rows = new Map();
-      for (const c of items.sort((a, b) => a.at - b.at)) { if (!rows.has(c.task)) rows.set(c.task, []); rows.get(c.task).push(c); }
-      const axis = h("div", { class: "tl-axis", "aria-hidden": "true" });
-      const labelStep = window.innerWidth < 600 ? 4 : 2; // fewer labels on a phone so they never overlap
-      for (let t = start; t <= end; t += labelStep) axis.append(h("span", { style: "left:" + pos(t) + "%", text: String(t).padStart(2, "0") + ":00" }));
-      const tl = h("div", { class: "tl", style: "--seg:" + (end - start) / 2 }, h("div", { class: "tl-head" }, h("span"), axis));
-      let order = 0;
-      for (const [task, list] of rows) {
-        tl.append(h("div", { class: "tl-row" }, h("div", { class: "tl-label", text: task }),
-          h("div", { class: "tl-track" }, list.map((c) => marker(c.status, c.task, c.time, c.by, order++, pos(c.at))))));
-      }
-
-      const count = { given: 0, refused: 0, not_done: 0 };
-      for (const c of rec.care_record) count[c.status] += 1;
-      const bar = h("div", { class: "bar3", role: "img", "aria-label": count.given + " given, " + count.refused + " refused, " + count.not_done + " not done" },
-        count.given ? h("i", { class: "g", style: "flex:" + count.given }) : null,
-        count.refused ? h("i", { class: "r", style: "flex:" + count.refused }) : null,
-        count.not_done ? h("i", { class: "n", style: "flex:" + count.not_done }) : null);
-      panel.replaceChildren(
-        title("clock", "Today's care for " + person.name),
-        h("p", { class: "sub", text: "Each mark is one task, placed at the time it was recorded." }),
-        h("div", { class: "legend" }, legendItem("given"), legendItem("refused"), legendItem("not_done")),
-        tl,
-        h("div", { class: "done" }, h("strong", { text: count.given + " of " + rec.care_record.length + " tasks given" }), bar,
-          h("div", { class: "key" }, h("span", { text: count.given + " given" }), h("span", { text: count.refused + " refused" }), h("span", { text: count.not_done + " not done" }))));
+      const list = rec ? [...rec.care_record].sort((a, b) => a.time.localeCompare(b.time)) : [];
+      const label = { given: "Given", refused: "Refused", not_done: "Not done" };
+      fill("care",
+        h("h2", { text: "Today's care" }),
+        list.length
+          ? h("table", {},
+              h("tr", {}, h("th", { text: "Time" }), h("th", { text: "Task" }), h("th", { text: "Status" }), h("th", { text: "By" })),
+              list.map((c) => h("tr", {}, h("td", { text: c.time }), h("td", { text: c.task }),
+                h("td", { class: c.status, text: label[c.status] || c.status }), h("td", { text: c.by }))))
+          : h("p", { class: "muted", text: "Nothing recorded yet today." }));
     }
 
     function renderGuide(person) {
-      const panel = $("guide");
       const ok = state.approved.get(person.resident_id);
       if (!ok) {
-        panel.replaceChildren(title("shield", "Approved guidance"),
-          h("div", { class: "blank" },
-            h("img", { src: "/static/img/empty-guidance.png", alt: "", width: 200, height: 130 }),
-            h("p", { class: "empty" }, "No approved guidance yet. A nurse needs to review the AI draft first. ",
-              state.role === "nurse" ? h("a", { href: "/guidance", text: "Draft guidance" }) : null)));
+        fill("guide", h("h2", { text: "Approved guidance" }),
+          h("p", { class: "muted" }, "No approved guidance yet. ", h("a", { href: "/guidance", text: "Draft guidance" })));
         return;
       }
-      const list = (lines) => h("ul", { class: "lines" }, lines.map((l) => h("li", {}, l.text, h("span", { class: "src", text: l.edited ? "Written by a nurse" : l.source }))));
-      panel.replaceChildren(
-        title("shield", "Approved guidance"),
-        h("p", { class: "sub", text: "Approved by " + ok.approved_by + ", " + whenText(ok.approved_at) + ". This is what carers see." }),
-        h("div", { class: "two" },
-          h("div", {}, h("h3", { text: "Signs to watch for" }), list(ok.watch_for)),
-          h("div", {}, h("h3", { text: "Prevention steps" }), list(ok.prevention))));
+      const list = (lines) => h("ul", {}, lines.map((l) => h("li", {}, l.text, h("span", { class: "src", text: l.edited ? "Written by a nurse" : l.source }))));
+      fill("guide",
+        h("h2", { text: "Approved guidance" }),
+        h("p", { class: "muted", text: "Approved by " + ok.approved_by + ", " + whenText(ok.approved_at) }),
+        h("p", {}, h("strong", { text: "Signs to watch for" })), list(ok.watch_for),
+        h("p", {}, h("strong", { text: "Prevention steps" })), list(ok.prevention));
     }
 
     function renderNeeds() {
       const items = [];
       for (const p of state.people) {
         const rec = state.records.get(p.resident_id);
-        if (rec) for (const c of rec.concerns) items.push({ person: p, c: c });
-      }
-      items.sort((a, b) => a.c.time.localeCompare(b.c.time));
-      const feed = h("ul", { class: "feed" });
-      for (const it of items) {
-        feed.append(h("li", {},
-          h("div", { class: "rowt" }, h("span", { class: "nm", text: it.person.name }), h("span", { class: "when", text: it.c.time })),
-          h("div", { class: "txt" }, h("span", { class: "tag warn", text: it.c.type }), "“" + it.c.text + "”")));
+        if (rec) for (const c of rec.concerns) items.push(h("li", {}, h("strong", { text: p.name + " · " + c.type }), " " + c.time,
+          h("span", { class: "src", text: "“" + c.text + "”" })));
       }
       if (state.pending && state.pending.ok) {
-        for (const d of state.pending.data) {
-          feed.append(h("li", {},
-            h("div", { class: "rowt" }, h("span", { class: "nm", text: d.resident }), h("span", { class: "when", text: whenText(d.created_at) })),
-            h("div", { class: "txt" }, h("span", { class: "tag ok", text: "AI draft" }), d.lines + " lines waiting for a nurse")));
-        }
+        for (const d of state.pending.data) items.push(h("li", {}, h("strong", { text: d.resident + " · AI draft" }),
+          h("span", { class: "src", text: d.lines + " lines waiting for a nurse" })));
       }
-      const parts = [title("flag", "Needs a nurse"), h("p", { class: "sub", text: "Concerns raised by carers and drafts to approve." }),
-        feed.children.length ? feed : h("p", { class: "empty", text: "Nothing needs attention." })];
-      if (state.pending && !state.pending.ok) parts.push(h("p", { class: "locked", text: "Only a nurse can see drafts." }));
-      $("needs").replaceChildren(...parts);
+      fill("needs", h("h2", { text: "Needs a nurse" }),
+        items.length ? h("ul", {}, items) : h("p", { class: "muted", text: "Nothing needs attention." }));
     }
 
     function renderContacts(rec) {
-      if (!rec) { $("contacts").replaceChildren(); return; }
-      const grid = h("div", { class: "call" },
-        h("span", { class: "nm", text: rec.doctor.name }), h("span", { class: "k", text: rec.doctor.phone }),
-        h("span", { class: "k", text: rec.doctor.practice }), h("span"));
-      for (const c of rec.contacts) grid.append(h("span", { class: "gap" }), h("span", { class: "nm", text: c.name + " (" + c.relationship + ")" }), h("span", { class: "k", text: c.phone }));
-      $("contacts").replaceChildren(title("phone", "Who to call"), h("p", { class: "sub", text: "Doctor and family. Fake details." }), grid);
+      if (!rec) { fill("contacts"); return; }
+      fill("contacts", h("h2", { text: "Who to call" }),
+        h("ul", {},
+          h("li", {}, rec.doctor.name + " (doctor) · " + rec.doctor.phone),
+          rec.contacts.map((c) => h("li", { text: c.name + " (" + c.relationship + ") · " + c.phone }))));
     }
 
     function renderActivity() {
-      const head = [title("pulse", "Recent activity"), h("p", { class: "sub", text: "The audit log: who did what, and when." })];
-      if (!state.audit || !state.audit.ok) { $("activity").replaceChildren(...head, h("p", { class: "locked", text: "Only a nurse can see the audit log." })); return; }
-      if (!state.audit.data.length) { $("activity").replaceChildren(...head, h("p", { class: "empty", text: "No activity yet." })); return; }
-      $("activity").replaceChildren(...head, h("ul", { class: "feed" }, state.audit.data.map((e) => h("li", {},
-        h("div", { class: "rowt" }, h("span", {}, h("span", { class: "nm", text: e.actor }), " " + e.action.replace(/_/g, " ")), h("span", { class: "when", text: whenText(e.at) })),
-        e.detail ? h("div", { class: "txt", text: e.detail }) : null))));
+      const head = h("h2", { text: "Recent activity" });
+      if (!state.audit || !state.audit.ok) { fill("activity", head, h("p", { class: "muted", text: "Only a nurse can see the audit log." })); return; }
+      if (!state.audit.data.length) { fill("activity", head, h("p", { class: "muted", text: "No activity yet." })); return; }
+      fill("activity", head, h("ul", {}, state.audit.data.map((e) => h("li", {},
+        e.actor + " " + e.action.replace(/_/g, " "), h("span", { class: "src", text: whenText(e.at) + (e.detail ? " · " + e.detail : "") })))));
     }
 
-    function replay() { // run the entrance motion again
-      const page = $("page");
-      page.classList.remove("go"); void page.offsetWidth; page.classList.add("go");
+    // ---------- Care priority: rules + AI, the nurse decides (Tanveer) ----------
+    async function loadDecision(id) {
+      state.thinking.add(id);
+      const quick = await api("/api/residents/" + id + "/decision?use_ai=false"); // rules only: fast
+      if (quick.ok && !state.decisions.has(id)) state.decisions.set(id, quick.data);
+      if (state.selected === id) renderPriority();
+      const full = await api("/api/residents/" + id + "/decision"); // rules + AI: slower
+      state.thinking.delete(id);
+      if (full.ok) state.decisions.set(id, full.data);
+      if (state.selected === id) renderPriority();
     }
 
-    function renderAll(animate) {
+    function renderPriority() {
+      const d = state.decisions.get(state.selected);
+      if (!d) { fill("priority", h("h2", { text: "Care priority" }), h("p", { class: "muted", text: "Checking…" })); return; }
+      const thinking = state.thinking.has(d.resident_id);
+      fill("priority",
+        h("div", { class: "top" }, h("h2", { text: "Care priority" }), h("span", { class: "level " + d.level, text: d.level })),
+        h("p", { class: "step", text: d.next_step + (thinking ? " (vital signs only so far)" : "") }),
+        d.reasons.length
+          ? h("ul", {}, d.reasons.map((r) => h("li", {}, r.text, h("span", { class: "src", text: (r.quote ? "“" + r.quote + "” · " : "") + r.source }))))
+          : h("p", { class: "muted", text: "Nothing needs attention." }),
+        thinking ? h("p", { class: "muted", text: "Reading carer notes…" }) : null,
+        !thinking && d.ai.status === "error" ? h("p", { class: "error", text: "AI not available, so this uses vital signs only." }) : null,
+        thinking ? null : reviewPart(d));
+    }
+
+    function nurseName() {
+      try { return localStorage.getItem("agecare_name") || "Nurse"; } catch (e) { return "Nurse"; }
+    }
+
+    function reviewPart(d) {
+      const r = d.last_review;
+      const done = r ? h("span", { class: "muted", text: (r.action === "priority_accepted" ? "Accepted" : "Changed") + " by " + r.actor + ", " + whenText(r.at) }) : null;
+      const accept = h("button", { type: "button", class: "primary", text: "Accept" });
+      const change = h("button", { type: "button", text: "Change" });
+      const box = h("div", { class: "review" }, accept, change, done);
+      accept.addEventListener("click", () => sendReview(d, d.level, ""));
+      change.addEventListener("click", () => {
+        const pick = h("select", { "aria-label": "New priority" }, ["Green", "Amber", "Red"].filter((l) => l !== d.level).map((l) => h("option", { value: l, text: l })));
+        const why = h("textarea", { placeholder: "Reason for the change", "aria-label": "Reason for the change" });
+        const save = h("button", { type: "button", class: "primary", text: "Save" });
+        const cancel = h("button", { type: "button", text: "Cancel" });
+        save.addEventListener("click", () => { if (!why.value.trim()) { why.focus(); return; } sendReview(d, pick.value, why.value); });
+        cancel.addEventListener("click", renderPriority);
+        box.replaceChildren(pick, why, save, cancel);
+        pick.focus();
+      });
+      return box;
+    }
+
+    async function sendReview(d, final, note) {
+      const headers = { "Content-Type": "application/json", "X-Role": state.role };
+      try { const token = localStorage.getItem("agecare_token"); if (token) headers["X-Session-Token"] = token; } catch (e) { /* no storage */ }
+      const response = await fetch("/api/residents/" + d.resident_id + "/decision/review", {
+        method: "POST", headers: headers,
+        body: JSON.stringify({ reviewer: nurseName(), suggested: d.level, final: final, note: note }),
+      });
+      let data = null;
+      try { data = await response.json(); } catch (e) { /* no body */ }
+      if (!response.ok) { alert("Could not save: " + (data && data.detail ? JSON.stringify(data.detail) : response.status)); return; }
+      d.last_review = data;
+      state.audit = await api("/api/audit?limit=8");
+      renderPriority(); renderActivity();
+    }
+
+    // ---------- page ----------
+    function renderAll() {
       const person = state.people.find((p) => p.resident_id === state.selected);
       if (!person) return;
       const rec = state.records.get(person.resident_id);
-      charts.clear();
-      renderStrip(); renderTabs();
-      renderFocus(person, rec); renderCare(person, rec); renderGuide(person);
-      renderNeeds(); renderContacts(rec); renderActivity();
-      if (animate) replay();
+      renderTabs(); renderPriority(); renderResident(person, rec); renderCare(person, rec);
+      renderGuide(person); renderNeeds(); renderContacts(rec); renderActivity();
     }
 
     function select(id) {
-      state.selected = id; hideTip(); renderAll(false);
-      const left = $("left"); // the left side comes in again for the new resident
-      left.querySelectorAll(".anim").forEach((node, i) => { node.style.animation = "none"; void node.offsetWidth; node.style.animation = ""; node.style.setProperty("--d", i); });
-      left.classList.remove("go"); void left.offsetWidth; left.classList.add("go");
-      const t = $("tab" + id); if (t) t.focus();
+      state.selected = id;
+      renderAll();
+      if (!state.decisions.has(id) && !state.thinking.has(id)) loadDecision(id);
     }
 
-    $("tabs").addEventListener("keydown", (event) => {
-      if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
-      const i = state.people.findIndex((p) => p.resident_id === state.selected);
-      select(state.people[(i + (event.key === "ArrowRight" ? 1 : state.people.length - 1)) % state.people.length].resident_id);
-      event.preventDefault();
-    });
-
-    document.querySelectorAll(".seg button").forEach((button) => button.addEventListener("click", async () => {
-      if (button.dataset.role === "carer") {
-        window.location.href = "/carer";
-        return;
-      }
-      state.role = button.dataset.role;
-      document.querySelectorAll(".seg button").forEach((b) => b.setAttribute("aria-pressed", String(b === button)));
-      await loadRoleData();
-      renderAll(false);
-    }));
-
-    // a soft light follows the pointer across the hero
-    const hero = $("hero");
-    hero.addEventListener("pointermove", (event) => {
-      const box = hero.getBoundingClientRect();
-      hero.style.setProperty("--mx", (event.clientX - box.left) + "px");
-      hero.style.setProperty("--my", (event.clientY - box.top) + "px");
-    });
-
-    (function greet() {
-      const now = new Date(), hour = now.getHours();
-      $("greeting").textContent = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
-      $("today").textContent = now.toLocaleDateString([], { weekday: "long", day: "numeric", month: "long" });
-    })();
     loadAll();
   </script>
   <script src="/static/auth.js"></script>
