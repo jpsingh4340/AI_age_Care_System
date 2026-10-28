@@ -36,6 +36,51 @@
       </div>
     </section>
 
+    <!-- AI Voice Companion & Orientation Assistant -->
+    <section class="card companion-card">
+      <div class="companion-header">
+        <div class="companion-avatar">
+          <span class="avatar-icon">🧓💬</span>
+          <span class="pulse-ring"></span>
+        </div>
+        <div class="companion-intro">
+          <h2>Talk to Grace · Bedside AI Voice Companion</h2>
+          <p class="sub">Ask any question about your meals, walk times, or who is looking after you today. Grace speaks your answers aloud!</p>
+        </div>
+        <button id="voiceToggleBtn" class="voice-mute-btn" onclick="toggleSpeech()" title="Toggle voice answers">
+          <span id="voiceIcon">🔊</span> <span id="voiceLabel">Voice: Spoken Aloud</span>
+        </button>
+      </div>
+
+      <!-- Live Chat / Voice Bubble -->
+      <div class="companion-bubble-wrap">
+        <div class="companion-speech" id="companionSpeech">
+          "Hello Margaret! I am Grace, your bedside companion. How are you feeling today, or what would you like to know about your routine?"
+        </div>
+      </div>
+
+      <!-- Quick Question Chips -->
+      <div class="chip-container">
+        <span class="chip-label">Quick Questions:</span>
+        <button class="question-chip" onclick="askCompanion('What is for lunch today?')">🥪 What is for lunch?</button>
+        <button class="question-chip" onclick="askCompanion('When is my walk with my frame?')">🚶 When is my walk?</button>
+        <button class="question-chip" onclick="askCompanion('Who is my carer today?')">🩺 Who is my carer?</button>
+        <button class="question-chip" onclick="askCompanion('Where am I right now?')">💙 Where am I?</button>
+      </div>
+
+      <!-- Interactive Input (Microphone + Text) -->
+      <form class="companion-input-row" onsubmit="event.preventDefault(); submitCompanionInput();">
+        <button type="button" id="micBtn" class="mic-btn" onclick="toggleMic()" title="Tap to speak">
+          <span id="micIcon">🎙️</span> <span id="micText">Tap to Speak</span>
+        </button>
+        <input type="text" id="companionInput" class="companion-input" placeholder="Or type a question for Grace here..." maxlength="200" />
+        <button type="submit" id="companionSendBtn" class="companion-send-btn">Ask Grace ➔</button>
+      </form>
+      <div id="listeningIndicator" class="listening-status" style="display: none;">
+        <span class="listening-dot"></span> Listening to your voice... Speak clearly!
+      </div>
+    </section>
+
     <div class="grid">
       <!-- Left Column: Check-in & Call Bell -->
       <div>

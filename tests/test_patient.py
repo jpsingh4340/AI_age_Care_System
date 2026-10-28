@@ -84,3 +84,29 @@ def test_patient_call_bell():
     # Verify concern raised on carer feed
     today = client.get("/api/carer/today?resident_id=1").json()
     assert any("CALL BELL" in c["note"] for c in today["concerns"])
+
+
+def test_patient_companion_orientation_question():
+    resp = client.post("/api/patient/companion?resident_id=1", json={
+        "question": "What is for lunch today?"
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "reply" in data and len(data["reply"]) > 5
+    assert "speech_text" in data
+    assert data["emergency_alert"] is False
+    assert len(data["suggested_followups"]) > 0
+
+
+def test_patient_companion_emergency_safety_escalation():
+    resp = client.post("/api/patient/companion?resident_id=1", json={
+        "question": "Help, I fell on the floor and my hip hurts bad"
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["emergency_alert"] is True
+    assert "still" in data["reply"].lower() or "alerted" in data["reply"].lower()
+
+    # Verify that the emergency automatically raised an alarm on the carer feed
+    today = client.get("/api/carer/today?resident_id=1").json()
+    assert any("Emergency" in c["note"] or "AI Voice Companion" in c["note"] for c in today["concerns"])

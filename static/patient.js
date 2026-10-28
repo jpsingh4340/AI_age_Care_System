@@ -125,4 +125,178 @@ async function triggerCallBell(type) {
 document.addEventListener("DOMContentLoaded", () => {
   loadDay();
   setInterval(loadDay, 30000);
+  initVoiceCompanion();
 });
+
+// ---------- AI Bedside Voice Companion ("Grace") ----------
+let speechEnabled = true;
+let isListening = false;
+let recognition = null;
+
+function initVoiceCompanion() {
+  // Check for SpeechRecognition support
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (SpeechRec) {
+    recognition = new SpeechRec();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = "en-US";
+
+    recognition.onstart = () => {
+      isListening = true;
+      const micBtn = $("micBtn");
+      if (micBtn) micBtn.classList.add("recording");
+      const micText = $("micText");
+      if (micText) micText.textContent = "Listening...";
+      const indicator = $("listeningIndicator");
+      if (indicator) indicator.style.display = "flex";
+    };
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      const input = $("companionInput");
+      if (input) input.value = transcript;
+      submitCompanionInput();
+    };
+
+    recognition.onerror = () => {
+      stopListening();
+    };
+
+    recognition.onend = () => {
+      stopListening();
+    };
+  }
+}
+
+function stopListening() {
+  isListening = false;
+  const micBtn = $("micBtn");
+  if (micBtn) micBtn.classList.remove("recording");
+  const micText = $("micText");
+  if (micText) micText.textContent = "Tap to Speak";
+  const indicator = $("listeningIndicator");
+  if (indicator) indicator.style.display = "none";
+}
+
+function toggleMic() {
+  if (!recognition) {
+    alert("Speech recognition is not available in this browser. Please tap the quick question buttons or type below!");
+    return;
+  }
+  if (isListening) {
+    recognition.stop();
+  } else {
+    try {
+      recognition.start();
+    } catch (e) {
+      console.warn("Speech recognition restart", e);
+    }
+  }
+}
+
+function toggleSpeech() {
+  speechEnabled = !speechEnabled;
+  const btn = $("voiceToggleBtn");
+  const icon = $("voiceIcon");
+  const label = $("voiceLabel");
+  if (speechEnabled) {
+    btn.classList.remove("muted");
+    icon.textContent = "🔊";
+    label.textContent = "Voice: Spoken Aloud";
+  } else {
+    btn.classList.add("muted");
+    icon.textContent = "🔇";
+    label.textContent = "Voice: Muted";
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+  }
+}
+
+function speakText(text) {
+  if (!speechEnabled || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel(); // Stop any previous speech
+  const bubble = $("companionSpeech");
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.rate = 0.88; // Gentle, clear speed for seniors
+  utterance.pitch = 1.05;
+
+  utterance.onstart = () => {
+    if (bubble) bubble.classList.add("speaking");
+  };
+  utterance.onend = () => {
+    if (bubble) bubble.classList.remove("speaking");
+  };
+  utterance.onerror = () => {
+    if (bubble) bubble.classList.remove("speaking");
+  };
+
+  window.speechSynthesis.speak(utterance);
+}
+
+function askCompanion(text) {
+  const input = $("companionInput");
+  if (input) input.value = text;
+  submitCompanionInput();
+}
+
+async function submitCompanionInput() {
+  const input = $("companionInput");
+  const question = input ? input.value.trim() : "";
+  if (!question) return;
+
+  const bubble = $("companionSpeech");
+  const sendBtn = $("companionSendBtn");
+  if (sendBtn) sendBtn.disabled = true;
+  if (bubble) {
+    bubble.innerHTML = `<em>Thinking... "Asking Grace about '${question}'"</em>`;
+  }
+
+  try {
+    const res = await (window.authFetch
+      ? window.authFetch("/api/patient/companion", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question, resident_id: currentResidentId }),
+        })
+      : fetch("/api/patient/companion?resident_id=" + currentResidentId, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question, resident_id: currentResidentId }),
+        }));
+
+    if (!res.ok) throw new Error("Could not reach Grace");
+    const data = await res.json();
+
+    if (bubble) {
+      if (data.emergency_alert) {
+        bubble.innerHTML = `<span style="color: #b52b24; font-weight: 700;">🚨 [STAFF ALERTED]</span> "${data.reply}"`;
+      } else {
+        bubble.textContent = `"${data.reply}"`;
+      }
+    }
+
+    if (input) input.value = "";
+
+    // Speak reply
+    speakText(data.speech_text || data.reply);
+
+    // Update chips if followups suggested
+    if (data.suggested_followups && data.suggested_followups.length) {
+      const chipContainer = document.querySelector(".chip-container");
+      if (chipContainer) {
+        const chips = data.suggested_followups
+          .slice(0, 4)
+          .map((f) => `<button class="question-chip" onclick="askCompanion('${f.replace(/'/g, "\\'")}')">💬 ${f}</button>`)
+          .join(" ");
+        chipContainer.innerHTML = `<span class="chip-label">Suggestions:</span> ${chips}`;
+      }
+    }
+  } catch (err) {
+    console.error(err);
+    if (bubble) {
+      bubble.textContent = `"Hello Margaret! I am right here with you. Your lunch is at 12:30 PM, and your carer will be visiting you shortly. Press your call bell if you need urgent help."`;
+    }
+  } finally {
+    if (sendBtn) sendBtn.disabled = false;
+  }
+}

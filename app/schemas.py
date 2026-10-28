@@ -343,3 +343,15 @@ class PatientDayResponse(BaseModel):
     schedule: list[PatientScheduleItem]
     approved_guidance: list[str]
     latest_sentiment: str | None = None
+
+
+class PatientCompanionRequest(BaseModel):
+    question: str = Field(min_length=1, max_length=500)
+    resident_id: int | None = None
+
+
+class PatientCompanionResponse(BaseModel):
+    reply: str
+    speech_text: str
+    emergency_alert: bool = False
+    suggested_followups: list[str] = []
