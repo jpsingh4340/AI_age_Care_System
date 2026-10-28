@@ -106,3 +106,11 @@ def test_changing_the_priority_needs_a_reason():
     r = client.post("/api/residents/2/decision/review", json=body, headers=NURSE)
     assert r.json()["action"] == "priority_changed"
     assert "from Amber to Red" in r.json()["detail"]
+
+
+def test_the_nurse_choice_is_shown_after_a_change():
+    body = {"reviewer": "Nurse Sarah", "suggested": "Amber", "final": "Red", "note": "Looked pale."}
+    client.post("/api/residents/2/decision/review", json=body, headers=NURSE)
+    review = client.get("/api/residents/2/decision").json()["last_review"]
+    assert review["suggested"] == "Amber"
+    assert review["final"] == "Red"

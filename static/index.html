@@ -251,6 +251,7 @@
     }
 
     // ---------- Care priority: rules + AI, the nurse decides (Tanveer) ----------
+    const NEXT_STEP = { Red: "A nurse should see the resident now.", Amber: "A nurse should check the resident.", Green: "Continue normal care." };
     async function loadDecision(id) {
       state.thinking.add(id);
       const quick = await api("/api/residents/" + id + "/decision?use_ai=false"); // rules only: fast
@@ -266,9 +267,13 @@
       const d = state.decisions.get(state.selected);
       if (!d) { fill("priority", h("h2", { text: "Care priority" }), h("p", { class: "muted", text: "Checking…" })); return; }
       const thinking = state.thinking.has(d.resident_id);
+      // If a nurse reviewed this same suggestion, show the nurse's choice.
+      const r = d.last_review;
+      const shown = r && r.final && r.suggested === d.level ? r.final : d.level;
       fill("priority",
-        h("div", { class: "top" }, h("h2", { text: "Care priority" }), h("span", { class: "level " + d.level, text: d.level })),
-        h("p", { class: "step", text: d.next_step + (thinking ? " (vital signs only so far)" : "") }),
+        h("div", { class: "top" }, h("h2", { text: "Care priority" }), h("span", { class: "level " + shown, text: shown })),
+        h("p", { class: "step", text: NEXT_STEP[shown] + (thinking ? " (vital signs only so far)" : "") }),
+        shown !== d.level ? h("p", { class: "muted", text: "Changed by a nurse. The system suggested " + d.level + "." }) : null,
         d.reasons.length
           ? h("ul", {}, d.reasons.map((r) => h("li", {}, r.text, h("span", { class: "src", text: (r.quote ? "“" + r.quote + "” · " : "") + r.source }))))
           : h("p", { class: "muted", text: "Nothing needs attention." }),
@@ -283,13 +288,13 @@
 
     function reviewPart(d) {
       const r = d.last_review;
-      const done = r ? h("span", { class: "muted", text: (r.action === "priority_accepted" ? "Accepted" : "Changed") + " by " + r.actor + ", " + whenText(r.at) }) : null;
+      const done = r ? h("span", { class: "muted", text: (r.action === "priority_accepted" ? "Accepted " + (r.final || "") : "Changed to " + r.final) + " by " + r.actor + ", " + whenText(r.at) }) : null;
       const accept = h("button", { type: "button", class: "primary", text: "Accept" });
       const change = h("button", { type: "button", text: "Change" });
       const box = h("div", { class: "review" }, accept, change, done);
       accept.addEventListener("click", () => sendReview(d, d.level, ""));
       change.addEventListener("click", () => {
-        const pick = h("select", { "aria-label": "New priority" }, ["Green", "Amber", "Red"].filter((l) => l !== d.level).map((l) => h("option", { value: l, text: l })));
+        const pick = h("select", { "aria-label": "New priority" }, ["Green", "Amber", "Red"].filter((l) => l !== (r && r.suggested === d.level ? r.final : d.level)).map((l) => h("option", { value: l, text: l })));
         const why = h("textarea", { placeholder: "Reason for the change", "aria-label": "Reason for the change" });
         const save = h("button", { type: "button", class: "primary", text: "Save" });
         const cancel = h("button", { type: "button", text: "Cancel" });
