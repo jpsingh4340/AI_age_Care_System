@@ -51,7 +51,15 @@ def _get_resident_id_from_auth(
     x_session_token: str = "",
     resident_id: int | None = None,
 ) -> int:
-    """Resolve resident ID from session token or query."""
+    """Resolve resident ID: explicit resident_id parameter takes priority, then user session."""
+    if resident_id is not None:
+        try:
+            val = int(resident_id)
+            if val > 0:
+                return val
+        except (ValueError, TypeError):
+            pass
+
     token = x_session_token.strip() if x_session_token else ""
     if not token and authorization.startswith("Bearer "):
         token = authorization[7:].strip()
@@ -61,7 +69,7 @@ def _get_resident_id_from_auth(
         if sess and sess.get("resident_id"):
             return int(sess["resident_id"])
 
-    return int(resident_id or 1)
+    return 1
 
 
 @router.get("/patient", include_in_schema=False)
