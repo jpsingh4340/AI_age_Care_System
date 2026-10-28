@@ -52,7 +52,7 @@ The chart also says: "Escalate care for any patient you, they or their family ar
 
 - **Honesty about limits:** This is a student prototype with fake data. NZEWS is made for hospitals and we only have 4 of its 7 vital signs, so the results are a guide, not a clinical decision.
 
-## References (APA)
+## 5. References (APA)
 Department of Internal Affairs & Stats NZ. (2020). *Algorithm charter for Aotearoa New Zealand*. https://data.govt.nz/toolkit/data-ethics/government-algorithm-transparency-and-accountability/algorithm-charter/
 
 Privacy Act 2020. https://www.legislation.govt.nz/act/public/2020/0031/latest/whole.html
@@ -60,3 +60,14 @@ Privacy Act 2020. https://www.legislation.govt.nz/act/public/2020/0031/latest/wh
 Privacy Commissioner. (2020). *Health information privacy code 2020*. https://www.privacy.org.nz/privacy-act-2020/codes-of-practice/hipc2020/
 
 Te Tāhū Hauora Health Quality & Safety Commission. (2021). *Vital signs chart with New Zealand early warning score*. https://www.hqsc.govt.nz/resources/resource-library/vital-signs-chart-with-new-zealand-early-warning-score/
+
+## 6. Prompt log
+
+Tested on our 4 fake residents with llama3.2:3b on my laptop (Intel i3, 8 GB RAM, CPU only).
+
+| Version | Date | What I changed | Result |
+|---|---|---|---|
+| v1 | 29 Oct 2026 | First prompt: use only the notes, copy exact quotes, never diagnose or name medicines | Ron H. went from Green to Amber because of "Nearly slipped when getting out of the chair". All quotes were real. But the AI wrote "Resident may be dehydrated" (sounds like a diagnosis) and "may need fluids and monitoring" (sounds like treatment advice). Time: 41.9 s for the first resident (model loading), then about 8 s each. |
+| v2 | 29 Oct 2026 | Added a rule: describe only what happened, do not name a condition or say what treatment or fluids are needed | The reasons now only describe what happened: "Did not have enough fluids", "Lost balance while getting out of chair", "Vomited after breakfast". Ron H. is still Amber. All quotes were real. Time: 27.0 s for the first resident, then about 8–9 s each. |
+
+**What I learned:** small models follow short, specific rules better than general ones. "Never diagnose" was not enough, so I had to give examples of words not to use. My code checks still matter, because a prompt cannot fully control the AI.
