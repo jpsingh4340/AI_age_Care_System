@@ -318,51 +318,22 @@ def firebase_sync_user(
     role: str = "carer",
     resident_id: int | None = None,
 ) -> dict:
-    """Find or create a local role account for a Firebase-authenticated user."""
+    """Verify that a Firebase/Google email is already registered, and return its assigned role."""
     clean_email = email.strip().lower()
     if not clean_email or "@" not in clean_email:
         raise ValueError("A valid email address is required.")
-    clean_role = role.strip().lower() if role else "carer"
-    if clean_role not in ROLES:
-        clean_role = "carer"
 
     with _get_connection() as conn:
         cur = conn.cursor()
         cur.execute("SELECT * FROM users WHERE username = ?", (clean_email,))
         user = cur.fetchone()
         if not user:
-            prefix = clean_email.split("@", 1)[0]
-            cur.execute("SELECT * FROM users WHERE username = ?", (prefix,))
-            user = cur.fetchone()
+            raise ValueError(f"Account '{clean_email}' is not registered. Please sign up first.")
 
-        if user:
-            linked_res = (resident_id or user["resident_id"] or 1) if clean_role == "family" else None
-            if role and clean_role != user["role"] or linked_res != user["resident_id"]:
-                conn.execute(
-                    "UPDATE users SET role = ?, resident_id = ? WHERE id = ?",
-                    (clean_role, linked_res, user["id"]),
-                )
-            return {
-                "id": user["id"],
-                "username": user["username"],
-                "full_name": full_name.strip() or user["full_name"],
-                "role": clean_role if role else user["role"],
-                "resident_id": linked_res if role else user["resident_id"],
-            }
-
-        display_name = full_name.strip() or clean_email.split("@", 1)[0].replace(".", " ").title()
-        linked_res = (resident_id or 1) if clean_role == "family" else None
-        pwd_hash, salt = _hash_password(secrets.token_hex(16))
-        now = datetime.now(timezone.utc).isoformat(timespec="seconds")
-        cur.execute(
-            "INSERT INTO users (username, password_hash, salt, full_name, role, resident_id, created_at) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (clean_email, pwd_hash, salt, display_name, clean_role, linked_res, now),
-        )
         return {
-            "id": cur.lastrowid,
-            "username": clean_email,
-            "full_name": display_name,
-            "role": clean_role,
-            "resident_id": linked_res,
+            "id": user["id"],
+            "username": user["username"],
+            "full_name": user["full_name"],
+            "role": user["role"],
+            "resident_id": user["resident_id"],
         }
