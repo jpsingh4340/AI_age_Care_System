@@ -3,172 +3,87 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Manager &amp; Admin · AgeCare</title>
+  <title>User accounts · AgeCare</title>
   <link rel="icon" type="image/png" href="/static/img/favicon.png">
   <link rel="stylesheet" href="/static/app.css">
-  <style>
-    .kpi-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-    .kpi-tile {
-      background-color: var(--card);
-      border: 1px solid var(--line);
-      border-radius: var(--radius-card);
-      padding: 14px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .kpi-num {
-      font-size: 24px;
-      font-weight: 700;
-      color: var(--ink);
-      font-variant-numeric: tabular-nums;
-    }
-    .kpi-num.alert {
-      color: var(--red);
-    }
-  </style>
 </head>
 <body>
   <header class="topbar"></header>
 
   <main class="page-container">
-    <div class="demo-banner alert-info">
-      <strong>Governance &amp; administration:</strong> User credential provisioning and tamper-evident audit trail for clinical governance (NZS 8134).
-    </div>
-
-    <!-- Main question: User accounts and facility compliance -->
-    <div class="page-question-banner">
-      <div class="between">
-        <div>
-          <h1 class="q-title">Facility overview &amp; user accounts</h1>
-          <p>Monitor shift completion metrics, manage staff and whānau credentials, and inspect the clinical audit log.</p>
-        </div>
-        <button type="button" class="btn btn-secondary btn-sm" onclick="loadOverview()">Refresh metrics</button>
+    <div class="page-head">
+      <div>
+        <p class="eyebrow">Manager</p>
+        <h1>User accounts</h1>
+        <p class="lede">Who can sign in, and what each person can see.</p>
       </div>
     </div>
 
-    <!-- Facility KPIs -->
-    <div class="kpi-row" id="kpiGrid"></div>
-
     <div class="grid-layout">
-      <!-- Left: User Accounts Management & Shift Overview -->
       <div class="stack">
-        <!-- 1. User accounts -->
-        <section class="card">
+        <section class="card" aria-labelledby="usersTitle">
           <div class="card-header">
-            <div>
-              <h2 class="card-title">User accounts &amp; role credentials</h2>
-              <p class="sub-text">Staff and family accounts with role-based access</p>
-            </div>
+            <h2 class="card-title" id="usersTitle">Accounts</h2>
+            <span class="sub-text" id="userCount"></span>
           </div>
-
-          <div class="table-wrap" style="margin-bottom: 20px;">
-            <table class="tbl">
-              <thead>
-                <tr>
-                  <th>Username</th>
-                  <th>Full name</th>
-                  <th>Role</th>
-                  <th>Linked resident</th>
-                  <th style="width: 70px;"></th>
-                </tr>
-              </thead>
-              <tbody id="userRows"></tbody>
-            </table>
-          </div>
-
-          <!-- Add new user form -->
-          <form class="stack" onsubmit="createUser(event)" style="border-top: 1px solid var(--line); padding-top: 16px;">
-            <h3 style="font-size: 15px; margin-bottom: 6px;">Provision a new user account</h3>
-            <div class="grid-equal">
-              <div class="form-group">
-                <label for="uFullName">Full name</label>
-                <input id="uFullName" class="field" type="text" required placeholder="e.g. Mere Walker">
-              </div>
-              <div class="form-group">
-                <label for="uUsername">Username or email</label>
-                <input id="uUsername" class="field" type="text" required minlength="3" placeholder="e.g. mere.walker">
-              </div>
-              <div class="form-group">
-                <label for="uPassword">Temporary password</label>
-                <input id="uPassword" class="field" type="password" required minlength="6" placeholder="Min 6 characters">
-              </div>
-              <div class="form-group">
-                <label for="uRole">Role portal</label>
-                <select id="uRole" class="field" onchange="toggleResSelect()">
-                  <option value="carer">Care Assistant</option>
-                  <option value="nurse">Registered Nurse</option>
-                  <option value="manager">Manager / Admin</option>
-                  <option value="family">Whānau / Family</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="form-group hidden" id="uResWrap">
-              <label for="uResident">Linked resident (Family accounts only)</label>
-              <select id="uResident" class="field"></select>
-            </div>
-
-            <div class="between" style="margin-top: 8px;">
-              <p class="text-sm" id="userMsg"></p>
-              <button type="submit" class="btn btn-primary btn-sm">Add user account</button>
-            </div>
-          </form>
-        </section>
-
-        <!-- 2. Residents shift progress -->
-        <section class="card">
-          <div class="card-header">
-            <div>
-              <h2 class="card-title">Residents shift overview</h2>
-              <p class="sub-text">Summary of tasks completed and concerns flagged today</p>
-            </div>
-          </div>
-
           <div class="table-wrap">
             <table class="tbl">
               <thead>
-                <tr>
-                  <th>Resident</th>
-                  <th>Room</th>
-                  <th>Tasks today</th>
-                  <th>Concerns</th>
-                  <th>Family update</th>
-                </tr>
+                <tr><th>Name</th><th>Username</th><th>Role</th><th>Resident</th><th><span class="sr-only">Actions</span></th></tr>
               </thead>
-              <tbody id="residentRows"></tbody>
+              <tbody id="userRows">
+                <tr><td colspan="5"><div class="skeleton w80"></div><div class="skeleton w60"></div></td></tr>
+              </tbody>
             </table>
           </div>
         </section>
+
+        <section class="card" aria-labelledby="addTitle">
+          <h2 class="card-title" id="addTitle" style="margin-bottom: 16px;">Add an account</h2>
+          <form onsubmit="createUser(event)">
+            <div class="grid-equal">
+              <div class="form-group">
+                <label for="uFullName">Full name</label>
+                <input id="uFullName" class="field" type="text" required placeholder="Mere Walker">
+              </div>
+              <div class="form-group">
+                <label for="uUsername">Username or email</label>
+                <input id="uUsername" class="field" type="text" required minlength="3" placeholder="mere.walker">
+              </div>
+              <div class="form-group">
+                <label for="uPassword">Temporary password <span class="hint">at least 6 characters</span></label>
+                <input id="uPassword" class="field" type="password" required minlength="6">
+              </div>
+              <div class="form-group">
+                <label for="uRole">Role</label>
+                <select id="uRole" class="field" onchange="toggleResSelect()">
+                  <option value="carer">Carer</option>
+                  <option value="nurse">Registered nurse</option>
+                  <option value="manager">Manager</option>
+                  <option value="family">Family</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group hidden" id="uResWrap">
+              <label for="uResident">Family member in care</label>
+              <select id="uResident" class="field"></select>
+            </div>
+            <div class="form-actions" style="margin-top: 4px;">
+              <p class="text-sm" id="userMsg" role="status"></p>
+              <button type="submit" class="btn btn-primary">Add account</button>
+            </div>
+          </form>
+        </section>
       </div>
 
-      <!-- Right: Compliance & Audit Log -->
-      <aside class="stack">
-        <!-- Compliance evidence -->
-        <section class="card">
-          <div class="card-header no-border">
-            <h2 class="card-title">Compliance evidence (NZS 8134)</h2>
+      <aside class="card" aria-labelledby="auditTitle">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title" id="auditTitle">Audit log</h2>
+            <p class="sub-text">Every sign-off and account change</p>
           </div>
-          <ul style="margin: 0; padding-left: 20px; font-size: 13.5px; line-height: 1.6; color: var(--ink-secondary);">
-            <li><strong>Human-in-the-loop:</strong> AI drafts are never shown to carers or families until verified and approved by a Registered Nurse.</li>
-            <li><strong>Health Privacy Code 2020:</strong> Whānau accounts have restricted access strictly to approved notes for their linked family member.</li>
-            <li><strong>Local processing:</strong> The language model runs locally via Ollama so resident health records never leave the facility network.</li>
-            <li><strong>Zero photo retention:</strong> Photos for OCR and room checks are discarded immediately from device memory after analysis.</li>
-          </ul>
-        </section>
-
-        <!-- Full clinical audit trail -->
-        <section class="card">
-          <div class="card-header no-border">
-            <h2 class="card-title">Clinical audit log</h2>
-          </div>
-          <ol class="audit-list" id="auditList"></ol>
-        </section>
+        </div>
+        <ol class="audit-list" id="auditList"><li><div class="skeleton w80" style="width: 100%;"></div></li></ol>
       </aside>
     </div>
   </main>
@@ -178,7 +93,15 @@
   <script src="/static/auth.js"></script>
   <script>
     const $ = (id) => document.getElementById(id);
+    const ROLE_NAMES = { carer: "Carer", nurse: "Nurse", manager: "Manager", family: "Family" };
     let residentsMap = {};
+
+    function el(tag, className, text) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
 
     function toggleResSelect() {
       $("uResWrap").classList.toggle("hidden", $("uRole").value !== "family");
@@ -203,79 +126,16 @@
 
       if (ovRes.ok) {
         const data = await ovRes.json();
-        const kpiGrid = $("kpiGrid");
-        kpiGrid.replaceChildren();
-        (data.kpis || []).forEach((k) => {
-          const card = document.createElement("div");
-          card.className = "kpi-tile";
-
-          const lbl = document.createElement("div");
-          lbl.className = "sub-text";
-          lbl.textContent = k.label;
-
-          const val = document.createElement("div");
-          val.className = "kpi-num" + (k.alert ? " alert" : "");
-          val.textContent = k.value;
-
-          const sub = document.createElement("div");
-          sub.className = "text-muted text-sm";
-          sub.textContent = k.sub;
-
-          card.append(lbl, val, sub);
-          kpiGrid.appendChild(card);
-        });
-
-        const rBody = $("residentRows");
-        rBody.replaceChildren();
-        (data.residents || []).forEach((r) => {
-          const tr = rBody.insertRow();
-
-          const tdName = tr.insertCell();
-          const strong = document.createElement("strong");
-          strong.textContent = r.name;
-          tdName.appendChild(strong);
-
-          tr.insertCell().textContent = r.room;
-          tr.insertCell().textContent = r.tasks;
-
-          const cCell = tr.insertCell();
-          if (r.concerns) {
-            const span = document.createElement("span");
-            span.className = "badge badge-red";
-            span.textContent = r.concerns + " flagged";
-            cCell.appendChild(span);
-          } else {
-            cCell.textContent = "None";
-            cCell.className = "text-muted";
-          }
-
-          const tdUp = tr.insertCell();
-          tdUp.className = "sub-text";
-          tdUp.textContent = r.family_update;
-        });
-
         const auditList = $("auditList");
         auditList.replaceChildren();
         if (!data.audit || !data.audit.length) {
-          const li = document.createElement("li");
-          li.className = "text-muted text-sm";
-          li.textContent = "No audit events logged yet.";
-          auditList.appendChild(li);
+          auditList.appendChild(el("li", "empty", "Nothing logged yet."));
         } else {
           data.audit.forEach((a) => {
-            const li = document.createElement("li");
-            const t = document.createElement("span");
-            t.className = "audit-time";
-            t.textContent = (a.at || "").slice(11, 16);
-
-            const body = document.createElement("span");
-            body.className = "text-sm";
-            const who = document.createElement("strong");
-            who.textContent = a.actor + " ";
-            body.appendChild(who);
-            body.appendChild(document.createTextNode((a.action || "").replace(/_/g, " ") + (a.detail ? " · " + a.detail : "")));
-
-            li.append(t, body);
+            const body = el("span", "text-sm");
+            body.append(el("strong", "", a.actor + " "), document.createTextNode((a.action || "").replace(/_/g, " ") + (a.detail ? ". " + a.detail : "")));
+            const li = el("li");
+            li.append(el("span", "audit-time", (a.at || "").slice(5, 16).replace("T", " ")), body);
             auditList.appendChild(li);
           });
         }
@@ -283,35 +143,27 @@
 
       if (usrRes.ok) {
         const users = await usrRes.json();
+        $("userCount").textContent = users.length + (users.length === 1 ? " account" : " accounts");
         const uBody = $("userRows");
         uBody.replaceChildren();
         const myUser = (localStorage.getItem("agecare_username") || "").toLowerCase();
 
         users.forEach((u) => {
           const tr = uBody.insertRow();
-
+          tr.insertCell().textContent = u.full_name;
           const tdUser = tr.insertCell();
           tdUser.className = "text-mono";
           tdUser.textContent = u.username;
-
-          tr.insertCell().textContent = u.full_name;
-
-          const tdRole = tr.insertCell();
-          const rBadge = document.createElement("span");
-          rBadge.className = "role-badge";
-          rBadge.textContent = u.role;
-          tdRole.appendChild(rBadge);
-
+          tr.insertCell().append(el("span", "role-badge", ROLE_NAMES[u.role] || u.role));
           const tdRes = tr.insertCell();
           tdRes.className = "sub-text";
-          tdRes.textContent = u.resident_id ? (residentsMap[u.resident_id] || "Resident #" + u.resident_id) : "All / Staff";
-
+          tdRes.textContent = u.resident_id ? residentsMap[u.resident_id] || "Resident " + u.resident_id : "";
           const act = tr.insertCell();
+          act.style.textAlign = "right";
           if (u.username.toLowerCase() !== myUser) {
-            const btn = document.createElement("button");
+            const btn = el("button", "btn btn-quiet btn-sm", "Remove");
             btn.type = "button";
-            btn.className = "btn btn-secondary btn-sm";
-            btn.textContent = "Remove";
+            btn.setAttribute("aria-label", "Remove " + u.username);
             btn.onclick = () => removeUser(u.username);
             act.appendChild(btn);
           }
@@ -337,24 +189,23 @@
       const data = await res.json();
       const msg = $("userMsg");
       if (!res.ok) {
-        msg.textContent = data.detail || "Could not create user.";
+        msg.textContent = typeof data.detail === "string" ? data.detail : "Could not add the account.";
         msg.className = "text-sm alert-danger";
         return;
       }
-      msg.textContent = "Created account for " + data.username + " (" + data.role + ").";
+      msg.textContent = "Added " + data.username + " as " + (ROLE_NAMES[data.role] || data.role) + ".";
       msg.className = "text-sm alert-success";
       $("uFullName").value = "";
       $("uUsername").value = "";
       $("uPassword").value = "";
-      if (window.showToast) window.showToast("Added user " + data.username);
       loadOverview();
     }
 
     async function removeUser(username) {
-      if (!confirm("Remove account '" + username + "'?")) return;
+      if (!confirm("Remove the account '" + username + "'? They will no longer be able to sign in.")) return;
       const res = await window.authFetch("/api/manager/users/" + encodeURIComponent(username), { method: "DELETE" });
       if (res.ok) {
-        if (window.showToast) window.showToast("Removed account " + username);
+        if (window.showToast) window.showToast("Removed " + username);
         loadOverview();
       }
     }
