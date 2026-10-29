@@ -3,114 +3,148 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Sign in · Age-Care Intelligence</title>
+  <title>Sign In &amp; Register · AgeCare</title>
   <link rel="icon" type="image/png" href="/static/img/favicon.png">
   <link rel="stylesheet" href="/static/app.css">
 </head>
 <body>
-  <header class="topbar">
-    <div class="topbar-inner">
-      <a class="brand" href="/welcome">
-        <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true">
-          <rect width="36" height="36" rx="9" fill="#0E6B66"></rect>
-          <path d="M18 26s-8-4.8-8-10.4A4.6 4.6 0 0 1 18 13a4.6 4.6 0 0 1 8 2.6C26 21.2 18 26 18 26z" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round"></path>
-        </svg>
-        <div>
-          <div class="brand-title">Age-Care Intelligence</div>
-          <div class="brand-sub">Kōwhai Gardens Rest Home · Four-role portal · fake test data only</div>
-        </div>
-      </a>
-      <a class="btn btn-ghost btn-sm" href="/welcome">Project overview</a>
+  <header class="topbar"></header>
+
+  <!-- Common ClearScan Hero -->
+  <section class="cs-hero">
+    <div class="cs-hero-watermark" aria-hidden="true">Role Verified Access</div>
+    <div class="cs-hero-eyebrow">Four-Role Authentication</div>
+    <h1>Sign In Instantly</h1>
+    <p class="cs-sub">
+      Each role—Carer, Nurse, Manager, and Family—has its own login credentials and opens its dedicated workspace.
+    </p>
+    <div class="cs-cta-row">
+      <button type="button" class="cs-glow-btn" onclick="quickFill('nurse1', 'password123')">
+        <span>✓</span> Quick Demo: Nurse Sarah
+      </button>
     </div>
-  </header>
-
-  <main class="page" style="max-width: 560px">
-    <div class="page-head">
-      <div>
-        <div class="eyebrow">Role-Based Access</div>
-        <h1 class="page-title">Sign in to your portal</h1>
-      </div>
+    <div class="cs-privacy-note">Session tokens are verified on every request.</div>
+    <div class="cs-trust-row">
+      <span><b>✓</b> Carer Shift Access</span>
+      <span><b>✓</b> Nurse Clinical Oversight</span>
+      <span><b>✓</b> Manager Governance</span>
+      <span><b>✓</b> Family Privacy Guard</span>
     </div>
+  </section>
 
-    <section class="card">
-      <div class="role-nav" role="tablist" aria-label="Sign in or register" style="align-self: flex-start">
-        <button type="button" class="btn btn-sm" id="tabLogin" aria-current="page" onclick="switchTab('login')" style="background:#0E6B66; color:#fff;">Sign in</button>
-        <button type="button" class="btn btn-sm" id="tabRegister" onclick="switchTab('register')">Create account</button>
-      </div>
+  <!-- Common Horizontal Feature Strip -->
+  <div class="cs-strip">
+    <div class="cs-strip-inner">
+      <span class="cs-strip-item">💊 Carer: tasks, vitals &amp; concerns.</span>
+      <span class="cs-strip-item">🩺 Nurse: priority review &amp; approvals.</span>
+      <span class="cs-strip-item">📊 Manager: KPIs, accounts &amp; audit trail.</span>
+      <span class="cs-strip-item">💌 Family: nurse-approved updates only.</span>
+    </div>
+  </div>
 
-      <div id="alertBox" class="notice hidden" role="alert"></div>
-
-      <!-- Sign-in form -->
-      <form id="loginForm" class="stack" onsubmit="handleLogin(event)">
-        <p class="small">Each role (Carer, Nurse, Manager, Family) signs in with its own credentials and opens its dedicated workspace.</p>
-
-        <label class="lbl" for="loginUsername">
-          Username
-          <input id="loginUsername" class="field" type="text" required autocomplete="username" placeholder="e.g. carer1, nurse1, manager1, family1">
-        </label>
-
-        <label class="lbl" for="loginPassword">
-          Password
-          <input id="loginPassword" class="field" type="password" required autocomplete="current-password" placeholder="••••••••">
-        </label>
-
-        <button type="submit" class="btn btn-primary" id="btnLogin">Sign in</button>
-      </form>
-
-      <!-- Register form -->
-      <form id="registerForm" class="stack hidden" onsubmit="handleRegister(event)">
-        <p class="small">Create a login for a Carer, Nurse, Manager, or Family member.</p>
-
-        <label class="lbl" for="regFullName">
-          Full name
-          <input id="regFullName" class="field" type="text" required placeholder="e.g. Aroha T.">
-        </label>
-
-        <div class="grid-fields">
-          <label class="lbl" for="regUsername">
-            Username
-            <input id="regUsername" class="field" type="text" required minlength="3" placeholder="e.g. aroha">
-          </label>
-          <label class="lbl" for="regPassword">
-            Password
-            <input id="regPassword" class="field" type="password" required minlength="6" placeholder="Min 6 characters">
-          </label>
-        </div>
-
-        <div class="stack" style="gap: 6px">
-          <span style="font-weight: 700; font-size: 15px">Role</span>
-          <div class="choices" role="radiogroup" aria-label="Role">
-            <label class="choice"><input type="radio" name="regRole" value="carer" checked onchange="onRoleChange()"> Carer</label>
-            <label class="choice"><input type="radio" name="regRole" value="nurse" onchange="onRoleChange()"> Nurse</label>
-            <label class="choice"><input type="radio" name="regRole" value="manager" onchange="onRoleChange()"> Manager</label>
-            <label class="choice"><input type="radio" name="regRole" value="family" onchange="onRoleChange()"> Family</label>
+  <main class="page" style="max-width: 980px">
+    <div class="row">
+      <!-- Left: Sign In / Create Account Card -->
+      <section class="card col-main">
+        <div class="between">
+          <h2>Account Credentials</h2>
+          <div class="role-nav" role="tablist" aria-label="Sign in or register">
+            <button type="button" id="tabLogin" aria-current="page" onclick="switchTab('login')">Log In</button>
+            <button type="button" id="tabRegister" onclick="switchTab('register')">Sign Up</button>
           </div>
         </div>
 
-        <label class="lbl hidden" id="residentPickerWrap" for="regResident">
-          Linked resident (Family accounts see only this resident's approved updates)
-          <select id="regResident" class="field"></select>
-        </label>
+        <div id="alertBox" class="notice hidden" role="alert"></div>
 
-        <button type="submit" class="btn btn-primary" id="btnRegister">Create account &amp; sign in</button>
-      </form>
+        <!-- Sign-in form -->
+        <form id="loginForm" class="stack" onsubmit="handleLogin(event)">
+          <p class="small">Enter your username and password, or pick a demo role on the right.</p>
 
-      <div class="divider stack" style="gap: 8px">
-        <div class="section-label">Quick demo logins (password: password123)</div>
-        <div class="grid-fields">
-          <button type="button" class="btn btn-ghost btn-sm" onclick="quickFill('carer1', 'password123')">Carer · Priya P.</button>
-          <button type="button" class="btn btn-ghost btn-sm" onclick="quickFill('nurse1', 'password123')">Nurse · RN Sarah J.</button>
-          <button type="button" class="btn btn-ghost btn-sm" onclick="quickFill('manager1', 'password123')">Manager · Tom B.</button>
-          <button type="button" class="btn btn-ghost btn-sm" onclick="quickFill('family1', 'password123')">Family · Claire T.</button>
+          <label class="lbl" for="loginUsername">
+            Username
+            <input id="loginUsername" class="field" type="text" required autocomplete="username" placeholder="e.g. carer1, nurse1, manager1, family1">
+          </label>
+
+          <label class="lbl" for="loginPassword">
+            Password
+            <input id="loginPassword" class="field" type="password" required autocomplete="current-password" placeholder="••••••••">
+          </label>
+
+          <button type="submit" class="btn btn-primary" id="btnLogin">Log In to Portal →</button>
+        </form>
+
+        <!-- Register form -->
+        <form id="registerForm" class="stack hidden" onsubmit="handleRegister(event)">
+          <p class="small">Register a new login for any of the four roles.</p>
+
+          <label class="lbl" for="regFullName">
+            Full name
+            <input id="regFullName" class="field" type="text" required placeholder="e.g. Aroha T.">
+          </label>
+
+          <div class="grid-fields">
+            <label class="lbl" for="regUsername">
+              Username
+              <input id="regUsername" class="field" type="text" required minlength="3" placeholder="e.g. aroha">
+            </label>
+            <label class="lbl" for="regPassword">
+              Password
+              <input id="regPassword" class="field" type="password" required minlength="6" placeholder="Min 6 characters">
+            </label>
+          </div>
+
+          <div class="stack" style="gap: 6px">
+            <span style="font-weight: 700; font-size: 14.5px">Select Role</span>
+            <div class="choices" role="radiogroup" aria-label="Role">
+              <label class="choice"><input type="radio" name="regRole" value="carer" checked onchange="onRoleChange()"> Carer</label>
+              <label class="choice"><input type="radio" name="regRole" value="nurse" onchange="onRoleChange()"> Nurse</label>
+              <label class="choice"><input type="radio" name="regRole" value="manager" onchange="onRoleChange()"> Manager</label>
+              <label class="choice"><input type="radio" name="regRole" value="family" onchange="onRoleChange()"> Family</label>
+            </div>
+          </div>
+
+          <label class="lbl hidden" id="residentPickerWrap" for="regResident">
+            Linked resident (Family accounts see only this resident's approved updates)
+            <select id="regResident" class="field"></select>
+          </label>
+
+          <button type="submit" class="btn btn-primary" id="btnRegister">Create Account &amp; Sign In →</button>
+        </form>
+      </section>
+
+      <!-- Right: One-Click Demo Accounts for All 4 Roles -->
+      <aside class="card col-side">
+        <span class="section-label">Instant Demo Credentials</span>
+        <h2>Try All Four Roles</h2>
+        <p class="small">Click any role below to sign in immediately (password for all demo accounts: <code class="mono">password123</code>).</p>
+
+        <div class="stack" style="margin-top: 4px">
+          <button type="button" class="btn btn-ghost" style="justify-content:space-between" onclick="quickFill('carer1', 'password123')">
+            <span>📋 <strong>Carer Priya Patel</strong></span>
+            <span class="mono">carer1 →</span>
+          </button>
+          <button type="button" class="btn btn-ghost" style="justify-content:space-between" onclick="quickFill('nurse1', 'password123')">
+            <span>🩺 <strong>Nurse Sarah Johnson</strong></span>
+            <span class="mono">nurse1 →</span>
+          </button>
+          <button type="button" class="btn btn-ghost" style="justify-content:space-between" onclick="quickFill('manager1', 'password123')">
+            <span>📊 <strong>Manager Tom Baker</strong></span>
+            <span class="mono">manager1 →</span>
+          </button>
+          <button type="button" class="btn btn-ghost" style="justify-content:space-between" onclick="quickFill('family1', 'password123')">
+            <span>💌 <strong>Family Claire Taylor</strong></span>
+            <span class="mono">family1 →</span>
+          </button>
         </div>
-      </div>
-    </section>
+      </aside>
+    </div>
 
     <footer class="foot">
       Age-Care Intelligence · Four roles (Carer, Nurse, Manager, Family) with individual credentials. All residents and staff are fictional.
     </footer>
   </main>
 
+  <script src="/static/auth.js"></script>
   <script>
     const HOME_BY_ROLE = { carer: "/carer", nurse: "/nurse", manager: "/manager", family: "/family" };
 
@@ -120,12 +154,17 @@
       document.getElementById("registerForm").classList.toggle("hidden", isLogin);
       const tLogin = document.getElementById("tabLogin");
       const tReg = document.getElementById("tabRegister");
-      tLogin.style.background = isLogin ? "#0E6B66" : "transparent";
-      tLogin.style.color = isLogin ? "#FFFFFF" : "#1A2B2E";
-      tReg.style.background = !isLogin ? "#0E6B66" : "transparent";
-      tReg.style.color = !isLogin ? "#FFFFFF" : "#1A2B2E";
+      if (isLogin) {
+        tLogin.setAttribute("aria-current", "page");
+        tReg.removeAttribute("aria-current");
+      } else {
+        tReg.setAttribute("aria-current", "page");
+        tLogin.removeAttribute("aria-current");
+      }
       hideAlert();
     }
+
+    if (window.location.hash === "#register") switchTab("register");
 
     function selectedRegRole() {
       const checked = document.querySelector("input[name='regRole']:checked");
@@ -133,8 +172,7 @@
     }
 
     function onRoleChange() {
-      const wrap = document.getElementById("residentPickerWrap");
-      wrap.classList.toggle("hidden", selectedRegRole() !== "family");
+      document.getElementById("residentPickerWrap").classList.toggle("hidden", selectedRegRole() !== "family");
     }
 
     function showAlert(text, kind) {
@@ -158,8 +196,7 @@
       } else {
         localStorage.removeItem("agecare_resident_id");
       }
-      const dest = HOME_BY_ROLE[data.role] || "/carer";
-      window.location.href = dest;
+      window.location.href = HOME_BY_ROLE[data.role] || "/carer";
     }
 
     function quickFill(user, pass) {
@@ -186,7 +223,7 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || "Invalid username or password.");
         showAlert("Signed in as " + data.full_name + " (" + data.role + "). Opening your portal…", "ok");
-        setTimeout(() => saveSessionAndGo(data), 300);
+        setTimeout(() => saveSessionAndGo(data), 250);
       } catch (err) {
         showAlert(err.message, "err");
       } finally {
@@ -216,7 +253,7 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || "Could not create account.");
         showAlert("Account created for " + data.full_name + ". Opening your portal…", "ok");
-        setTimeout(() => saveSessionAndGo(data), 300);
+        setTimeout(() => saveSessionAndGo(data), 250);
       } catch (err) {
         showAlert(err.message, "err");
       } finally {
@@ -224,7 +261,6 @@
       }
     }
 
-    // Load residents for the family registration dropdown
     fetch("/api/residents")
       .then((r) => (r.ok ? r.json() : []))
       .then((list) => {

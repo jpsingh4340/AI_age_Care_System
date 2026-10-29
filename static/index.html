@@ -3,57 +3,54 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Nurse · Handover &amp; clinical review · Age-Care Intelligence</title>
+  <title>Nurse Portal · Handover &amp; Clinical Review · AgeCare</title>
   <link rel="icon" type="image/png" href="/static/img/favicon.png">
   <link rel="stylesheet" href="/static/app.css">
 </head>
 <body>
-  <!-- Top bar -->
-  <header class="topbar">
-    <div class="topbar-inner">
-      <a class="brand" href="/nurse">
-        <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true">
-          <rect width="36" height="36" rx="9" fill="#0E6B66"></rect>
-          <path d="M18 26s-8-4.8-8-10.4A4.6 4.6 0 0 1 18 13a4.6 4.6 0 0 1 8 2.6C26 21.2 18 26 18 26z" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round"></path>
-        </svg>
-        <div>
-          <div class="brand-title">Age-Care Intelligence</div>
-          <div class="brand-sub">Kōwhai Gardens Rest Home · Nurse Clinical Portal</div>
-        </div>
+  <header class="topbar"></header>
+
+  <!-- Common ClearScan Hero -->
+  <section class="cs-hero">
+    <div class="cs-hero-watermark" aria-hidden="true">Clinical Review &amp; Handover</div>
+    <div class="cs-hero-eyebrow">Role 02 · Registered Nurse Portal</div>
+    <h1>Clinical Review Instantly</h1>
+    <p class="cs-sub">
+      Review AI-supported care priorities, inspect vital signs and carer shift notes, and approve guidance or family updates with full clinical control.
+    </p>
+    <div class="cs-cta-row">
+      <a class="cs-glow-btn" href="/guidance">
+        <span>✓</span> Draft Care Guidance
       </a>
-      <nav class="role-nav" aria-label="Nurse pages">
-        <a href="/nurse" aria-current="page">Handover &amp; review</a>
-        <a href="/guidance">Guidance</a>
-        <a href="/ocr">Report OCR</a>
-        <a href="/ask">Ask AI</a>
-        <a href="/vision">Room check</a>
-        <a href="/carer">Carer view</a>
-      </nav>
-      <div class="user-chip">
-        <span class="user-pill">Signed in as <strong data-auth-name>Nurse</strong></span>
-        <button type="button" class="btn btn-ghost btn-sm" onclick="logout()">Sign out</button>
-      </div>
+      <a class="btn btn-ghost" href="/ocr">Read Health Report (OCR)</a>
     </div>
-  </header>
+    <div class="cs-privacy-note" id="banner">AI drafts are suggestions only. Nothing reaches carers or a family until a nurse approves it.</div>
+    <div class="cs-trust-row">
+      <span><b>✓</b> Priority Triage</span>
+      <span><b>✓</b> Source-Backed Guidance</span>
+      <span><b>✓</b> Family Update Approval</span>
+      <span><b>✓</b> Full Audit Log</span>
+    </div>
+  </section>
+
+  <!-- Common Horizontal Feature Strip -->
+  <div class="cs-strip">
+    <div class="cs-strip-inner">
+      <span class="cs-strip-item">🩺 Accept or change care priority levels.</span>
+      <span class="cs-strip-item">📋 Live sync with carer tasks &amp; concerns.</span>
+      <span class="cs-strip-item">✅ Approve plain-language family updates.</span>
+      <span class="cs-strip-item">⚡ Inspect OCR reports &amp; room alerts.</span>
+    </div>
+  </div>
 
   <main class="page">
     <div class="page-head">
       <div>
-        <div class="eyebrow">Nurse / team leader</div>
-        <h1 class="page-title">Handover &amp; clinical review</h1>
+        <div class="eyebrow">Nurse / Team Leader</div>
+        <h2 class="page-title">Resident Handover &amp; Clinical Oversight</h2>
       </div>
-      <p class="small" id="banner">Fake test data only. AI drafts are suggestions until a nurse approves them.</p>
+      <div class="pills" id="tabs" role="tablist" aria-label="Residents"></div>
     </div>
-
-    <div class="notice info">
-      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" style="flex:none; margin-top:2px">
-        <path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6l8-3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path>
-      </svg>
-      <span>AI drafts are suggestions only. Nothing reaches carers or a family until you approve it.</span>
-    </div>
-
-    <!-- Resident chooser pills -->
-    <div class="pills" id="tabs" role="tablist" aria-label="Residents"></div>
 
     <div class="row">
       <!-- Left column -->
@@ -382,7 +379,6 @@
         class: "field",
         rows: "4",
         readonly: !isPending ? "readonly" : false,
-        style: !isPending ? "background:#F7F8F5" : "",
       });
       box.value = val;
       box.addEventListener("input", (e) => state.famEdits.set(latest.id, e.target.value));
@@ -478,11 +474,11 @@
     function renderActivity() {
       const head = h("h2", { text: "Audit log" });
       if (!state.audit || !state.audit.ok) {
-        fill("activity", head, h("p", { class: "tiny", style: "color:#9FB5AE", text: "Only a nurse can see the audit log." }));
+        fill("activity", head, h("p", { class: "tiny", text: "Only a nurse can see the audit log." }));
         return;
       }
       if (!state.audit.data.length) {
-        fill("activity", head, h("p", { class: "tiny", style: "color:#9FB5AE", text: "No activity yet." }));
+        fill("activity", head, h("p", { class: "tiny", text: "No activity yet." }));
         return;
       }
       fill(

@@ -3,42 +3,50 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Carer · Today's shift · Age-Care Intelligence</title>
+  <title>Carer Portal · AgeCare</title>
   <link rel="icon" type="image/png" href="/static/img/favicon.png">
   <link rel="stylesheet" href="/static/app.css">
 </head>
 <body>
-  <!-- Top bar -->
-  <header class="topbar">
-    <div class="topbar-inner">
-      <a class="brand" href="/carer">
-        <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true">
-          <rect width="36" height="36" rx="9" fill="#0E6B66"></rect>
-          <path d="M18 26s-8-4.8-8-10.4A4.6 4.6 0 0 1 18 13a4.6 4.6 0 0 1 8 2.6C26 21.2 18 26 18 26z" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round"></path>
-        </svg>
-        <div>
-          <div class="brand-title">Age-Care Intelligence</div>
-          <div class="brand-sub">Kōwhai Gardens Rest Home · Carer Shift Portal</div>
-        </div>
-      </a>
-      <nav class="role-nav" aria-label="Carer pages">
-        <a href="/carer" aria-current="page">Today's shift</a>
-        <a href="/ask">Ask AI</a>
-        <a href="/welcome">Project overview</a>
-      </nav>
-      <div class="user-chip">
-        <span class="user-pill">Signed in as <strong data-auth-name>Carer</strong></span>
-        <button type="button" class="btn btn-ghost btn-sm" onclick="logout()">Sign out</button>
-      </div>
-    </div>
-  </header>
+  <header class="topbar"></header>
 
-  <main class="page">
-    <!-- Signed-in heading strip -->
+  <!-- Common ClearScan Hero -->
+  <section class="cs-hero">
+    <div class="cs-hero-watermark" aria-hidden="true">Frontline Shift Care</div>
+    <div class="cs-hero-eyebrow">Role 01 · Carer Workspace</div>
+    <h1>Today's Shift Care</h1>
+    <p class="cs-sub">
+      Record daily care tasks, check spot vitals, and flag observations so the Registered Nurse can review them immediately.
+    </p>
+    <div class="cs-cta-row">
+      <a class="cs-glow-btn" href="#carerWorkspace">
+        <span>✓</span> Record Shift Care
+      </a>
+    </div>
+    <div class="cs-privacy-note">Every task, vital sign, and concern syncs live to the Nurse dashboard.</div>
+    <div class="cs-trust-row">
+      <span><b>✓</b> Fast Task Logging</span>
+      <span><b>✓</b> Vital Sign Range Checks</span>
+      <span><b>✓</b> Direct Nurse Alerts</span>
+      <span><b>✓</b> RN-Approved Guidance</span>
+    </div>
+  </section>
+
+  <!-- Common Horizontal Feature Strip -->
+  <div class="cs-strip">
+    <div class="cs-strip-inner">
+      <span class="cs-strip-item">💊 Check nurse-approved guidance first.</span>
+      <span class="cs-strip-item">📋 Log meals, hydration &amp; mobility.</span>
+      <span class="cs-strip-item">🩺 Out-of-range vitals flag the nurse.</span>
+      <span class="cs-strip-item">⚡ Instant shift log per resident.</span>
+    </div>
+  </div>
+
+  <main class="page" id="carerWorkspace">
     <div class="page-head">
       <div>
-        <div class="eyebrow">Carer</div>
-        <h1 class="page-title">Today's shift</h1>
+        <div class="eyebrow">Carer Shift Sheet</div>
+        <h2 class="page-title">Select Resident &amp; Record Care</h2>
       </div>
       <div class="inline">
         <label class="inline small" for="carer" style="font-weight:700; color:var(--ink)">
@@ -48,7 +56,7 @@
       </div>
     </div>
 
-    <!-- Resident chooser pills (plus select for compatibility) -->
+    <!-- Resident chooser pills + select -->
     <div class="between">
       <div id="residentPills" class="pills" role="group" aria-label="Choose resident"></div>
       <label class="inline small" for="resident">
@@ -73,7 +81,7 @@
           </label>
 
           <div class="stack" style="gap: 6px">
-            <span style="font-weight: 700; font-size: 15px">Status of task</span>
+            <span style="font-weight: 700; font-size: 14.5px">Status of task</span>
             <div class="choices" role="radiogroup" aria-label="Status of task">
               <label class="choice">
                 <input type="radio" name="status" value="given" checked>

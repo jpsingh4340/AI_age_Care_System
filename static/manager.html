@@ -3,41 +3,51 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Manager · Overview &amp; compliance · Age-Care Intelligence</title>
+  <title>Manager Portal · Overview &amp; Compliance · AgeCare</title>
   <link rel="icon" type="image/png" href="/static/img/favicon.png">
   <link rel="stylesheet" href="/static/app.css">
 </head>
 <body>
-  <header class="topbar">
-    <div class="topbar-inner">
-      <a class="brand" href="/manager">
-        <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true">
-          <rect width="36" height="36" rx="9" fill="#0E6B66"></rect>
-          <path d="M18 26s-8-4.8-8-10.4A4.6 4.6 0 0 1 18 13a4.6 4.6 0 0 1 8 2.6C26 21.2 18 26 18 26z" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round"></path>
-        </svg>
-        <div>
-          <div class="brand-title">Age-Care Intelligence</div>
-          <div class="brand-sub">Kōwhai Gardens Rest Home · Manager &amp; Compliance Portal</div>
-        </div>
-      </a>
-      <nav class="role-nav" aria-label="Manager pages">
-        <a href="/manager" aria-current="page">Overview &amp; compliance</a>
-        <a href="/welcome">Project overview</a>
-      </nav>
-      <div class="user-chip">
-        <span class="user-pill">Signed in as <strong data-auth-name>Manager</strong></span>
-        <button type="button" class="btn btn-ghost btn-sm" onclick="logout()">Sign out</button>
-      </div>
+  <header class="topbar"></header>
+
+  <!-- Common ClearScan Hero -->
+  <section class="cs-hero">
+    <div class="cs-hero-watermark" aria-hidden="true">Governance &amp; Compliance</div>
+    <div class="cs-hero-eyebrow">Role 03 · Manager &amp; Admin Portal</div>
+    <h1>Facility Overview Instantly</h1>
+    <p class="cs-sub">
+      Monitor live rest-home KPIs, manage staff and family role credentials, and inspect the complete NZS 8134 clinical audit log.
+    </p>
+    <div class="cs-cta-row">
+      <button type="button" class="cs-glow-btn" onclick="loadOverview()">
+        <span>✓</span> Refresh Live Metrics
+      </button>
     </div>
-  </header>
+    <div class="cs-privacy-note">Every AI draft, nurse decision, and account action is logged with a timestamp.</div>
+    <div class="cs-trust-row">
+      <span><b>✓</b> NZS 8134 Evidence</span>
+      <span><b>✓</b> HIPC 2020 Privacy</span>
+      <span><b>✓</b> 4-Role Credentials</span>
+      <span><b>✓</b> Tamper-Evident Audit</span>
+    </div>
+  </section>
+
+  <!-- Common Horizontal Feature Strip -->
+  <div class="cs-strip">
+    <div class="cs-strip-inner">
+      <span class="cs-strip-item">📊 Real-time shift completion KPIs.</span>
+      <span class="cs-strip-item">🔑 Provision Carer, Nurse, Manager &amp; Family logins.</span>
+      <span class="cs-strip-item">✅ Verify human-in-the-loop compliance.</span>
+      <span class="cs-strip-item">⚡ Complete timestamped audit trail.</span>
+    </div>
+  </div>
 
   <main class="page">
     <div class="page-head">
       <div>
-        <div class="eyebrow">Admin / manager</div>
-        <h1 class="page-title">Overview and compliance</h1>
+        <div class="eyebrow">Admin / Manager</div>
+        <h2 class="page-title">Facility KPIs, Accounts &amp; Compliance</h2>
       </div>
-      <button type="button" class="btn btn-ghost btn-sm" onclick="loadOverview()">Refresh</button>
     </div>
 
     <!-- KPI strip -->
@@ -47,7 +57,7 @@
       <!-- Left: Residents overview + User accounts management -->
       <div class="col-main">
         <section class="card">
-          <h2>Residents</h2>
+          <h2>Residents Overview</h2>
           <div class="table-wrap">
             <table class="tbl">
               <thead>
@@ -66,7 +76,7 @@
 
         <section class="card">
           <div class="between">
-            <h2>User logins &amp; role credentials</h2>
+            <h2>User Logins &amp; Role Credentials</h2>
             <span class="small">Create logins for carers, nurses, managers, and families</span>
           </div>
 
@@ -125,29 +135,41 @@
       <!-- Right: Compliance evidence & Audit log -->
       <aside class="col-side">
         <section class="card">
-          <h2>Compliance evidence</h2>
-          <ul class="list" style="background:transparent">
-            <li style="padding-bottom:10px; border-bottom:1px solid var(--line-soft)">
-              <strong>Human-in-the-loop (NZS 8134)</strong>
-              <div class="small">AI drafts are never shown to carers or families until a Registered Nurse approves them.</div>
-            </li>
-            <li style="padding-bottom:10px; border-bottom:1px solid var(--line-soft)">
-              <strong>Health Information Privacy Code 2020</strong>
-              <div class="small">Each role has its own login. Family accounts see only nurse-approved updates for their linked resident.</div>
-            </li>
-            <li style="padding-bottom:10px; border-bottom:1px solid var(--line-soft)">
-              <strong>Local AI processing</strong>
-              <div class="small">Small language model runs locally via Ollama so resident notes stay on facility hardware.</div>
-            </li>
-            <li>
-              <strong>Full audit trail</strong>
-              <div class="small">Every draft, nurse approval, priority review and account change is timestamped below.</div>
-            </li>
-          </ul>
+          <h2>Compliance Evidence</h2>
+          <div class="cs-feature-list">
+            <div class="cs-feature-item">
+              <span class="cs-check-circle">✓</span>
+              <div>
+                <strong>Human-in-the-loop (NZS 8134)</strong>
+                <div class="small">AI drafts are never shown to carers or families until a Registered Nurse approves them.</div>
+              </div>
+            </div>
+            <div class="cs-feature-item">
+              <span class="cs-check-circle">✓</span>
+              <div>
+                <strong>Health Information Privacy Code 2020</strong>
+                <div class="small">Each role has its own login. Family accounts see only nurse-approved updates for their linked resident.</div>
+              </div>
+            </div>
+            <div class="cs-feature-item">
+              <span class="cs-check-circle">✓</span>
+              <div>
+                <strong>Local AI processing</strong>
+                <div class="small">Small language model runs locally via Ollama so resident notes stay on facility hardware.</div>
+              </div>
+            </div>
+            <div class="cs-feature-item">
+              <span class="cs-check-circle">✓</span>
+              <div>
+                <strong>Full audit trail</strong>
+                <div class="small">Every draft, nurse approval, priority review and account change is timestamped below.</div>
+              </div>
+            </div>
+          </div>
         </section>
 
         <section class="card dark">
-          <h2>Audit log</h2>
+          <h2>Audit Log</h2>
           <ol class="audit" id="auditList"></ol>
         </section>
       </aside>
