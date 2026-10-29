@@ -3,82 +3,107 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Family Portal · AgeCare</title>
+  <title>Whānau &amp; Family Portal · AgeCare</title>
   <link rel="icon" type="image/png" href="/static/img/favicon.png">
   <link rel="stylesheet" href="/static/app.css">
+  <style>
+    .resident-badge-circle {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background-color: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid var(--accent-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .update-box {
+      font-size: 16px;
+      line-height: 1.6;
+      white-space: pre-line;
+      color: var(--ink);
+      padding: 16px 0;
+    }
+  </style>
 </head>
 <body>
   <header class="topbar"></header>
 
-  <!-- Common ClearScan Hero -->
-  <section class="cs-hero">
-    <div class="cs-hero-watermark" aria-hidden="true">Family &amp; Whānau Updates</div>
-    <div class="cs-hero-eyebrow">Role 04 · Family Portal</div>
-    <h1 id="greetingHeading">Kia ora, Whānau</h1>
-    <p class="cs-sub">
-      Read warm, plain-language daily updates checked and approved by your loved one's Registered Nurse, and message the care team directly.
-    </p>
-    <div class="cs-cta-row">
-      <a class="cs-glow-btn" href="#famMsg">
-        <span>✓</span> Message Care Team
-      </a>
+  <main class="page-container page-narrow">
+    <div class="demo-banner alert-info">
+      <strong>Whānau update notice:</strong> All daily updates are checked and signed off by a Registered Nurse before they are shared.
     </div>
-    <div class="cs-privacy-note">Families see only nurse-approved updates—never raw clinical notes (Health Information Privacy Code 2020).</div>
-    <div class="cs-trust-row">
-      <span><b>✓</b> Nurse-Checked Updates</span>
-      <span><b>✓</b> Plain-Language Clarity</span>
-      <span><b>✓</b> Direct Staff Messaging</span>
-      <span><b>✓</b> Single-Resident Privacy</span>
-    </div>
-  </section>
 
-  <!-- Common Horizontal Feature Strip -->
-  <div class="cs-strip">
-    <div class="cs-strip-inner">
-      <span class="cs-strip-item">💌 Reassuring daily summaries.</span>
-      <span class="cs-strip-item">🩺 Reviewed by a Registered Nurse before sending.</span>
-      <span class="cs-strip-item">🔒 Linked strictly to your family member.</span>
-      <span class="cs-strip-item">⚡ Send questions or visit times to staff.</span>
+    <!-- Main question: How is my family member, and who do I contact? -->
+    <div class="page-question-banner">
+      <h1 class="q-title" id="greetingHeading">Kia ora, Whānau</h1>
+      <p>How is my family member, and who do I contact? Here is today's nurse-approved daily update and direct messaging with our care team.</p>
     </div>
-  </div>
 
-  <main class="page" style="max-width: 1040px">
-    <div class="row">
-      <!-- Left: Today's approved update -->
-      <section class="card col-main">
-        <div class="inline" style="gap: 14px">
-          <div id="resInitials" aria-hidden="true" style="width: 52px; height: 52px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px">MT</div>
+    <div class="stack">
+      <!-- 1. Today's update -->
+      <section class="card">
+        <div class="card-header no-border">
+          <div class="inline" style="gap: 12px;">
+            <div id="resInitials" class="resident-badge-circle" aria-hidden="true">MT</div>
+            <div>
+              <h2 class="card-title" id="resTitle" style="font-size: 18px;">Today's update</h2>
+              <p class="sub-text" id="resRoom">Kōwhai Gardens Rest Home</p>
+            </div>
+          </div>
+          <span class="badge badge-green">Nurse approved</span>
+        </div>
+
+        <div id="updateBody">
+          <p class="text-muted" style="padding: 16px 0;">Loading today's update…</p>
+        </div>
+      </section>
+
+      <!-- 2. Message the care team -->
+      <section class="card">
+        <div class="card-header">
           <div>
-            <h2 id="resTitle" style="font-size: 21px">Today's update</h2>
-            <div class="small" id="resRoom">Kōwhai Gardens</div>
+            <h2 class="card-title">Message the care team</h2>
+            <p class="sub-text">Questions, updates, or visiting times for our duty nurse and carers.</p>
           </div>
         </div>
 
-        <div id="updateBody" class="stack">
-          <p class="muted" style="font-size: 17px">Loading today's update…</p>
+        <div class="form-group">
+          <label for="famMsg">Your message</label>
+          <textarea id="famMsg" class="field" rows="3" placeholder="e.g. I will be visiting on Saturday morning with the grandchildren."></textarea>
+        </div>
+
+        <div class="between">
+          <p class="text-sm" id="famStatus"></p>
+          <button type="button" id="sendBtn" class="btn btn-primary" onclick="sendMessage()">Send message to team</button>
+        </div>
+
+        <div style="margin-top: 18px;">
+          <h3 style="font-size: 14px; margin-bottom: 8px;">Previous messages</h3>
+          <div id="sentList" class="audit-list"></div>
         </div>
       </section>
 
-      <!-- Right: Message the care team -->
-      <section class="card col-side">
-        <h2>Message the Care Team</h2>
-        <label class="lbl" for="famMsg">
-          <span class="small" style="font-weight: 400">Questions, or anything staff should know</span>
-          <textarea id="famMsg" class="field" rows="3" placeholder="e.g. I'll visit Saturday morning with the grandkids"></textarea>
-        </label>
-        <div class="between">
-          <p class="msg" id="famStatus"></p>
-          <button type="button" id="sendBtn" class="btn btn-primary" onclick="sendMessage()">Send Message →</button>
+      <!-- 3. Who to contact -->
+      <section class="card">
+        <div class="card-header no-border">
+          <h2 class="card-title">Who to contact</h2>
         </div>
-
-        <div id="sentList" class="stack"></div>
+        <p class="text-sm text-secondary" style="margin-bottom: 8px;">If you have urgent questions about care or wish to arrange a visit:</p>
+        <ul style="margin: 0; padding-left: 20px; font-size: 13.5px; line-height: 1.6; color: var(--ink-secondary);">
+          <li><strong>Duty Nurse Station:</strong> Available on shift 24 hours</li>
+          <li><strong>Facility Reception:</strong> Weekdays 8:30 AM to 5:00 PM</li>
+          <li><strong>Visiting Hours:</strong> Daily 9:00 AM to 8:00 PM</li>
+        </ul>
       </section>
     </div>
-
-    <footer class="foot">
-      Prototype for Team Trio · IA728001 Studio 5. All residents and staff are fictional.
-    </footer>
   </main>
+
+  <footer class="foot"></footer>
 
   <script src="/static/auth.js"></script>
   <script>
@@ -93,69 +118,109 @@
       if (!res.ok) return;
       const data = await res.json();
       const r = data.resident;
-      const initials = r.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+      const initials = (r.name || "").split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
       $("resInitials").textContent = initials;
-      $("resTitle").textContent = "Today's update for " + r.name.split(" ")[0];
-      $("resRoom").textContent = r.room + " · Kōwhai Gardens";
+      $("resTitle").textContent = "Today's update for " + (r.name ? r.name.split(" ")[0] : "Resident");
+      $("resRoom").textContent = (r.room || "Room") + " · Kōwhai Care";
 
       const updateBody = $("updateBody");
-      updateBody.innerHTML = "";
-      if (!data.updates.length) {
+      updateBody.replaceChildren();
+
+      if (!data.updates || !data.updates.length) {
         const p = document.createElement("p");
-        p.className = "muted";
-        p.style.fontSize = "17px";
-        p.textContent = "No update has been approved yet today. Updates are checked by a nurse before they're shared with you.";
+        p.className = "text-muted";
+        p.style.padding = "16px 0";
+        p.textContent = "No update has been approved yet today. Updates are prepared by our care staff and checked by a Registered Nurse before they are shared.";
         updateBody.appendChild(p);
       } else {
         const latest = data.updates[0];
-        const p = document.createElement("p");
-        p.style.fontSize = "18px";
-        p.style.lineHeight = "1.6";
-        p.style.whiteSpace = "pre-line";
+        const p = document.createElement("div");
+        p.className = "update-box";
         p.textContent = latest.text;
 
         const meta = document.createElement("div");
-        meta.className = "tiny inline";
-        meta.innerHTML = `<span class="badge ok">✓ Nurse Approved</span>`;
-        const span = document.createElement("span");
-        span.textContent = "Approved by " + (latest.approved_by || "Registered Nurse") + " · " + (latest.sent_at || "").slice(11, 16);
-        meta.appendChild(span);
+        meta.className = "between";
+        meta.style.borderTop = "1px solid var(--line)";
+        meta.style.paddingTop = "10px";
+
+        const left = document.createElement("span");
+        left.className = "badge badge-green";
+        left.textContent = "Approved by " + (latest.approved_by || "Registered Nurse");
+
+        const right = document.createElement("span");
+        right.className = "text-mono text-muted";
+        right.textContent = "Sent at " + (latest.sent_at || "").slice(11, 16);
+
+        meta.append(left, right);
         updateBody.append(p, meta);
       }
 
       const sentList = $("sentList");
-      sentList.innerHTML = "";
-      data.messages.forEach((m) => {
-        const item = document.createElement("div");
-        item.className = "list-item";
-        item.style.flexDirection = "column";
-        item.style.gap = "4px";
-        const txt = document.createElement("div");
-        txt.textContent = m.text;
-        const sub = document.createElement("div");
-        sub.className = "tiny";
-        sub.textContent = (m.created_at || "").slice(11, 16) + " · " + (m.read_by ? "Read by " + m.read_by : "Sent to nurse");
-        item.append(txt, sub);
-        sentList.appendChild(item);
-      });
+      sentList.replaceChildren();
+      if (!data.messages || !data.messages.length) {
+        const empty = document.createElement("p");
+        empty.className = "text-muted text-sm";
+        empty.textContent = "No messages sent yet.";
+        sentList.appendChild(empty);
+      } else {
+        data.messages.forEach((m) => {
+          const item = document.createElement("div");
+          item.className = "list-item";
+          item.style.flexDirection = "column";
+          item.style.gap = "4px";
+
+          const topRow = document.createElement("div");
+          topRow.className = "between";
+          topRow.style.width = "100%";
+
+          const txt = document.createElement("div");
+          txt.className = "text-sm";
+          txt.style.fontWeight = "600";
+          txt.textContent = m.text;
+
+          const time = document.createElement("span");
+          time.className = "mono-time";
+          time.textContent = (m.created_at || "").slice(11, 16);
+          topRow.append(txt, time);
+
+          const sub = document.createElement("div");
+          sub.className = "sub-text";
+          sub.textContent = m.read_by ? "Read by " + m.read_by : "Sent to duty nurse";
+
+          item.append(topRow, sub);
+          sentList.appendChild(item);
+        });
+      }
     }
 
     async function sendMessage() {
       const text = $("famMsg").value.trim();
-      if (text.length < 2) return;
+      if (text.length < 2) {
+        $("famMsg").focus();
+        return;
+      }
       $("sendBtn").disabled = true;
-      const res = await window.authFetch("/api/family/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: text }),
-      });
-      $("sendBtn").disabled = false;
-      if (res.ok) {
-        $("famMsg").value = "";
-        $("famStatus").textContent = "Message sent to the care team.";
-        $("famStatus").className = "msg ok";
-        if (window.showToast) window.showToast("Message sent to care team");
-        loadFamily();
+      try {
+        const res = await window.authFetch("/api/family/messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: text }),
+        });
+        if (res.ok) {
+          $("famMsg").value = "";
+          $("famStatus").textContent = "Message sent to the care team.";
+          $("famStatus").className = "text-sm alert-success";
+          if (window.showToast) window.showToast("Message sent to care team");
+          loadFamily();
+        } else {
+          $("famStatus").textContent = "Could not send message. Please try again.";
+          $("famStatus").className = "text-sm alert-danger";
+        }
+      } catch (e) {
+        $("famStatus").textContent = e.message || "Network error.";
+        $("famStatus").className = "text-sm alert-danger";
+      } finally {
+        $("sendBtn").disabled = false;
       }
     }
 
