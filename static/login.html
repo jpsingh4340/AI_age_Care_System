@@ -505,7 +505,7 @@
     window.handleGoogleSignIn = async function () {
       hideAlert();
       if (!fbAuth) {
-        showAlert("Paste your Firebase config in static/firebase-config.js to enable Google Sign-In.", "err");
+        showAlert("Firebase is not initialized yet. Please refresh the page.", "err");
         return;
       }
       try {
@@ -523,6 +523,10 @@
         showAlert("Signed in with Google as " + session.full_name + " (" + session.role + ").", "ok");
         setTimeout(() => saveSessionAndGo(session), 250);
       } catch (err) {
+        if (err && err.code === "auth/unauthorized-domain" && window.location.hostname === "127.0.0.1") {
+          window.location.href = "http://localhost:" + (window.location.port || "8000") + "/login";
+          return;
+        }
         showAlert(err.message || "Google sign-in failed.", "err");
       }
     };
@@ -603,11 +607,21 @@
       const residentId = role === "family" ? Number(document.getElementById("regResident").value) : null;
 
       try {
-        // 1. Create account in Firebase Auth if configured
+        // 1. Create account in Firebase Auth if configured and Email/Password provider is enabled
         if (fbAuth) {
-          const cred = await createUserWithEmailAndPassword(fbAuth, email, password);
-          if (fullName) {
-            try { await updateProfile(cred.user, { displayName: fullName }); } catch (e) {}
+          try {
+            const cred = await createUserWithEmailAndPassword(fbAuth, email, password);
+            if (fullName) {
+              try { await updateProfile(cred.user, { displayName: fullName }); } catch (e) {}
+            }
+          } catch (fbErr) {
+            if (fbErr && fbErr.code === "auth/email-already-in-use") {
+              throw new Error("This email is already registered in Firebase. Please switch to Log in.");
+            }
+            if (fbErr && fbErr.code === "auth/weak-password") {
+              throw new Error("Password should be at least 6 characters.");
+            }
+            console.warn("Firebase Email/Password registration note:", fbErr.code || fbErr.message);
           }
         }
 
