@@ -1,10 +1,17 @@
-// Carer shift sheet - load assigned residents, save care records, view approved guidance.
+// Carer shift sheet: pick a resident, save care records, read approved guidance.
 var state = { role: "carer", people: [], selected: null };
 
-var STATUS_TEXT = { given: "Given", refused: "Refused", not_done: "Not done" };
+var STATUS_TEXT = { given: "Done", refused: "Refused", not_done: "Not done" };
 
 function $(id) {
   return document.getElementById(id);
+}
+
+function el(tag, className, text) {
+  var node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
 }
 
 async function getJSON(url) {
@@ -23,21 +30,21 @@ async function postJSON(url, data) {
   });
   var body = await res.json();
   if (!res.ok) {
-    var msg = typeof body.detail === "string" ? body.detail : "Please check your entries.";
+    var msg = typeof body.detail === "string" ? body.detail : "Please check what you entered.";
     throw new Error(msg);
   }
   return body;
 }
 
 function showMsg(id, text, type) {
-  var el = $(id);
-  if (!el) return;
-  el.textContent = text;
+  var box = $(id);
+  if (!box) return;
+  box.textContent = text;
   var cls = "text-sm ";
   if (type === "ok") cls += "alert-success";
   else if (type === "warn") cls += "alert-warn";
   else cls += "alert-danger";
-  el.className = cls;
+  box.className = cls;
   if (window.showToast) window.showToast(text, type === "err");
 }
 
@@ -48,15 +55,15 @@ function fillSelect(select, items) {
   });
 }
 
-function carerName() {
+function carerName(msgId) {
   var name = $("carer").value.trim();
-  if (name === "" || name.length < 2) {
+  if (name.length < 2) {
     var fallback = localStorage.getItem("agecare_name") || "";
     if (fallback) {
       $("carer").value = fallback;
       return fallback;
     }
-    alert("Please type your name in the 'Carer on duty' field.");
+    showMsg(msgId, "Type your name in 'Carer on duty' first.", "err");
     $("carer").focus();
     return null;
   }
@@ -68,16 +75,18 @@ function timeOnly(iso) {
   return (iso || "").slice(11, 16);
 }
 
+function roomOf(p) {
+  return "Room " + (100 + Number(p.resident_id));
+}
+
 function renderPills() {
   var wrap = $("residentPills");
   if (!wrap) return;
   wrap.replaceChildren();
   state.people.forEach(function (p) {
-    var btn = document.createElement("button");
+    var btn = el("button", "pill", p.name + " · " + roomOf(p));
     btn.type = "button";
-    btn.className = "pill";
     btn.setAttribute("aria-pressed", String(String(p.resident_id) === String(state.selected)));
-    btn.textContent = p.name + " · Room " + (100 + Number(p.resident_id));
     btn.addEventListener("click", function () {
       $("resident").value = String(p.resident_id);
       changeResident();
@@ -87,8 +96,7 @@ function renderPills() {
 }
 
 async function loadPage() {
-  var savedName = localStorage.getItem("carerName") || localStorage.getItem("agecare_name") || "Priya P.";
-  $("carer").value = savedName;
+  $("carer").value = localStorage.getItem("carerName") || localStorage.getItem("agecare_name") || "";
 
   var opts = await getJSON("/api/carer/options");
   if (opts) {
@@ -98,14 +106,15 @@ async function loadPage() {
 
   var people = await getJSON("/api/residents");
   if (!people) {
-    $("guide").textContent = "Could not connect to the server.";
+    $("residentPills").replaceChildren(el("p", "alert-box alert-danger", "Could not reach the server. Check that the backend is running."));
+    $("guide").textContent = "";
     return;
   }
   state.people = people;
   var sel = $("resident");
   sel.replaceChildren();
   people.forEach(function (p) {
-    sel.add(new Option(p.name + " (Room " + (100 + Number(p.resident_id)) + ")", p.resident_id));
+    sel.add(new Option(p.name + " (" + roomOf(p) + ")", p.resident_id));
   });
   sel.addEventListener("change", changeResident);
   changeResident();
@@ -117,8 +126,12 @@ function changeResident() {
   if (!person) return;
   state.selected = person.resident_id;
   $("todayName").textContent = person.name;
-  var condEl = $("residentConditions");
-  if (condEl) condEl.textContent = (person.conditions || []).join(" · ");
+  $("recordName").textContent = person.name;
+  $("residentConditions").textContent = (person.conditions || []).join(", ");
+  ["taskMsg", "vitalsMsg", "concernMsg"].forEach(function (m) {
+    $(m).textContent = "";
+    $(m).className = "text-sm";
+  });
   renderPills();
   loadToday();
   loadGuide();
@@ -129,15 +142,15 @@ async function loadToday() {
   if (!data) return;
   var rows = [];
   (data.tasks || []).forEach(function (t) {
-    rows.push({ time: t.created_at, what: t.task + " — " + (STATUS_TEXT[t.status] || t.status), status: t.status, by: t.carer });
+    rows.push({ time: t.created_at, what: t.task + ": " + (STATUS_TEXT[t.status] || t.status), status: t.status, by: t.carer });
   });
   (data.vitals || []).forEach(function (v) {
     var parts = [];
-    if (v.pulse) parts.push("Pulse " + v.pulse + " bpm");
+    if (v.pulse) parts.push("Pulse " + v.pulse);
     if (v.systolic && v.diastolic) parts.push("BP " + v.systolic + "/" + v.diastolic);
     if (v.temperature) parts.push("Temp " + v.temperature + "°C");
     if (v.spo2) parts.push("SpO2 " + v.spo2 + "%");
-    rows.push({ time: v.created_at, what: "Vitals: " + parts.join(", "), status: "vitals", by: v.carer });
+    rows.push({ time: v.created_at, what: "Vital signs: " + parts.join(", "), status: "vitals", by: v.carer });
   });
   (data.concerns || []).forEach(function (c) {
     rows.push({ time: c.created_at, what: "Concern (" + c.type + "): " + c.note, status: "concern", by: c.carer });
@@ -147,11 +160,10 @@ async function loadToday() {
   var body = $("todayRows");
   body.replaceChildren();
   if (rows.length === 0) {
-    var tr = body.insertRow();
-    var td = tr.insertCell();
+    var td = body.insertRow().insertCell();
     td.colSpan = 3;
-    td.className = "text-muted";
-    td.textContent = "Nothing recorded yet today for this resident.";
+    td.className = "empty";
+    td.textContent = "Nothing recorded yet today. Use the form to add the first task.";
     return;
   }
   rows.forEach(function (r) {
@@ -161,18 +173,12 @@ async function loadToday() {
     tdTime.textContent = timeOnly(r.time);
 
     var tdWhat = tr.insertCell();
-    var span = document.createElement("span");
-    span.textContent = r.what;
-    if (r.status === "concern") {
-      span.className = "badge badge-red";
-      span.style.fontWeight = "600";
-    } else if (r.status === "refused" || r.status === "not_done") {
-      span.className = "badge badge-amber";
-    }
-    tdWhat.appendChild(span);
+    tdWhat.textContent = r.what;
+    if (r.status === "concern") tdWhat.style.color = "var(--red)";
+    else if (r.status === "refused" || r.status === "not_done") tdWhat.style.color = "var(--amber)";
 
     var tdBy = tr.insertCell();
-    tdBy.className = "text-sm text-muted";
+    tdBy.className = "sub-text";
     tdBy.textContent = r.by;
   });
 }
@@ -182,46 +188,28 @@ async function loadGuide() {
   var g = await getJSON("/api/guidance/" + state.selected + "/approved");
   box.replaceChildren();
   if (!g) {
-    var p = document.createElement("p");
-    p.className = "text-muted";
-    p.textContent = "No approved guidance for this resident yet. A Registered Nurse will review and approve care guidance.";
-    box.appendChild(p);
+    box.appendChild(el("p", "empty", "No approved guidance for this resident yet. Ask the nurse on duty if you are unsure."));
     return;
   }
-
-  addList(box, "Signs to watch for", g.watch_for);
-  addList(box, "Daily prevention steps", g.prevention);
-
-  var by = document.createElement("div");
-  by.className = "sub-text";
-  by.style.marginTop = "10px";
-  by.textContent = "Approved by " + g.approved_by;
-  box.appendChild(by);
+  addList(box, "Signs to watch for", g.watch_for, true);
+  addList(box, "Every day", g.prevention, false);
+  box.appendChild(el("p", "sub-text", "Approved by " + g.approved_by));
 }
 
-function addList(box, heading, lines) {
+function addList(box, heading, lines, first) {
   if (!lines || lines.length === 0) return;
-  var b = document.createElement("div");
-  b.style.fontWeight = "600";
-  b.style.color = "var(--ink)";
-  b.style.marginTop = "8px";
-  b.textContent = heading;
-  box.appendChild(b);
-
-  var ul = document.createElement("ul");
-  ul.style.margin = "4px 0 10px";
-  ul.style.paddingLeft = "18px";
+  var label = el("p", "section-label", heading);
+  if (first) label.style.marginTop = "0";
+  box.appendChild(label);
+  var ul = el("ul", "bullets");
   lines.forEach(function (l) {
-    var li = document.createElement("li");
-    li.textContent = l.text;
-    ul.appendChild(li);
+    ul.appendChild(el("li", "", l.text));
   });
   box.appendChild(ul);
 }
 
-// Save handlers
 $("saveTask").addEventListener("click", async function () {
-  var name = carerName();
+  var name = carerName("taskMsg");
   if (!name) return;
   var statusRadio = document.querySelector("input[name=status]:checked");
   var status = statusRadio ? statusRadio.value : "given";
@@ -237,7 +225,7 @@ $("saveTask").addEventListener("click", async function () {
 });
 
 $("saveVitals").addEventListener("click", async function () {
-  var name = carerName();
+  var name = carerName("vitalsMsg");
   if (!name) return;
   var data = { resident_id: String(state.selected), carer: name };
   ["pulse", "systolic", "diastolic", "temperature", "spo2"].forEach(function (f) {
@@ -246,9 +234,9 @@ $("saveVitals").addEventListener("click", async function () {
   try {
     var res = await postJSON("/api/carer/vitals", data);
     if (res.tell_nurse) {
-      showMsg("vitalsMsg", "Saved. Outside usual range — please tell the nurse immediately.", "warn");
+      showMsg("vitalsMsg", "Saved. A reading is outside the usual range. Tell the nurse now.", "warn");
     } else {
-      showMsg("vitalsMsg", "Vitals saved successfully.", "ok");
+      showMsg("vitalsMsg", "Vital signs saved.", "ok");
     }
     ["pulse", "systolic", "diastolic", "temperature", "spo2"].forEach(function (f) { $(f).value = ""; });
     loadToday();
@@ -258,11 +246,11 @@ $("saveVitals").addEventListener("click", async function () {
 });
 
 $("saveConcern").addEventListener("click", async function () {
-  var name = carerName();
+  var name = carerName("concernMsg");
   if (!name) return;
   var note = $("cnote").value.trim();
   if (note.length < 3) {
-    showMsg("concernMsg", "Please write a brief note about what you observed.", "err");
+    showMsg("concernMsg", "Write a short note about what you noticed.", "err");
     $("cnote").focus();
     return;
   }
@@ -270,7 +258,7 @@ $("saveConcern").addEventListener("click", async function () {
     await postJSON("/api/carer/concerns", {
       resident_id: String(state.selected), type: $("ctype").value, note: note, carer: name,
     });
-    showMsg("concernMsg", "Concern sent to the nurse on duty.", "ok");
+    showMsg("concernMsg", "Sent to the nurse on duty.", "ok");
     $("cnote").value = "";
     loadToday();
   } catch (e) {
