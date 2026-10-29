@@ -3,223 +3,111 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Sign In · AgeCare</title>
+  <title>Sign in · AgeCare</title>
   <link rel="icon" type="image/png" href="/static/img/favicon.png">
   <link rel="stylesheet" href="/static/app.css">
-  <style>
-    .auth-shell {
-      max-width: 440px;
-      margin: 36px auto;
-    }
-    .auth-card {
-      background-color: var(--card);
-      border: 1px solid var(--line);
-      border-radius: var(--radius-card);
-      padding: 28px 24px;
-      box-shadow: var(--shadow-subtle);
-    }
-    .auth-header {
-      margin-bottom: 20px;
-      text-align: left;
-    }
-    .auth-tabs {
-      display: flex;
-      border-bottom: 1px solid var(--line);
-      margin-bottom: 20px;
-      gap: 16px;
-    }
-    .auth-tab-btn {
-      background: none;
-      border: none;
-      padding: 8px 0;
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--muted);
-      cursor: pointer;
-      position: relative;
-    }
-    .auth-tab-btn.active {
-      color: var(--accent);
-      border-bottom: 2px solid var(--accent);
-      margin-bottom: -1px;
-    }
-    .password-wrap {
-      position: relative;
-    }
-    .password-wrap input {
-      padding-right: 40px;
-    }
-    .eye-toggle-btn {
-      position: absolute;
-      right: 0;
-      top: 0;
-      bottom: 0;
-      width: 40px;
-      background: none;
-      border: none;
-      color: var(--muted);
-      cursor: pointer;
-      display: grid;
-      place-items: center;
-      font-size: 13px;
-    }
-    .google-btn {
-      width: 100%;
-      min-height: 40px;
-      background-color: var(--card);
-      border: 1px solid var(--line-strong);
-      border-radius: var(--radius-input);
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--ink);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      cursor: pointer;
-      transition: background-color 120ms ease;
-    }
-    .google-btn:hover {
-      background-color: var(--bg-subtle);
-    }
-    .divider-text {
-      display: flex;
-      align-items: center;
-      text-align: center;
-      margin: 16px 0;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    .divider-text::before, .divider-text::after {
-      content: "";
-      flex: 1;
-      border-bottom: 1px solid var(--line);
-    }
-    .divider-text:not(:empty)::before {
-      margin-right: 10px;
-    }
-    .divider-text:not(:empty)::after {
-      margin-left: 10px;
-    }
-    .auth-foot-action {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin: 12px 0 18px;
-      font-size: 13px;
-    }
-    .forgot-btn {
-      background: none;
-      border: none;
-      color: var(--accent);
-      padding: 0;
-      cursor: pointer;
-      text-decoration: underline;
-      font-size: 13px;
-    }
-  </style>
 </head>
 <body>
   <header class="topbar"></header>
 
-  <main class="page-container page-narrow">
-    <div class="auth-shell">
-      <div class="demo-banner alert-warn" style="margin-bottom: 16px;">
-        <strong>Demo prototype only:</strong> Fictional residents and synthetic records. No medical decisions are made without a Registered Nurse.
+  <main class="page-container">
+    <div class="auth-layout">
+      <div class="auth-aside">
+        <p class="eyebrow">Kōwhai Gardens rest home</p>
+        <h1>Sign in to AgeCare</h1>
+        <p class="lede">Carers record care, nurses decide what happens next, and families get a checked daily update.</p>
+        <figure class="shot">
+          <img src="/static/img/shot-nurse.png" alt="The nurse dashboard: residents sorted by care priority, with the selected resident's details below" width="1280" height="800">
+          <figcaption>Nurse dashboard with demo data</figcaption>
+        </figure>
+        <div class="demo-accounts">
+          <p class="section-label">Demo accounts (password: password123)</p>
+          <table class="tbl">
+            <tbody>
+              <tr><td class="text-mono">nurse1</td><td>Registered nurse</td></tr>
+              <tr><td class="text-mono">carer1</td><td>Carer</td></tr>
+              <tr><td class="text-mono">family1</td><td>Family of Margaret T.</td></tr>
+              <tr><td class="text-mono">manager1</td><td>Manager</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <div class="auth-card" id="authCard">
-        <div class="auth-header">
-          <h1 id="authHeading" style="font-size: 21px; margin-bottom: 4px;">Sign in</h1>
-          <p id="authSubtitle" class="sub-text">Access your role workspace: Carer, Nurse, Manager, or Whānau.</p>
-        </div>
+      <div>
+        <div class="card" id="authCard" style="padding: 28px 24px;">
+          <h2 id="authHeading" style="font-size: 24px;">Sign in</h2>
+          <p id="authSubtitle" class="sub-text" style="margin: 4px 0 20px;">You will go straight to the page for your role.</p>
 
-        <div class="auth-tabs">
-          <button type="button" class="auth-tab-btn active" id="tabLogin" onclick="switchTab('login')">Log in</button>
-          <button type="button" class="auth-tab-btn" id="tabRegister" onclick="switchTab('register')">Create account</button>
-        </div>
-
-        <!-- Google section -->
-        <div id="googleLoginSection">
-          <button type="button" class="google-btn" id="btnGoogle" onclick="handleGoogleSignIn()">
-            <img src="/static/img/ico/google.png" alt="" width="18" height="18" class="ico">
-            <span>Continue with Google</span>
-          </button>
-          <div class="divider-text">Or sign in with email</div>
-        </div>
-
-        <div id="alertBox" class="alert-box hidden" role="alert"></div>
-
-        <!-- Log in form -->
-        <form id="loginForm" onsubmit="handleLogin(event)">
-          <div class="form-group">
-            <label for="loginEmail">Email or username</label>
-            <input id="loginEmail" type="text" required autocomplete="username" class="field" placeholder="e.g. nurse.sam or nurse@example.com">
+          <div class="auth-tabs" role="tablist">
+            <button type="button" class="auth-tab-btn active" id="tabLogin" onclick="switchTab('login')">Sign in</button>
+            <button type="button" class="auth-tab-btn" id="tabRegister" onclick="switchTab('register')">Create account</button>
           </div>
 
-          <div class="form-group">
-            <label for="loginPassword">Password</label>
-            <div class="password-wrap">
-              <input id="loginPassword" type="password" required autocomplete="current-password" class="field" placeholder="Enter password">
-              <button type="button" class="eye-toggle-btn" onclick="togglePassword('loginPassword', this)" aria-label="Show or hide password" title="Show or hide password">Show</button>
+          <div id="googleLoginSection">
+            <button type="button" class="google-btn" id="btnGoogle" onclick="handleGoogleSignIn()">
+              <img src="/static/img/ico/google.png" alt="" width="18" height="18">
+              <span>Continue with Google</span>
+            </button>
+            <div class="divider-text">or with your username</div>
+          </div>
+
+          <div id="alertBox" class="alert-box hidden" role="alert" style="margin-bottom: 16px;"></div>
+
+          <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="form-group">
+              <label for="loginEmail">Username or email</label>
+              <input id="loginEmail" type="text" required autocomplete="username" class="field" placeholder="nurse1">
             </div>
-          </div>
-
-          <div class="auth-foot-action">
-            <label class="choice" style="border:0; padding:0; min-height:auto;">
-              <input type="checkbox" id="rememberMe" checked>
-              <span>Remember me</span>
-            </label>
-            <button type="button" class="forgot-btn" onclick="handleForgotPassword()">Forgot password?</button>
-          </div>
-
-          <button type="submit" class="btn btn-primary btn-block" id="btnLogin">
-            Sign in
-          </button>
-        </form>
-
-        <!-- Register form -->
-        <form id="registerForm" class="hidden" onsubmit="handleRegister(event)">
-          <div class="form-group">
-            <label for="regFullName">Full name</label>
-            <input id="regFullName" type="text" required class="field" placeholder="e.g. Sarah Johnson">
-          </div>
-
-          <div class="form-group">
-            <label for="regEmail">Email address</label>
-            <input id="regEmail" type="text" required autocomplete="email" class="field" placeholder="e.g. sarah@example.com">
-          </div>
-
-          <div class="form-group">
-            <label for="regPassword">Password</label>
-            <div class="password-wrap">
-              <input id="regPassword" type="password" required minlength="6" autocomplete="new-password" class="field" placeholder="Minimum 6 characters">
-              <button type="button" class="eye-toggle-btn" onclick="togglePassword('regPassword', this)" aria-label="Show or hide password">Show</button>
+            <div class="form-group">
+              <label for="loginPassword">Password</label>
+              <div class="password-wrap">
+                <input id="loginPassword" type="password" required autocomplete="current-password" class="field">
+                <button type="button" class="eye-toggle-btn" onclick="togglePassword('loginPassword', this)" aria-label="Show or hide password">Show</button>
+              </div>
             </div>
-          </div>
-
-          <div class="form-group">
-            <label>Select role</label>
-            <div class="choices" role="radiogroup" aria-label="Select role">
-              <label class="choice"><input type="radio" name="regRole" value="carer" checked onchange="onRoleChange()"> Care Assistant</label>
-              <label class="choice"><input type="radio" name="regRole" value="nurse" onchange="onRoleChange()"> Registered Nurse</label>
-              <label class="choice"><input type="radio" name="regRole" value="manager" onchange="onRoleChange()"> Manager</label>
-              <label class="choice"><input type="radio" name="regRole" value="family" onchange="onRoleChange()"> Whānau / Family</label>
+            <div class="auth-foot-action">
+              <label class="choice bare" style="font-weight: 500;">
+                <input type="checkbox" id="rememberMe" checked>
+                <span>Remember me</span>
+              </label>
+              <button type="button" class="link-btn" onclick="handleForgotPassword()">Forgot password?</button>
             </div>
-          </div>
+            <button type="submit" class="btn btn-primary btn-block" id="btnLogin">Sign in</button>
+          </form>
 
-          <div class="form-group hidden" id="residentPickerWrap">
-            <label for="regResident">Linked resident (Family accounts)</label>
-            <select id="regResident" class="field"></select>
-          </div>
-
-          <button type="submit" class="btn btn-primary btn-block" id="btnRegister" style="margin-top: 18px;">
-            Create account
-          </button>
-        </form>
+          <form id="registerForm" class="hidden" onsubmit="handleRegister(event)">
+            <div class="form-group">
+              <label for="regFullName">Full name</label>
+              <input id="regFullName" type="text" required class="field" autocomplete="name">
+            </div>
+            <div class="form-group">
+              <label for="regEmail">Email</label>
+              <input id="regEmail" type="text" required autocomplete="email" class="field">
+            </div>
+            <div class="form-group">
+              <label for="regPassword">Password <span class="hint">at least 6 characters</span></label>
+              <div class="password-wrap">
+                <input id="regPassword" type="password" required minlength="6" autocomplete="new-password" class="field">
+                <button type="button" class="eye-toggle-btn" onclick="togglePassword('regPassword', this)" aria-label="Show or hide password">Show</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label id="roleLabel">Role</label>
+              <div class="choices" role="radiogroup" aria-labelledby="roleLabel">
+                <label class="choice"><input type="radio" name="regRole" value="carer" checked onchange="onRoleChange()"> Carer</label>
+                <label class="choice"><input type="radio" name="regRole" value="nurse" onchange="onRoleChange()"> Nurse</label>
+                <label class="choice"><input type="radio" name="regRole" value="manager" onchange="onRoleChange()"> Manager</label>
+                <label class="choice"><input type="radio" name="regRole" value="family" onchange="onRoleChange()"> Family</label>
+              </div>
+            </div>
+            <div class="form-group hidden" id="residentPickerWrap">
+              <label for="regResident">Your family member in care</label>
+              <select id="regResident" class="field"></select>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block" id="btnRegister" style="margin-top: 8px;">Create account</button>
+          </form>
+        </div>
+        <p class="sub-text" style="margin-top: 12px;">Demo data only. These are fake residents.</p>
       </div>
     </div>
   </main>
@@ -274,8 +162,8 @@
 
       document.getElementById("authHeading").textContent = isLogin ? "Sign in" : "Create account";
       document.getElementById("authSubtitle").textContent = isLogin
-        ? "Access your role workspace: Carer, Nurse, Manager, or Whānau."
-        : "Register your email and pick your role in the care team.";
+        ? "You will go straight to the page for your role."
+        : "Use your email and choose your role.";
       hideAlert();
     };
 
@@ -482,9 +370,10 @@
       .then((r) => (r.ok ? r.json() : []))
       .then((list) => {
         const sel = document.getElementById("regResident");
-        sel.innerHTML = list
-          .map((p) => `<option value="${p.resident_id}">${p.name} (Room ${p.room || (100 + Number(p.resident_id))})</option>`)
-          .join("");
+        sel.replaceChildren();
+        list.forEach((p) => {
+          sel.add(new Option(p.name + " (Room " + (p.room || 100 + Number(p.resident_id)) + ")", p.resident_id));
+        });
       });
   </script>
 </body>
