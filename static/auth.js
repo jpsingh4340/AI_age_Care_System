@@ -1,4 +1,4 @@
-// Client-side authentication, strict 4-role guard, and universal ClearScan layout header/hero
+// Client-side authentication, strict 4-role guard, and universal ClearScan layout header/footer
 (function () {
   const HOME_BY_ROLE = {
     carer: "/carer",
@@ -134,35 +134,61 @@
   };
 
   function buildNavLinks() {
-    const links = [
-      { href: "/carer", label: "Carer" },
-      { href: "/nurse", label: "Nurse" },
-      { href: "/manager", label: "Manager" },
-      { href: "/family", label: "Family" },
-    ];
+    // On welcome or login page, do not show role portal links
+    if (path === "/welcome" || path === "/" || path === "/login") {
+      return "";
+    }
+    if (!token || !role) {
+      return "";
+    }
+    const links = [];
     if (role === "nurse") {
       links.push(
+        { href: "/nurse", label: "Nurse Dashboard" },
         { href: "/guidance", label: "Guidance AI" },
         { href: "/ocr", label: "Report OCR" },
         { href: "/vision", label: "Room Check" },
         { href: "/ask", label: "Ask AI" }
       );
     } else if (role === "carer") {
-      links.push({ href: "/ask", label: "Ask AI" });
+      links.push(
+        { href: "/carer", label: "Carer Portal" },
+        { href: "/ask", label: "Ask AI" }
+      );
     }
-    return links
-      .map(function (l) {
-        const current = path === l.href ? ' aria-current="page"' : "";
-        return '<a href="' + l.href + '"' + current + ">" + l.label + "</a>";
-      })
-      .join("");
+    if (!links.length) return "";
+    return (
+      '<nav class="role-nav" aria-label="Workspace navigation">' +
+      links
+        .map(function (l) {
+          const current = path === l.href ? ' aria-current="page"' : "";
+          return '<a href="' + l.href + '"' + current + ">" + l.label + "</a>";
+        })
+        .join("") +
+      "</nav>"
+    );
   }
 
-  // Upgrade every page's topbar to the unified ClearScan header
+  const STUDENT_FOOTER_HTML = `
+    <div class="foot-nav">
+      <span class="foot-brand">AgeCare</span>
+      <div class="foot-contacts">
+        <span>📞 <strong>Phone:</strong> 09-555-0192 / +64 21 000 4829 (Fake Demo Line)</span>
+        <span>✉️ <strong>Email:</strong> helpdesk@agecare-studentdemo.ac.nz · nurse.desk@agecare-studentdemo.ac.nz</span>
+        <span>📍 <strong>Address:</strong> 42 Kōwhai Avenue, Mt Eden, Auckland 1024, NZ</span>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <span>🎓 <strong>Student Project:</strong> Level 7 Software Engineering · IA728001 Studio 5 (Team Trio · Jaspreet Singh)</span>
+      <span>⚠️ All resident names, phone numbers, emails, and medical records are fictional for educational evaluation only.</span>
+    </div>
+  `;
+
+  // Upgrade every page's topbar and footer to the unified ClearScan layout
   document.addEventListener("DOMContentLoaded", function () {
     const curTheme = document.documentElement.getAttribute("data-theme") || "dark";
     const curFont = document.documentElement.getAttribute("data-font") || "md";
-    const homeHref = HOME_BY_ROLE[role] || "/login";
+    const isWelcomeOrLogin = path === "/welcome" || path === "/" || path === "/login";
 
     let header = document.querySelector("header.topbar, header.top, header");
     if (!header) {
@@ -173,29 +199,31 @@
     header.innerHTML = `
       <div class="topbar-inner">
         <a class="brand" href="/welcome">
-          <div>
-            <span class="brand-title">AgeCare</span>
-            <span class="brand-sub">Kōwhai Gardens · 4-Role Intelligence</span>
-          </div>
+          <span class="brand-title">AgeCare</span>
         </a>
-        <nav class="role-nav" aria-label="Role and tool navigation">
-          ${buildNavLinks()}
-        </nav>
+        ${buildNavLinks()}
         <div class="user-chip">
           <button type="button" class="ctrl-btn" id="csFontBtn" onclick="cycleFontSize()" title="Text size">Aa ${curFont === "md" ? "▾" : curFont.toUpperCase()}</button>
           <button type="button" class="ctrl-btn" id="csThemeBtn" onclick="toggleTheme()" title="Toggle dark/light theme">${curTheme === "dark" ? "🌙" : "☀️"}</button>
           ${
-            token
+            token && !isWelcomeOrLogin
               ? `<span class="user-pill"><strong data-auth-name>${fullName || username}</strong> · ${ROLE_LABELS[role] || role}</span>
-                 <button type="button" class="ctrl-btn" onclick="logout()">Sign Out</button>
-                 <a class="ctrl-btn" href="${homeHref}" style="border-color:var(--accent); color:var(--accent-ink)">My Portal →</a>`
-              : `<a class="ctrl-btn" href="/login">Log In</a>
-                 <a class="ctrl-btn" href="/login#register">Sign Up</a>
-                 <a class="ctrl-btn" href="/login" style="border-color:var(--accent); color:var(--accent-ink)">Open Portal →</a>`
+                 <button type="button" class="ctrl-btn" onclick="logout()">Sign Out</button>`
+              : `<a class="ctrl-btn" href="/login" style="background:var(--accent); border-color:var(--accent); color:#ffffff; font-weight:700">Log In / Sign Up</a>`
           }
         </div>
       </div>
     `;
+
+    // Ensure every page has the student-made contact navbar/footer at the bottom
+    const mainEl = document.querySelector("main.page, main") || document.body;
+    let footer = document.querySelector("footer.foot, footer");
+    if (!footer) {
+      footer = document.createElement("footer");
+      mainEl.appendChild(footer);
+    }
+    footer.className = "foot";
+    footer.innerHTML = STUDENT_FOOTER_HTML;
 
     // Populate any other [data-auth-name] / [data-auth-role] placeholders
     document.querySelectorAll("[data-auth-name]").forEach(function (el) {
