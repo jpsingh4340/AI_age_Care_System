@@ -170,17 +170,43 @@
   }
 
   const STUDENT_FOOTER_HTML = `
-    <div class="foot-nav">
-      <span class="foot-brand">AgeCare</span>
-      <div class="foot-contacts">
-        <span>📞 <strong>Phone:</strong> 09-555-0192 / +64 21 000 4829 (Fake Demo Line)</span>
-        <span>✉️ <strong>Email:</strong> helpdesk@agecare-studentdemo.ac.nz · nurse.desk@agecare-studentdemo.ac.nz</span>
-        <span>📍 <strong>Address:</strong> 42 Kōwhai Avenue, Mt Eden, Auckland 1024, NZ</span>
+    <div class="foot-grid">
+      <div class="foot-col">
+        <span class="foot-brand">AgeCare</span>
+        <p class="foot-desc">Connected residential aged-care platform empowering carers, registered nurses, facility managers, and whānau.</p>
+      </div>
+      <div class="foot-col">
+        <h4>Phone Support</h4>
+        <ul class="foot-list">
+          <li><span class="foot-ico">📞</span> <span>0800 243 227 (Toll-Free NZ)</span></li>
+          <li><span class="foot-ico">☎️</span> <span>+64 (09) 379 4820 (Reception)</span></li>
+          <li><span class="foot-ico">🩺</span> <span>+64 21 840 912 (24/7 Duty Nurse)</span></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h4>Email Directory</h4>
+        <ul class="foot-list">
+          <li><span class="foot-ico">✉️</span> <span>support@agecare.co.nz</span></li>
+          <li><span class="foot-ico">🏥</span> <span>nursing@agecare.co.nz</span></li>
+          <li><span class="foot-ico">👨‍👩‍👧</span> <span>whanau@agecare.co.nz</span></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h4>Location &amp; Hours</h4>
+        <ul class="foot-list">
+          <li><span class="foot-ico">📍</span> <span>42 Kōwhai Avenue, Mt Eden, Auckland 1024</span></li>
+          <li><span class="foot-ico">🕒</span> <span>Visiting: Daily 9:00 AM – 8:00 PM</span></li>
+          <li><span class="foot-ico">🛡️</span> <span>Clinical Station: Open 24 Hours</span></li>
+        </ul>
       </div>
     </div>
-    <div class="foot-meta">
-      <span>🎓 <strong>Student Project:</strong> Level 7 Software Engineering · IA728001 Studio 5 (Team Trio · Jaspreet Singh)</span>
-      <span>⚠️ All resident names, phone numbers, emails, and medical records are fictional for educational evaluation only.</span>
+    <div class="foot-bottom">
+      <span>© 2026 AgeCare Health NZ. All rights reserved.</span>
+      <div class="foot-links">
+        <span>Privacy Policy</span>
+        <span>Terms of Service</span>
+        <span>NZ Health &amp; Disability Standards</span>
+      </div>
     </div>
   `;
 
