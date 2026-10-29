@@ -3,74 +3,61 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Ask AI Assistant · AgeCare</title>
+  <title>Ask AI · AgeCare</title>
   <link rel="icon" type="image/png" href="/static/img/favicon.png">
   <link rel="stylesheet" href="/static/app.css">
   <style>
-    #answer {
-      white-space: pre-line;
-      font-size: 15px;
-      line-height: 1.6;
-      color: var(--ink);
-    }
+    #answer { font-size: 16px; line-height: 1.65; white-space: pre-line; }
   </style>
 </head>
 <body>
   <header class="topbar"></header>
 
   <main class="page-container page-narrow">
-    <div class="demo-banner alert-info">
-      <strong>Clinical support assistant:</strong> Ask practical aged-care questions in plain English. Answers cite approved guidance where available and run locally on facility hardware.
+    <div class="page-head">
+      <div>
+        <p class="eyebrow">Carers and nurses</p>
+        <h1>Ask a care question</h1>
+        <p class="lede">Practical questions about everyday care, answered from approved reference notes where possible.</p>
+      </div>
     </div>
 
-    <!-- Main question: One clear task -->
-    <div class="page-question-banner">
-      <h1 class="q-title">Ask care intelligence</h1>
-      <p>Clinical and practical aged-care assistant. Grounded in approved care references and local language models.</p>
-    </div>
+    <p class="notice"><strong>Demo data only.</strong> The AI runs on this computer. It does not diagnose or give medicine doses. If you are worried about a resident, tell the nurse.</p>
 
-    <!-- Step indicators -->
-    <div class="numbered-steps">
-      <div class="step-chip active"><span class="num">1</span><span>Choose model</span></div>
-      <div class="step-chip active"><span class="num">2</span><span>Type care question</span></div>
-      <div class="step-chip"><span class="num">3</span><span>Read verified answer</span></div>
-    </div>
+    <ol class="steps" aria-label="Steps">
+      <li class="step active"><span class="num">1</span>Type your question</li>
+      <li class="step" id="st2"><span class="num">2</span>Ask</li>
+      <li class="step" id="st3"><span class="num">3</span>Read the answer</li>
+    </ol>
 
-    <!-- Input Card -->
     <section class="card">
-      <div class="card-header no-border">
-        <div>
-          <h2 class="card-title">Ask a question</h2>
-          <p class="sub-text">Never diagnoses conditions or prescribes drug doses.</p>
+      <div class="form-group">
+        <label for="question">Your question</label>
+        <textarea id="question" class="field" rows="4" placeholder="For example: What should I check before helping someone stand with a walking frame?"></textarea>
+      </div>
+
+      <details style="margin-bottom: 4px;">
+        <summary class="sub-text" style="cursor: pointer; font-weight: 600; min-height: 32px;">Model settings</summary>
+        <div class="form-group" style="margin-top: 8px;">
+          <label for="model">Local AI model</label>
+          <select id="model" class="field"><option>Loading…</option></select>
+          <div id="ollama" class="text-sm" style="margin-top: 8px;"></div>
         </div>
-        <div id="ollama" class="text-sm"></div>
-      </div>
+      </details>
 
-      <div class="form-group">
-        <label for="model">1. Local AI model</label>
-        <select id="model" class="field"><option>Loading models...</option></select>
-      </div>
-
-      <div class="form-group">
-        <label for="question">2. Your care question</label>
-        <textarea id="question" class="field" rows="4" placeholder="e.g. What safety checks should be completed before helping a resident stand with a walking frame?"></textarea>
-      </div>
-
-      <div class="between" style="margin-top: 14px;">
-        <span class="sub-text">Press Ctrl+Enter to submit</span>
-        <button id="send" type="button" class="btn btn-primary">Ask question</button>
+      <div class="form-actions">
+        <span class="text-muted">Ctrl + Enter also sends</span>
+        <button id="send" type="button" class="btn btn-primary">Ask</button>
       </div>
     </section>
 
-    <!-- Step 3: Result Area -->
-    <section class="card" id="result" hidden>
+    <section class="card" id="result" hidden style="margin-top: 16px;" aria-live="polite">
       <div class="card-header">
-        <h2 class="card-title">3. Clinical response</h2>
+        <h2 class="card-title">Answer</h2>
         <span id="badge" class="badge"></span>
       </div>
-
-      <div id="answer" style="padding: 10px 0;"></div>
-      <div id="meta" class="sub-text text-mono" style="border-top: 1px solid var(--line); padding-top: 10px; margin-top: 10px;"></div>
+      <div id="answer"></div>
+      <p id="meta" class="text-mono text-muted" style="border-top: 1px solid var(--line); padding-top: 10px; margin-top: 16px;"></p>
     </section>
   </main>
 
@@ -79,34 +66,37 @@
   <script src="/static/auth.js"></script>
   <script>
     const $ = (id) => document.getElementById(id);
-    let defaultModel = "";
 
     async function loadModels() {
       const select = $("model");
       try {
         const r = await fetch("/api/ask/models");
         const data = await r.json();
-        defaultModel = data.default;
         select.replaceChildren();
         if (!data.ollama_running) {
           select.add(new Option("No local models found", ""));
           setStatus("Ollama is not running. Start it with: ollama serve", "err");
           return;
         }
-        for (const name of (data.models || [])) {
+        for (const name of data.models || []) {
           const label = name === data.default ? name + " (recommended)" : name;
           select.add(new Option(label, name, false, name === data.default));
         }
-        setStatus((data.models || []).length + " model(s) available locally", "ok");
+        setStatus((data.models || []).length + " model(s) on this computer", "ok");
       } catch (e) {
-        setStatus("Could not connect to model server", "err");
+        setStatus("Could not reach the model server", "err");
       }
     }
 
     function setStatus(text, kind) {
-      const el = $("ollama");
-      el.textContent = text;
-      el.className = "text-sm " + (kind === "ok" ? "badge badge-green" : "badge badge-amber");
+      const box = $("ollama");
+      box.textContent = text;
+      box.className = "badge " + (kind === "ok" ? "badge-green" : "badge-amber");
+    }
+
+    function step(n) {
+      $("st2").classList.toggle("active", n >= 2);
+      $("st3").classList.toggle("active", n >= 3);
     }
 
     async function ask() {
@@ -117,11 +107,12 @@
       }
       const btn = $("send");
       btn.disabled = true;
-      btn.textContent = "Thinking…";
+      btn.textContent = "Asking…";
+      step(2);
       $("result").hidden = false;
       $("badge").textContent = "";
-      $("badge").className = "badge";
-      $("answer").textContent = "The local model is reading clinical notes. Please wait…";
+      $("badge").className = "badge hidden";
+      $("answer").textContent = "Reading care notes…";
       $("meta").textContent = "";
 
       const started = Date.now();
@@ -132,25 +123,23 @@
           body: JSON.stringify({ question: question, model: $("model").value || null }),
         });
         const data = await r.json();
-        if (!r.ok) throw new Error(data.detail || "Something went wrong.");
+        if (!r.ok) throw new Error(typeof data.detail === "string" ? data.detail : "Something went wrong.");
 
-        $("badge").textContent = data.grounded ? "Grounded in approved guidance" : "General clinical guidance";
+        $("badge").textContent = data.grounded ? "From approved notes" : "General answer";
         $("badge").className = "badge " + (data.grounded ? "badge-green" : "badge-amber");
         $("answer").textContent = data.answer;
 
-        const secs = ((Date.now() - started) / 1000).toFixed(1);
-        let meta = "Model: " + data.model + " · " + secs + "s";
-        if (data.sources && data.sources.length) {
-          meta += " · Sources: " + data.sources.join(", ");
-        }
+        let meta = data.model + " · " + ((Date.now() - started) / 1000).toFixed(1) + "s";
+        if (data.sources && data.sources.length) meta += " · Sources: " + data.sources.join(", ");
         $("meta").textContent = meta;
+        step(3);
       } catch (e) {
-        $("answer").textContent = typeof e.message === "string" ? e.message : "Something went wrong";
+        $("answer").textContent = e.message || "Something went wrong.";
         $("badge").textContent = "Error";
         $("badge").className = "badge badge-red";
       } finally {
         btn.disabled = false;
-        btn.textContent = "Ask question";
+        btn.textContent = "Ask";
       }
     }
 
