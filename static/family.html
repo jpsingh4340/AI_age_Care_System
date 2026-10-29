@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Family Portal · AgeCare</title>
+  <link rel="icon" type="image/png" href="/static/img/favicon.png">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <header class="topbar"></header>
+
+  <!-- Common ClearScan Hero -->
+  <section class="cs-hero">
+    <div class="cs-hero-watermark" aria-hidden="true">Family &amp; Whānau Updates</div>
+    <div class="cs-hero-eyebrow">Role 04 · Family Portal</div>
+    <h1 id="greetingHeading">Kia ora, Whānau</h1>
+    <p class="cs-sub">
+      Read warm, plain-language daily updates checked and approved by your loved one's Registered Nurse, and message the care team directly.
+    </p>
+    <div class="cs-cta-row">
+      <a class="cs-glow-btn" href="#famMsg">
+        <span>✓</span> Message Care Team
+      </a>
+    </div>
+    <div class="cs-privacy-note">Families see only nurse-approved updates—never raw clinical notes (Health Information Privacy Code 2020).</div>
+    <div class="cs-trust-row">
+      <span><b>✓</b> Nurse-Checked Updates</span>
+      <span><b>✓</b> Plain-Language Clarity</span>
+      <span><b>✓</b> Direct Staff Messaging</span>
+      <span><b>✓</b> Single-Resident Privacy</span>
+    </div>
+  </section>
+
+  <!-- Common Horizontal Feature Strip -->
+  <div class="cs-strip">
+    <div class="cs-strip-inner">
+      <span class="cs-strip-item">💌 Reassuring daily summaries.</span>
+      <span class="cs-strip-item">🩺 Reviewed by a Registered Nurse before sending.</span>
+      <span class="cs-strip-item">🔒 Linked strictly to your family member.</span>
+      <span class="cs-strip-item">⚡ Send questions or visit times to staff.</span>
+    </div>
+  </div>
+
+  <main class="page" style="max-width: 1040px">
+    <div class="row">
+      <!-- Left: Today's approved update -->
+      <section class="card col-main">
+        <div class="inline" style="gap: 14px">
+          <div id="resInitials" aria-hidden="true" style="width: 52px; height: 52px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px">MT</div>
+          <div>
+            <h2 id="resTitle" style="font-size: 21px">Today's update</h2>
+            <div class="small" id="resRoom">Kōwhai Gardens</div>
+          </div>
+        </div>
+
+        <div id="updateBody" class="stack">
+          <p class="muted" style="font-size: 17px">Loading today's update…</p>
+        </div>
+      </section>
+
+      <!-- Right: Message the care team -->
+      <section class="card col-side">
+        <h2>Message the Care Team</h2>
+        <label class="lbl" for="famMsg">
+          <span class="small" style="font-weight: 400">Questions, or anything staff should know</span>
+          <textarea id="famMsg" class="field" rows="3" placeholder="e.g. I'll visit Saturday morning with the grandkids"></textarea>
+        </label>
+        <div class="between">
+          <p class="msg" id="famStatus"></p>
+          <button type="button" id="sendBtn" class="btn btn-primary" onclick="sendMessage()">Send Message →</button>
+        </div>
+
+        <div id="sentList" class="stack"></div>
+      </section>
+    </div>
+
+    <footer class="foot">
+      Prototype for Team Trio · IA728001 Studio 5. All residents and staff are fictional.
+    </footer>
+  </main>
+
+  <script src="/static/auth.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    async function loadFamily() {
+      const fullName = localStorage.getItem("agecare_name") || "Family";
+      const firstName = fullName.split(" ")[0];
+      $("greetingHeading").textContent = "Kia ora, " + firstName;
+
+      const res = await window.authFetch("/api/family/me");
+      if (!res.ok) return;
+      const data = await res.json();
+      const r = data.resident;
+      const initials = r.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+      $("resInitials").textContent = initials;
+      $("resTitle").textContent = "Today's update for " + r.name.split(" ")[0];
+      $("resRoom").textContent = r.room + " · Kōwhai Gardens";
+
+      const updateBody = $("updateBody");
+      updateBody.innerHTML = "";
+      if (!data.updates.length) {
+        const p = document.createElement("p");
+        p.className = "muted";
+        p.style.fontSize = "17px";
+        p.textContent = "No update has been approved yet today. Updates are checked by a nurse before they're shared with you.";
+        updateBody.appendChild(p);
+      } else {
+        const latest = data.updates[0];
+        const p = document.createElement("p");
+        p.style.fontSize = "18px";
+        p.style.lineHeight = "1.6";
+        p.style.whiteSpace = "pre-line";
+        p.textContent = latest.text;
+
+        const meta = document.createElement("div");
+        meta.className = "tiny inline";
+        meta.innerHTML = `<span class="badge ok">✓ Nurse Approved</span>`;
+        const span = document.createElement("span");
+        span.textContent = "Approved by " + (latest.approved_by || "Registered Nurse") + " · " + (latest.sent_at || "").slice(11, 16);
+        meta.appendChild(span);
+        updateBody.append(p, meta);
+      }
+
+      const sentList = $("sentList");
+      sentList.innerHTML = "";
+      data.messages.forEach((m) => {
+        const item = document.createElement("div");
+        item.className = "list-item";
+        item.style.flexDirection = "column";
+        item.style.gap = "4px";
+        const txt = document.createElement("div");
+        txt.textContent = m.text;
+        const sub = document.createElement("div");
+        sub.className = "tiny";
+        sub.textContent = (m.created_at || "").slice(11, 16) + " · " + (m.read_by ? "Read by " + m.read_by : "Sent to nurse");
+        item.append(txt, sub);
+        sentList.appendChild(item);
+      });
+    }
+
+    async function sendMessage() {
+      const text = $("famMsg").value.trim();
+      if (text.length < 2) return;
+      $("sendBtn").disabled = true;
+      const res = await window.authFetch("/api/family/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: text }),
+      });
+      $("sendBtn").disabled = false;
+      if (res.ok) {
+        $("famMsg").value = "";
+        $("famStatus").textContent = "Message sent to the care team.";
+        $("famStatus").className = "msg ok";
+        if (window.showToast) window.showToast("Message sent to care team");
+        loadFamily();
+      }
+    }
+
+    loadFamily();
+  </script>
+</body>
+</html>

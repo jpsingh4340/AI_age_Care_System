@@ -1,6 +1,5 @@
-// carer page - load residents, save tasks / vitals / concerns, show today's list
+// Carer page - load residents, save tasks / vitals / concerns, show today's list.
 
-// the AI Nurse bubble reads this too
 var state = { role: "carer", people: [], selected: null };
 
 var STATUS_TEXT = { given: "Given", refused: "Refused", not_done: "Not done" };
@@ -10,20 +9,21 @@ function $(id) {
 }
 
 async function getJSON(url) {
-  var res = await fetch(url, { headers: { "X-Role": "carer" } });
+  var fn = window.authFetch || fetch;
+  var res = await fn(url, { headers: { "X-Role": "carer" } });
   if (!res.ok) return null;
   return await res.json();
 }
 
 async function postJSON(url, data) {
-  var res = await fetch(url, {
+  var fn = window.authFetch || fetch;
+  var res = await fn(url, {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-Role": "carer" },
     body: JSON.stringify(data),
   });
   var body = await res.json();
   if (!res.ok) {
-    // pydantic errors come back as a list
     var msg = typeof body.detail === "string" ? body.detail : "Please check what you typed";
     throw new Error(msg);
   }
@@ -31,8 +31,11 @@ async function postJSON(url, data) {
 }
 
 function showMsg(id, text, type) {
-  $(id).textContent = text;
-  $(id).className = "msg " + type;
+  var el = $(id);
+  if (!el) return;
+  el.textContent = text;
+  el.className = "msg " + type;
+  if (window.showToast) window.showToast(text, type === "err");
 }
 
 function fillSelect(select, items) {
@@ -45,6 +48,11 @@ function fillSelect(select, items) {
 function carerName() {
   var name = $("carer").value.trim();
   if (name === "" || name.length === 1) {
+    var fallback = localStorage.getItem("agecare_name") || "";
+    if (fallback) {
+      $("carer").value = fallback;
+      return fallback;
+    }
     alert("Please type your name first");
     $("carer").focus();
     return null;
@@ -54,17 +62,36 @@ function carerName() {
 }
 
 function timeOnly(iso) {
-  return iso.slice(11, 16);
+  return (iso || "").slice(11, 16);
 }
 
-// ---------- load ----------
+function renderPills() {
+  var wrap = $("residentPills");
+  if (!wrap) return;
+  wrap.innerHTML = "";
+  state.people.forEach(function (p) {
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "pill";
+    btn.setAttribute("aria-pressed", String(String(p.resident_id) === String(state.selected)));
+    btn.textContent = p.name + " · Room " + (100 + Number(p.resident_id));
+    btn.addEventListener("click", function () {
+      $("resident").value = String(p.resident_id);
+      changeResident();
+    });
+    wrap.appendChild(btn);
+  });
+}
 
 async function loadPage() {
-  $("carer").value = localStorage.getItem("carerName") || "";
+  var savedName = localStorage.getItem("carerName") || localStorage.getItem("agecare_name") || "Priya P.";
+  $("carer").value = savedName;
 
   var opts = await getJSON("/api/carer/options");
-  fillSelect($("task"), opts.tasks);
-  fillSelect($("ctype"), opts.concern_types);
+  if (opts) {
+    fillSelect($("task"), opts.tasks);
+    fillSelect($("ctype"), opts.concern_types);
+  }
 
   var people = await getJSON("/api/residents");
   if (!people) {
@@ -73,8 +100,9 @@ async function loadPage() {
   }
   state.people = people;
   var sel = $("resident");
+  sel.innerHTML = "";
   people.forEach(function (p) {
-    sel.add(new Option(p.name, p.resident_id));
+    sel.add(new Option(p.name + " (Room " + (100 + Number(p.resident_id)) + ")", p.resident_id));
   });
   sel.addEventListener("change", changeResident);
   changeResident();
@@ -82,30 +110,34 @@ async function loadPage() {
 
 function changeResident() {
   var id = $("resident").value;
-  // resident ids can be numbers, keep the same type as the api
-  var person = state.people.find(function (p) { return String(p.resident_id) === id; });
+  var person = state.people.find(function (p) { return String(p.resident_id) === String(id); }) || state.people[0];
+  if (!person) return;
   state.selected = person.resident_id;
   $("todayName").textContent = person.name;
+  var condEl = $("residentConditions");
+  if (condEl) condEl.textContent = (person.conditions || []).join(" · ");
+  renderPills();
   loadToday();
   loadGuide();
 }
 
 async function loadToday() {
   var data = await getJSON("/api/carer/today?resident_id=" + encodeURIComponent(state.selected));
+  if (!data) return;
   var rows = [];
   data.tasks.forEach(function (t) {
-    rows.push({ time: t.created_at, what: t.task + " - " + STATUS_TEXT[t.status], cls: t.status, by: t.carer });
+    rows.push({ time: t.created_at, what: t.task + " — " + STATUS_TEXT[t.status], cls: "st-" + t.status, by: t.carer });
   });
   data.vitals.forEach(function (v) {
     var parts = [];
     if (v.pulse) parts.push("Pulse " + v.pulse);
     if (v.systolic && v.diastolic) parts.push("BP " + v.systolic + "/" + v.diastolic);
-    if (v.temperature) parts.push("Temp " + v.temperature);
+    if (v.temperature) parts.push("Temp " + v.temperature + "°C");
     if (v.spo2) parts.push("O2 " + v.spo2 + "%");
     rows.push({ time: v.created_at, what: "Vitals: " + parts.join(", "), cls: "", by: v.carer });
   });
   data.concerns.forEach(function (c) {
-    rows.push({ time: c.created_at, what: "Concern (" + c.type + "): " + c.note, cls: "refused", by: c.carer });
+    rows.push({ time: c.created_at, what: "Concern (" + c.type + "): " + c.note, cls: "st-concern", by: c.carer });
   });
   rows.sort(function (a, b) { return a.time > b.time ? -1 : 1; });
 
@@ -115,64 +147,51 @@ async function loadToday() {
     var tr = body.insertRow();
     var td = tr.insertCell();
     td.colSpan = 3;
+    td.className = "muted";
     td.textContent = "Nothing recorded yet today.";
     return;
   }
   rows.forEach(function (r) {
     var tr = body.insertRow();
-    tr.insertCell().textContent = timeOnly(r.time);
+    var tdTime = tr.insertCell();
+    tdTime.className = "mono";
+    tdTime.textContent = timeOnly(r.time);
     var what = tr.insertCell();
-    var badge = document.createElement("span");
-    badge.textContent = r.what;
-    if (r.cls) badge.className = "tag-" + r.cls.replace("_", "-");
-    what.appendChild(badge);
+    var span = document.createElement("span");
+    span.textContent = r.what;
+    if (r.cls) span.className = r.cls;
+    what.appendChild(span);
     tr.insertCell().textContent = r.by;
   });
-
-  // Check for live resident call bells or emergency alarms
-  var allToday = await getJSON("/api/carer/today");
-  if (allToday && allToday.concerns) {
-    var urgent = allToday.concerns.find(function(c) {
-      return c.note && (c.note.includes("CALL BELL") || c.note.includes("self-reported") || c.note.includes("Emergency"));
-    });
-    var banner = $("liveAlertsBanner");
-    var alertText = $("liveAlertText");
-    if (urgent && banner && alertText && (!window.dismissedAlert || window.dismissedAlert !== urgent.created_at)) {
-      window.activeAlertTime = urgent.created_at;
-      alertText.textContent = urgent.note + " (" + timeOnly(urgent.created_at) + ")";
-      banner.style.display = "block";
-    }
-  }
-}
-
-function dismissAlert() {
-  window.dismissedAlert = window.activeAlertTime;
-  var banner = $("liveAlertsBanner");
-  if (banner) banner.style.display = "none";
 }
 
 async function loadGuide() {
   var box = $("guide");
   var g = await getJSON("/api/guidance/" + state.selected + "/approved");
   if (!g) {
-    box.innerHTML = "<p class='small' style='color:#758a8a; font-style:italic;'>No approved guidance for this resident yet. An RN will prepare and approve instructions.</p>";
+    box.innerHTML = "<p class='small'>No approved guidance for this resident yet. A nurse will review and approve guidance.</p>";
     return;
   }
   box.innerHTML = "";
   addList(box, "Signs to watch for", g.watch_for);
   addList(box, "Daily prevention steps", g.prevention);
   var by = document.createElement("div");
-  by.className = "approved-footer";
-  by.textContent = "Approved by " + g.approved_by + " · Clinical oversight";
+  by.className = "tiny";
+  by.style.marginTop = "8px";
+  by.textContent = "Approved by " + g.approved_by;
   box.appendChild(by);
 }
 
 function addList(box, heading, lines) {
   if (!lines || lines.length === 0) return;
-  var b = document.createElement("b");
+  var b = document.createElement("div");
+  b.style.fontWeight = "700";
+  b.style.color = "var(--ink)";
+  b.style.marginTop = "6px";
   b.textContent = heading;
   var ul = document.createElement("ul");
-  ul.className = "guide-list";
+  ul.style.margin = "4px 0 8px";
+  ul.style.paddingLeft = "20px";
   lines.forEach(function (l) {
     var li = document.createElement("li");
     li.textContent = l.text;
@@ -192,7 +211,7 @@ $("saveTask").addEventListener("click", async function () {
     await postJSON("/api/carer/tasks", {
       resident_id: String(state.selected), task: $("task").value, status: status, carer: name,
     });
-    showMsg("taskMsg", "Saved: " + $("task").value + " - " + STATUS_TEXT[status], "ok");
+    showMsg("taskMsg", "Saved: " + $("task").value + " (" + STATUS_TEXT[status] + ")", "ok");
     loadToday();
   } catch (e) {
     showMsg("taskMsg", e.message, "err");
@@ -209,7 +228,7 @@ $("saveVitals").addEventListener("click", async function () {
   try {
     var res = await postJSON("/api/carer/vitals", data);
     if (res.tell_nurse) {
-      showMsg("vitalsMsg", "Saved. Some numbers are outside the usual range, please tell the nurse now.", "warn");
+      showMsg("vitalsMsg", "Saved. Outside usual range — please tell the nurse now.", "warn");
     } else {
       showMsg("vitalsMsg", "Vitals saved.", "ok");
     }

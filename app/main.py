@@ -1,7 +1,7 @@
 import re
 import time
 from pathlib import Path
-from app.routers import ask, carer, decision, patient, vision
+from app.routers import ask, carer, decision, portal, vision
 
 from fastapi import FastAPI, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,6 +24,7 @@ from .schemas import (
     GuidanceRequest,
     GuidanceResponse,
     LoginRequest,
+    FirebaseAuthRequest,
     OcrResponse,
     RecordsOut,
     RegisterRequest,
@@ -42,7 +43,7 @@ app = FastAPI(
 
 app.include_router(ask.router)
 app.include_router(carer.router)
-app.include_router(patient.router)
+app.include_router(portal.router)
 app.include_router(vision.router)
 app.include_router(decision.router)
 
@@ -82,10 +83,7 @@ def need_nurse(
 
 
 # ---------- Pages ----------
-@app.get("/", include_in_schema=False)
-def home():
-    """The dashboard. Open http://127.0.0.1:8000 in the browser."""
-    return FileResponse(STATIC_DIR / "index.html")
+# "/" now redirects to /login (see app/routers/portal.py)
 
 
 @app.get("/nurse", include_in_schema=False)
@@ -121,9 +119,13 @@ def login_page():
 # ---------- Authentication & Registration API ----------
 @app.post("/api/auth/register", response_model=AuthResponse)
 def auth_register(request: RegisterRequest):
-    """Register a new user as either a nurse or carer."""
+    """Register a new carer, nurse or family account. Manager accounts are created on /manager."""
+    if request.role == "family" and not guidance.load_resident(request.resident_id or 0):
+        raise HTTPException(status_code=400, detail="Pick the resident you are family of.")
     try:
-        user = auth.register_user(request.username, request.password, request.full_name, request.role)
+        user = auth.register_user(
+            request.username, request.password, request.full_name, request.role, request.resident_id
+        )
     except ValueError as err:
         raise HTTPException(status_code=400, detail=str(err))
     return auth.create_session(user)
@@ -135,6 +137,21 @@ def auth_login(request: LoginRequest):
     user = auth.authenticate_user(request.username, request.password)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid username or password.")
+    return auth.create_session(user)
+
+
+@app.post("/api/auth/firebase", response_model=AuthResponse)
+def auth_firebase(request: FirebaseAuthRequest):
+    """Exchange a verified Firebase email/Google sign-in for an AgeCare role session."""
+    try:
+        user = auth.firebase_sync_user(
+            email=request.email,
+            full_name=request.full_name,
+            role=request.role,
+            resident_id=request.resident_id,
+        )
+    except ValueError as err:
+        raise HTTPException(status_code=400, detail=str(err))
     return auth.create_session(user)
 
 
@@ -155,6 +172,7 @@ def auth_me(
         username=sess["username"],
         full_name=sess["full_name"],
         role=sess["role"],
+        resident_id=sess["resident_id"],
     )
 
 

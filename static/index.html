@@ -3,99 +3,98 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Nurse dashboard</title>
+  <title>Nurse Portal · Handover &amp; Clinical Review · AgeCare</title>
   <link rel="icon" type="image/png" href="/static/img/favicon.png">
-  <style>
-    :root {
-      --bg: #f4f6f5; --card: #ffffff; --ink: #1a2423; --muted: #5b6b6a; --line: #dde3e1;
-      --accent: #0a7c73; --green: #1f7a4a; --amber: #9a5700; --red: #b3261e;
-      --green-bg: #e3f3e9; --amber-bg: #fff1d6; --red-bg: #fce8e6;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #0f1716; --card: #172221; --ink: #e6efee; --muted: #9fb3b1; --line: #2a3b39;
-        --accent: #3fc1b5; --green: #5ccb8b; --amber: #eba64a; --red: #f2766e;
-        --green-bg: #12301f; --amber-bg: #33260f; --red-bg: #3a1917;
-      }
-    }
-    * { box-sizing: border-box; }
-    body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, "Segoe UI", Arial, sans-serif; }
-    a { color: var(--accent); }
-    header { background: var(--card); border-bottom: 1px solid var(--line); padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
-    header strong { font-size: 17px; margin-right: auto; }
-    header nav { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 14px; }
-    main { max-width: 1100px; margin: 0 auto; padding: 16px; }
-    .demo { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
-    .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
-    .tabs button { font: inherit; border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 8px; padding: 8px 14px; cursor: pointer; min-height: 40px; }
-    .tabs button[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
-    .grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
-    @media (min-width: 900px) { .grid { grid-template-columns: 3fr 2fr; } }
-    .col { display: grid; gap: 16px; align-content: start; }
-    section { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
-    h2 { font-size: 16px; margin: 0 0 8px; }
-    p { margin: 4px 0; }
-    ul { margin: 4px 0; padding-left: 20px; }
-    li { margin: 4px 0; }
-    .muted, .src { color: var(--muted); font-size: 13px; }
-    .src { display: block; }
-    table { width: 100%; border-collapse: collapse; font-size: 14px; }
-    th, td { text-align: left; padding: 5px 6px; border-bottom: 1px solid var(--line); }
-    th { color: var(--muted); font-weight: 600; }
-    .refused, .not_done { color: var(--red); }
-
-    /* Care priority card (Tanveer) */
-    .top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-    .level { font-weight: 700; padding: 3px 12px; border-radius: 999px; }
-    .level.Green { color: var(--green); background: var(--green-bg); }
-    .level.Amber { color: var(--amber); background: var(--amber-bg); }
-    .level.Red { color: var(--red); background: var(--red-bg); }
-    .step { font-weight: 600; }
-    .error { color: var(--red); font-size: 14px; }
-    .review { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
-    .review button, .review select, .review textarea { font: inherit; border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px; background: var(--card); color: var(--ink); min-height: 40px; }
-    .review button { cursor: pointer; font-weight: 600; }
-    .review button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-    .review textarea { flex: 1 1 100%; min-height: 56px; }
-  </style>
+  <link rel="stylesheet" href="/static/app.css">
 </head>
 <body>
-  <header>
-    <strong>Age-Care · Nurse dashboard</strong>
-    <nav aria-label="Pages">
-      <a href="/guidance">Guidance</a>
-      <a href="/ocr">Health report OCR</a>
-      <a href="/ask">Ask AI</a>
-      <a href="/vision">Face and room check</a>
-      <a href="/carer">Carer view</a>
-    </nav>
-  </header>
+  <header class="topbar"></header>
 
-  <main>
-    <p class="demo" id="banner">Demo data only. All residents are fake.</p>
-    <div class="tabs" id="tabs" role="tablist" aria-label="Residents"></div>
-
-    <div class="grid">
-      <div class="col">
-        <section id="priority"></section>
-        <section id="resident"></section>
-        <section id="care"></section>
-        <section id="guide"></section>
-      </div>
-      <div class="col">
-        <section id="needs"></section>
-        <section id="contacts"></section>
-        <section id="activity"></section>
-      </div>
+  <!-- Common ClearScan Hero -->
+  <section class="cs-hero">
+    <div class="cs-hero-watermark" aria-hidden="true">Clinical Review &amp; Handover</div>
+    <div class="cs-hero-eyebrow">Role 02 · Registered Nurse Portal</div>
+    <h1>Clinical Review Instantly</h1>
+    <p class="cs-sub">
+      Review AI-supported care priorities, inspect vital signs and carer shift notes, and approve guidance or family updates with full clinical control.
+    </p>
+    <div class="cs-cta-row">
+      <a class="cs-glow-btn" href="/guidance">
+        <span>✓</span> Draft Care Guidance
+      </a>
+      <a class="btn btn-ghost" href="/ocr">Read Health Report (OCR)</a>
     </div>
+    <div class="cs-privacy-note" id="banner">AI drafts are suggestions only. Nothing reaches carers or a family until a nurse approves it.</div>
+    <div class="cs-trust-row">
+      <span><b>✓</b> Priority Triage</span>
+      <span><b>✓</b> Source-Backed Guidance</span>
+      <span><b>✓</b> Family Update Approval</span>
+      <span><b>✓</b> Full Audit Log</span>
+    </div>
+  </section>
+
+  <!-- Common Horizontal Feature Strip -->
+  <div class="cs-strip">
+    <div class="cs-strip-inner">
+      <span class="cs-strip-item">🩺 Accept or change care priority levels.</span>
+      <span class="cs-strip-item">📋 Live sync with carer tasks &amp; concerns.</span>
+      <span class="cs-strip-item">✅ Approve plain-language family updates.</span>
+      <span class="cs-strip-item">⚡ Inspect OCR reports &amp; room alerts.</span>
+    </div>
+  </div>
+
+  <main class="page">
+    <div class="page-head">
+      <div>
+        <div class="eyebrow">Nurse / Team Leader</div>
+        <h2 class="page-title">Resident Handover &amp; Clinical Oversight</h2>
+      </div>
+      <div class="pills" id="tabs" role="tablist" aria-label="Residents"></div>
+    </div>
+
+    <div class="row">
+      <!-- Left column -->
+      <div class="col-main">
+        <section class="card" id="priority"></section>
+        <section class="card" id="resident"></section>
+        <section class="card" id="care"></section>
+        <section class="card" id="guide"></section>
+      </div>
+
+      <!-- Right column -->
+      <aside class="col-side">
+        <section class="card" id="needs"></section>
+        <section class="card" id="familyUpdates"></section>
+        <section class="card" id="familyMessages"></section>
+        <section class="card" id="contacts"></section>
+        <section class="card dark" id="activity"></section>
+      </aside>
+    </div>
+
+    <footer class="foot">
+      Prototype for Team Trio · IA728001 Studio 5. Local small language model via Ollama with rule fallback. All residents and staff are fictional.
+    </footer>
   </main>
 
+  <script src="/static/auth.js"></script>
   <script>
     const $ = (id) => document.getElementById(id);
-    const state = { role: "nurse", people: [], records: new Map(), approved: new Map(), pending: null, audit: null,
-                    selected: null, decisions: new Map(), thinking: new Set() };
+    const state = {
+      role: "nurse",
+      people: [],
+      records: new Map(),
+      approved: new Map(),
+      pending: null,
+      audit: null,
+      selected: null,
+      decisions: new Map(),
+      thinking: new Set(),
+      famUpdates: [],
+      famMessages: [],
+      famEdits: new Map(),
+      draftingFam: false,
+    };
 
-    // Build elements with text only, so text from the server can never run as code.
     function h(tag, props, ...kids) {
       const node = document.createElement(tag);
       for (const [key, value] of Object.entries(props || {})) {
@@ -110,27 +109,39 @@
       }
       return node;
     }
-    function fill(id, ...kids) { $(id).replaceChildren(...kids.flat().filter(Boolean)); }
+
+    function fill(id, ...kids) {
+      $(id).replaceChildren(...kids.flat().filter(Boolean));
+    }
+
     function whenText(iso) {
       const d = new Date(iso);
       return isNaN(d) ? iso : d.toLocaleString([], { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
     }
 
-    // ---------- data ----------
-    async function api(path) {
-      const headers = { "X-Role": state.role };
-      try { const token = localStorage.getItem("agecare_token"); if (token) headers["X-Session-Token"] = token; } catch (e) { /* no storage */ }
-      const response = await fetch(path, { headers: headers });
+    async function api(path, options) {
+      options = options || {};
+      options.headers = Object.assign({ "X-Role": state.role }, options.headers || {});
+      try {
+        const token = localStorage.getItem("agecare_token");
+        if (token) {
+          options.headers["X-Session-Token"] = token;
+          options.headers["Authorization"] = "Bearer " + token;
+        }
+      } catch (e) {}
+      const response = await fetch(path, options);
       let data = null;
-      try { data = await response.json(); } catch (e) { /* no body */ }
+      try { data = await response.json(); } catch (e) {}
       return { ok: response.ok, status: response.status, data: data };
     }
 
-    // entries from the carer page are saved in their own tables, so add them here
     async function addCarerEntries() {
       const today = await api("/api/carer/today");
       if (!today.ok) return;
-      const find = (id) => { for (const [k, r] of state.records) if (String(k) === String(id)) return r; return null; };
+      const find = (id) => {
+        for (const [k, r] of state.records) if (String(k) === String(id)) return r;
+        return null;
+      };
       for (const t of today.data.tasks) {
         const rec = find(t.resident_id);
         if (rec) rec.care_record.push({ time: t.created_at.slice(11, 16), task: t.task, status: t.status, by: t.carer });
@@ -144,37 +155,63 @@
     async function loadAll() {
       const list = await api("/api/residents");
       if (!list.ok) {
-        $("banner").className = "error";
+        $("banner").className = "msg err";
         $("banner").textContent = "Can't reach the server. Start it with: python -m uvicorn app.main:app --reload";
         return;
       }
       state.people = list.data;
       state.selected = state.people[0] && state.people[0].resident_id;
-      await Promise.all(state.people.map(async (p) => {
-        const [rec, ok] = await Promise.all([api("/api/residents/" + p.resident_id + "/records"), api("/api/guidance/" + p.resident_id + "/approved")]);
-        state.records.set(p.resident_id, rec.ok ? rec.data : null);
-        state.approved.set(p.resident_id, ok.ok ? ok.data : null);
-      }));
+      await Promise.all(
+        state.people.map(async (p) => {
+          const [rec, ok] = await Promise.all([
+            api("/api/residents/" + p.resident_id + "/records"),
+            api("/api/guidance/" + p.resident_id + "/approved"),
+          ]);
+          state.records.set(p.resident_id, rec.ok ? rec.data : null);
+          state.approved.set(p.resident_id, ok.ok ? ok.data : null);
+        })
+      );
       await addCarerEntries();
-      state.pending = await api("/api/guidance/pending");
-      state.audit = await api("/api/audit?limit=8");
+      const [pending, audit, famU, famM] = await Promise.all([
+        api("/api/guidance/pending"),
+        api("/api/audit?limit=10"),
+        api("/api/family-updates"),
+        api("/api/messages"),
+      ]);
+      state.pending = pending;
+      state.audit = audit;
+      state.famUpdates = famU.ok ? famU.data : [];
+      state.famMessages = famM.ok ? famM.data : [];
       renderAll();
       loadDecision(state.selected);
     }
 
-    // ---------- sections ----------
     function renderTabs() {
-      fill("tabs", state.people.map((p) => {
-        const tab = h("button", { type: "button", role: "tab", "aria-selected": String(p.resident_id === state.selected), text: p.name });
-        tab.addEventListener("click", () => select(p.resident_id));
-        return tab;
-      }));
+      fill(
+        "tabs",
+        state.people.map((p) => {
+          const on = p.resident_id === state.selected;
+          const tab = h("button", {
+            type: "button",
+            role: "tab",
+            class: "pill",
+            "aria-selected": String(on),
+            "aria-pressed": String(on),
+            text: p.name + " · Room " + (100 + p.resident_id),
+          });
+          tab.addEventListener("click", () => select(p.resident_id));
+          return tab;
+        })
+      );
     }
 
     function renderResident(person, rec) {
-      if (!rec) { fill("resident", h("h2", { text: person.name }), h("p", { class: "muted", text: "No records found." })); return; }
+      if (!rec) {
+        fill("resident", h("h2", { text: person.name }), h("p", { class: "small", text: "No records found." }));
+        return;
+      }
       const hist = rec.readings_history;
-      const last = (key) => hist[key] && hist[key].length ? hist[key][hist[key].length - 1].value : null;
+      const last = (key) => (hist[key] && hist[key].length ? hist[key][hist[key].length - 1].value : null);
       const rows = [
         ["Pulse", last("pulse"), "bpm"],
         ["Blood pressure", last("systolic") != null && last("diastolic") != null ? last("systolic") + "/" + last("diastolic") : null, "mmHg"],
@@ -182,82 +219,292 @@
         ["Oxygen", last("spo2"), "%"],
       ].filter((r) => r[1] != null);
       const allergies = rec.allergies.join(", ") || "None recorded";
-      fill("resident",
-        h("h2", { text: person.name }),
-        h("p", { text: person.conditions.join(" · ") }),
+      fill(
+        "resident",
+        h("div", { class: "between" },
+          h("h2", { text: person.name + " · Room " + (100 + person.resident_id) }),
+          h("span", { class: "small", text: person.conditions.join(" · ") })
+        ),
         h("p", {}, h("strong", { text: "Allergies: " }), allergies),
-        rows.length ? h("table", {},
-          h("tr", {}, h("th", { text: "Latest vital signs" }), h("th", { text: "Value" })),
-          rows.map((r) => h("tr", {}, h("td", { text: r[0] }), h("td", { text: r[1] + " " + r[2] })))) : null);
+        rows.length
+          ? h(
+              "table",
+              { class: "tbl" },
+              h("thead", {}, h("tr", {}, h("th", { text: "Latest vital signs" }), h("th", { text: "Value" }))),
+              h("tbody", {}, rows.map((r) => h("tr", {}, h("td", { text: r[0] }), h("td", { text: r[1] + " " + r[2] }))))
+            )
+          : null
+      );
     }
 
     function renderCare(person, rec) {
       const list = rec ? [...rec.care_record].sort((a, b) => a.time.localeCompare(b.time)) : [];
       const label = { given: "Given", refused: "Refused", not_done: "Not done" };
-      fill("care",
+      fill(
+        "care",
         h("h2", { text: "Today's care" }),
         list.length
-          ? h("table", {},
-              h("tr", {}, h("th", { text: "Time" }), h("th", { text: "Task" }), h("th", { text: "Status" }), h("th", { text: "By" })),
-              list.map((c) => h("tr", {}, h("td", { text: c.time }), h("td", { text: c.task }),
-                h("td", { class: c.status, text: label[c.status] || c.status }), h("td", { text: c.by }))))
-          : h("p", { class: "muted", text: "Nothing recorded yet today." }));
+          ? h(
+              "table",
+              { class: "tbl" },
+              h("thead", {}, h("tr", {}, h("th", { text: "Time" }), h("th", { text: "Task" }), h("th", { text: "Status" }), h("th", { text: "By" }))),
+              h(
+                "tbody",
+                {},
+                list.map((c) =>
+                  h(
+                    "tr",
+                    {},
+                    h("td", { class: "mono", text: c.time }),
+                    h("td", { text: c.task }),
+                    h("td", { class: "st-" + c.status, text: label[c.status] || c.status }),
+                    h("td", { text: c.by })
+                  )
+                )
+              )
+            )
+          : h("p", { class: "small", text: "Nothing recorded yet today." })
+      );
     }
 
     function renderGuide(person) {
       const ok = state.approved.get(person.resident_id);
       if (!ok) {
-        fill("guide", h("h2", { text: "Approved guidance" }),
-          h("p", { class: "muted" }, "No approved guidance yet. ", h("a", { href: "/guidance", text: "Draft guidance" })));
+        fill(
+          "guide",
+          h("div", { class: "between" },
+            h("h2", { text: "Approved guidance" }),
+            h("a", { class: "btn btn-ghost btn-sm", href: "/guidance", text: "Draft guidance" })
+          ),
+          h("p", { class: "small", text: "No approved guidance yet for this resident." })
+        );
         return;
       }
-      const list = (lines) => h("ul", {}, lines.map((l) => h("li", {}, l.text, h("span", { class: "src", text: l.edited ? "Written by a nurse" : l.source }))));
-      fill("guide",
-        h("h2", { text: "Approved guidance" }),
-        h("p", { class: "muted", text: "Approved by " + ok.approved_by + ", " + whenText(ok.approved_at) }),
-        h("p", {}, h("strong", { text: "Signs to watch for" })), list(ok.watch_for),
-        h("p", {}, h("strong", { text: "Prevention steps" })), list(ok.prevention));
+      const list = (lines) =>
+        h(
+          "ul",
+          { style: "margin:4px 0; padding-left:20px" },
+          lines.map((l) => h("li", {}, l.text, h("span", { class: "tiny", style: "display:block", text: l.edited ? "Written by a nurse" : l.source })))
+        );
+      fill(
+        "guide",
+        h("div", { class: "between" },
+          h("h2", { text: "Approved guidance" }),
+          h("a", { class: "btn btn-ghost btn-sm", href: "/guidance", text: "Update guidance" })
+        ),
+        h("p", { class: "small", text: "Approved by " + ok.approved_by + ", " + whenText(ok.approved_at) }),
+        h("p", {}, h("strong", { text: "Signs to watch for" })),
+        list(ok.watch_for),
+        h("p", {}, h("strong", { text: "Prevention steps" })),
+        list(ok.prevention)
+      );
     }
 
     function renderNeeds() {
       const items = [];
       for (const p of state.people) {
         const rec = state.records.get(p.resident_id);
-        if (rec) for (const c of rec.concerns) items.push(h("li", {}, h("strong", { text: p.name + " · " + c.type }), " " + c.time,
-          h("span", { class: "src", text: "“" + c.text + "”" })));
+        if (rec) {
+          for (const c of rec.concerns) {
+            items.push(
+              h("li", { class: "list-item", style: "flex-direction:column; gap:4px" },
+                h("div", { class: "between", style: "width:100%" },
+                  h("strong", { text: p.name + " · " + c.type }),
+                  h("span", { class: "mono", text: c.time })
+                ),
+                h("span", { class: "small", text: "“" + c.text + "”" })
+              )
+            );
+          }
+        }
       }
       if (state.pending && state.pending.ok) {
-        for (const d of state.pending.data) items.push(h("li", {}, h("strong", { text: d.resident + " · AI draft" }),
-          h("span", { class: "src", text: d.lines + " lines waiting for a nurse" })));
+        for (const d of state.pending.data) {
+          items.push(
+            h("li", { class: "list-item", style: "flex-direction:column; gap:4px" },
+              h("strong", { text: d.resident + " · AI guidance draft" }),
+              h("span", { class: "small", text: d.lines + " lines waiting for a nurse" })
+            )
+          );
+        }
       }
-      fill("needs", h("h2", { text: "Needs a nurse" }),
-        items.length ? h("ul", {}, items) : h("p", { class: "muted", text: "Nothing needs attention." }));
+      fill(
+        "needs",
+        h("h2", { text: "Needs a nurse" }),
+        items.length ? h("ul", { class: "list" }, items) : h("p", { class: "small", text: "Nothing needs attention." })
+      );
+    }
+
+    function renderFamilyUpdates(person) {
+      const latest = state.famUpdates.find((u) => Number(u.resident_id) === Number(person.resident_id));
+      const draftBtn = h("button", {
+        type: "button",
+        class: "btn btn-ghost btn-sm",
+        disabled: state.draftingFam ? "disabled" : false,
+        text: state.draftingFam ? "Drafting…" : latest && latest.status === "draft" ? "Re-draft with AI" : "Draft update with AI",
+      });
+      draftBtn.addEventListener("click", async () => {
+        state.draftingFam = true;
+        renderFamilyUpdates(person);
+        const res = await api("/api/family-updates/draft", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ resident_id: person.resident_id }),
+        });
+        state.draftingFam = false;
+        if (res.ok) {
+          state.famEdits.delete(res.data.id);
+          const list = await api("/api/family-updates");
+          if (list.ok) state.famUpdates = list.data;
+          state.audit = await api("/api/audit?limit=10");
+          if (window.showToast) window.showToast("Drafted family update for " + person.name);
+        }
+        renderFamilyUpdates(person);
+        renderActivity();
+      });
+
+      const head = h("div", { class: "between" }, h("h2", { text: "Family updates to approve" }), draftBtn);
+      if (!latest) {
+        fill(
+          "familyUpdates",
+          head,
+          h("p", { class: "small", text: "No family update drafted yet for " + person.name + ". Click “Draft update with AI” to prepare a plain-language update for their family." })
+        );
+        return;
+      }
+
+      const isPending = latest.status === "draft";
+      const val = isPending && state.famEdits.has(latest.id) ? state.famEdits.get(latest.id) : latest.text;
+      const box = h("textarea", {
+        class: "field",
+        rows: "4",
+        readonly: !isPending ? "readonly" : false,
+      });
+      box.value = val;
+      box.addEventListener("input", (e) => state.famEdits.set(latest.id, e.target.value));
+
+      const approveBtn = isPending
+        ? h("button", { type: "button", class: "btn btn-primary btn-sm", text: "Approve and send to family" })
+        : null;
+      if (approveBtn) {
+        approveBtn.addEventListener("click", async () => {
+          const textToSend = (state.famEdits.has(latest.id) ? state.famEdits.get(latest.id) : latest.text).trim();
+          const res = await api("/api/family-updates/" + latest.id + "/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: textToSend }),
+          });
+          if (res.ok) {
+            const list = await api("/api/family-updates");
+            if (list.ok) state.famUpdates = list.data;
+            state.audit = await api("/api/audit?limit=10");
+            if (window.showToast) window.showToast("Approved and sent to family portal");
+            renderFamilyUpdates(person);
+            renderActivity();
+          }
+        });
+      }
+
+      fill(
+        "familyUpdates",
+        head,
+        h("div", { class: "between" },
+          h("strong", { text: "For " + person.name + "'s family" }),
+          h("span", { class: "badge " + (isPending ? "draft" : "ok"), text: isPending ? "Needs nurse approval" : "Sent " + (latest.sent_at || "").slice(11, 16) })
+        ),
+        box,
+        h("div", { class: "between" },
+          h("span", { class: "tiny", text: isPending ? "Drafted by " + latest.drafted_by : "Approved by " + (latest.approved_by || "Nurse") }),
+          approveBtn
+        )
+      );
+    }
+
+    function renderFamilyMessages() {
+      const unread = state.famMessages.filter((m) => !m.read_by).length;
+      const head = h("h2", { text: "Messages from families (" + unread + " new)" });
+      if (!state.famMessages.length) {
+        fill("familyMessages", head, h("p", { class: "small", text: "No messages from families yet." }));
+        return;
+      }
+      fill(
+        "familyMessages",
+        head,
+        h(
+          "ul",
+          { class: "list" },
+          state.famMessages.slice(0, 6).map((m) => {
+            const markBtn = !m.read_by
+              ? h("button", { type: "button", class: "btn btn-ghost btn-sm", text: "Mark as read" })
+              : null;
+            if (markBtn) {
+              markBtn.addEventListener("click", async () => {
+                await api("/api/messages/" + m.id + "/read", { method: "POST" });
+                const famM = await api("/api/messages");
+                if (famM.ok) state.famMessages = famM.data;
+                renderFamilyMessages();
+              });
+            }
+            return h(
+              "li",
+              { class: "list-item" + (!m.read_by ? " unread" : ""), style: "flex-direction:column; gap:6px" },
+              h("div", { class: "tiny", text: m.from_name + " · " + (m.created_at || "").slice(11, 16) }),
+              h("div", { text: m.text }),
+              markBtn
+            );
+          })
+        )
+      );
     }
 
     function renderContacts(rec) {
       if (!rec) { fill("contacts"); return; }
-      fill("contacts", h("h2", { text: "Who to call" }),
-        h("ul", {},
+      fill(
+        "contacts",
+        h("h2", { text: "Who to call" }),
+        h(
+          "ul",
+          { style: "margin:4px 0; padding-left:20px" },
           h("li", {}, rec.doctor.name + " (doctor) · " + rec.doctor.phone),
-          rec.contacts.map((c) => h("li", { text: c.name + " (" + c.relationship + ") · " + c.phone }))));
+          rec.contacts.map((c) => h("li", { text: c.name + " (" + c.relationship + ") · " + c.phone }))
+        )
+      );
     }
 
     function renderActivity() {
-      const head = h("h2", { text: "Recent activity" });
-      if (!state.audit || !state.audit.ok) { fill("activity", head, h("p", { class: "muted", text: "Only a nurse can see the audit log." })); return; }
-      if (!state.audit.data.length) { fill("activity", head, h("p", { class: "muted", text: "No activity yet." })); return; }
-      fill("activity", head, h("ul", {}, state.audit.data.map((e) => h("li", {},
-        e.actor + " " + e.action.replace(/_/g, " "), h("span", { class: "src", text: whenText(e.at) + (e.detail ? " · " + e.detail : "") })))));
+      const head = h("h2", { text: "Audit log" });
+      if (!state.audit || !state.audit.ok) {
+        fill("activity", head, h("p", { class: "tiny", text: "Only a nurse can see the audit log." }));
+        return;
+      }
+      if (!state.audit.data.length) {
+        fill("activity", head, h("p", { class: "tiny", text: "No activity yet." }));
+        return;
+      }
+      fill(
+        "activity",
+        head,
+        h(
+          "ol",
+          { class: "audit" },
+          state.audit.data.map((e) =>
+            h(
+              "li",
+              {},
+              h("span", { class: "t", text: (e.at || "").slice(11, 16) }),
+              h("span", {}, h("strong", { text: e.actor }), " " + e.action.replace(/_/g, " ") + (e.detail ? " · " + e.detail : ""))
+            )
+          )
+        )
+      );
     }
 
-    // ---------- Care priority: rules + AI, the nurse decides (Tanveer) ----------
-    const NEXT_STEP = { Red: "A nurse should see the resident now.", Amber: "A nurse should check the resident.", Green: "Continue normal care." };
     async function loadDecision(id) {
       state.thinking.add(id);
-      const quick = await api("/api/residents/" + id + "/decision?use_ai=false"); // rules only: fast
+      const quick = await api("/api/residents/" + id + "/decision?use_ai=false");
       if (quick.ok && !state.decisions.has(id)) state.decisions.set(id, quick.data);
       if (state.selected === id) renderPriority();
-      const full = await api("/api/residents/" + id + "/decision"); // rules + AI: slower
+      const full = await api("/api/residents/" + id + "/decision");
       state.thinking.delete(id);
       if (full.ok) state.decisions.set(id, full.data);
       if (state.selected === id) renderPriority();
@@ -265,21 +512,26 @@
 
     function renderPriority() {
       const d = state.decisions.get(state.selected);
-      if (!d) { fill("priority", h("h2", { text: "Care priority" }), h("p", { class: "muted", text: "Checking…" })); return; }
+      if (!d) {
+        fill("priority", h("h2", { text: "Care priority" }), h("p", { class: "small", text: "Checking…" }));
+        return;
+      }
       const thinking = state.thinking.has(d.resident_id);
-      // If a nurse reviewed this same suggestion, show the nurse's choice.
-      const r = d.last_review;
-      const shown = r && r.final && r.suggested === d.level ? r.final : d.level;
-      fill("priority",
-        h("div", { class: "top" }, h("h2", { text: "Care priority" }), h("span", { class: "level " + shown, text: shown })),
-        h("p", { class: "step", text: NEXT_STEP[shown] + (thinking ? " (vital signs only so far)" : "") }),
-        shown !== d.level ? h("p", { class: "muted", text: "Changed by a nurse. The system suggested " + d.level + "." }) : null,
+      fill(
+        "priority",
+        h("div", { class: "between" }, h("h2", { text: "Care priority" }), h("span", { class: "level " + d.level, text: d.level })),
+        h("p", { style: "font-weight:700", text: d.next_step + (thinking ? " (vital signs only so far)" : "") }),
         d.reasons.length
-          ? h("ul", {}, d.reasons.map((r) => h("li", {}, r.text, h("span", { class: "src", text: (r.quote ? "“" + r.quote + "” · " : "") + r.source }))))
-          : h("p", { class: "muted", text: "Nothing needs attention." }),
-        thinking ? h("p", { class: "muted", text: "Reading carer notes…" }) : null,
-        !thinking && d.ai.status === "error" ? h("p", { class: "error", text: "AI not available, so this uses vital signs only." }) : null,
-        thinking ? null : reviewPart(d));
+          ? h(
+              "ul",
+              { style: "margin:4px 0; padding-left:20px" },
+              d.reasons.map((r) => h("li", {}, r.text, h("span", { class: "tiny", style: "display:block", text: (r.quote ? "“" + r.quote + "” · " : "") + r.source })))
+            )
+          : h("p", { class: "small", text: "Nothing needs attention." }),
+        thinking ? h("p", { class: "small", text: "Reading carer notes…" }) : null,
+        !thinking && d.ai.status === "error" ? h("p", { class: "msg err", text: "AI not available, so this uses vital signs only." }) : null,
+        thinking ? null : reviewPart(d)
+      );
     }
 
     function nurseName() {
@@ -288,16 +540,16 @@
 
     function reviewPart(d) {
       const r = d.last_review;
-      const done = r ? h("span", { class: "muted", text: (r.action === "priority_accepted" ? "Accepted " + (r.final || "") : "Changed to " + r.final) + " by " + r.actor + ", " + whenText(r.at) }) : null;
-      const accept = h("button", { type: "button", class: "primary", text: "Accept" });
-      const change = h("button", { type: "button", text: "Change" });
-      const box = h("div", { class: "review" }, accept, change, done);
+      const done = r ? h("span", { class: "small", text: (r.action === "priority_accepted" ? "Accepted" : "Changed") + " by " + r.actor + ", " + whenText(r.at) }) : null;
+      const accept = h("button", { type: "button", class: "btn btn-primary btn-sm", text: "Accept" });
+      const change = h("button", { type: "button", class: "btn btn-ghost btn-sm", text: "Change" });
+      const box = h("div", { class: "inline" }, accept, change, done);
       accept.addEventListener("click", () => sendReview(d, d.level, ""));
       change.addEventListener("click", () => {
-        const pick = h("select", { "aria-label": "New priority" }, ["Green", "Amber", "Red"].filter((l) => l !== (r && r.suggested === d.level ? r.final : d.level)).map((l) => h("option", { value: l, text: l })));
-        const why = h("textarea", { placeholder: "Reason for the change", "aria-label": "Reason for the change" });
-        const save = h("button", { type: "button", class: "primary", text: "Save" });
-        const cancel = h("button", { type: "button", text: "Cancel" });
+        const pick = h("select", { class: "field", style: "width:auto", "aria-label": "New priority" }, ["Green", "Amber", "Red"].filter((l) => l !== d.level).map((l) => h("option", { value: l, text: l })));
+        const why = h("textarea", { class: "field", rows: "2", placeholder: "Reason for the change", "aria-label": "Reason for the change" });
+        const save = h("button", { type: "button", class: "btn btn-primary btn-sm", text: "Save" });
+        const cancel = h("button", { type: "button", class: "btn btn-ghost btn-sm", text: "Cancel" });
         save.addEventListener("click", () => { if (!why.value.trim()) { why.focus(); return; } sendReview(d, pick.value, why.value); });
         cancel.addEventListener("click", renderPriority);
         box.replaceChildren(pick, why, save, cancel);
@@ -307,27 +559,35 @@
     }
 
     async function sendReview(d, final, note) {
-      const headers = { "Content-Type": "application/json", "X-Role": state.role };
-      try { const token = localStorage.getItem("agecare_token"); if (token) headers["X-Session-Token"] = token; } catch (e) { /* no storage */ }
-      const response = await fetch("/api/residents/" + d.resident_id + "/decision/review", {
-        method: "POST", headers: headers,
+      const res = await api("/api/residents/" + d.resident_id + "/decision/review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reviewer: nurseName(), suggested: d.level, final: final, note: note }),
       });
-      let data = null;
-      try { data = await response.json(); } catch (e) { /* no body */ }
-      if (!response.ok) { alert("Could not save: " + (data && data.detail ? JSON.stringify(data.detail) : response.status)); return; }
-      d.last_review = data;
-      state.audit = await api("/api/audit?limit=8");
-      renderPriority(); renderActivity();
+      if (!res.ok) {
+        alert("Could not save: " + (res.data && res.data.detail ? JSON.stringify(res.data.detail) : res.status));
+        return;
+      }
+      d.last_review = res.data;
+      state.audit = await api("/api/audit?limit=10");
+      renderPriority();
+      renderActivity();
     }
 
-    // ---------- page ----------
     function renderAll() {
       const person = state.people.find((p) => p.resident_id === state.selected);
       if (!person) return;
       const rec = state.records.get(person.resident_id);
-      renderTabs(); renderPriority(); renderResident(person, rec); renderCare(person, rec);
-      renderGuide(person); renderNeeds(); renderContacts(rec); renderActivity();
+      renderTabs();
+      renderPriority();
+      renderResident(person, rec);
+      renderCare(person, rec);
+      renderGuide(person);
+      renderNeeds();
+      renderFamilyUpdates(person);
+      renderFamilyMessages();
+      renderContacts(rec);
+      renderActivity();
     }
 
     function select(id) {
@@ -338,7 +598,6 @@
 
     loadAll();
   </script>
-  <script src="/static/auth.js"></script>
   <script src="/ai-bubble.js"></script>
 </body>
 </html>
