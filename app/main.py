@@ -24,6 +24,7 @@ from .schemas import (
     GuidanceRequest,
     GuidanceResponse,
     LoginRequest,
+    FirebaseAuthRequest,
     OcrResponse,
     RecordsOut,
     RegisterRequest,
@@ -136,6 +137,21 @@ def auth_login(request: LoginRequest):
     user = auth.authenticate_user(request.username, request.password)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid username or password.")
+    return auth.create_session(user)
+
+
+@app.post("/api/auth/firebase", response_model=AuthResponse)
+def auth_firebase(request: FirebaseAuthRequest):
+    """Exchange a verified Firebase email/Google sign-in for an AgeCare role session."""
+    try:
+        user = auth.firebase_sync_user(
+            email=request.email,
+            full_name=request.full_name,
+            role=request.role,
+            resident_id=request.resident_id,
+        )
+    except ValueError as err:
+        raise HTTPException(status_code=400, detail=str(err))
     return auth.create_session(user)
 
 

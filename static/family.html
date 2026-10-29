@@ -3,47 +3,51 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Family portal · Age-Care Intelligence</title>
+  <title>Family Portal · AgeCare</title>
   <link rel="icon" type="image/png" href="/static/img/favicon.png">
   <link rel="stylesheet" href="/static/app.css">
 </head>
 <body>
-  <header class="topbar">
-    <div class="topbar-inner">
-      <a class="brand" href="/family">
-        <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true">
-          <rect width="36" height="36" rx="9" fill="#0E6B66"></rect>
-          <path d="M18 26s-8-4.8-8-10.4A4.6 4.6 0 0 1 18 13a4.6 4.6 0 0 1 8 2.6C26 21.2 18 26 18 26z" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round"></path>
-        </svg>
-        <div>
-          <div class="brand-title">Age-Care Intelligence</div>
-          <div class="brand-sub">Kōwhai Gardens Rest Home · Family Portal</div>
-        </div>
+  <header class="topbar"></header>
+
+  <!-- Common ClearScan Hero -->
+  <section class="cs-hero">
+    <div class="cs-hero-watermark" aria-hidden="true">Family &amp; Whānau Updates</div>
+    <div class="cs-hero-eyebrow">Role 04 · Family Portal</div>
+    <h1 id="greetingHeading">Kia ora, Whānau</h1>
+    <p class="cs-sub">
+      Read warm, plain-language daily updates checked and approved by your loved one's Registered Nurse, and message the care team directly.
+    </p>
+    <div class="cs-cta-row">
+      <a class="cs-glow-btn" href="#famMsg">
+        <span>✓</span> Message Care Team
       </a>
-      <nav class="role-nav" aria-label="Family pages">
-        <a href="/family" aria-current="page">Today's update</a>
-        <a href="/welcome">Project overview</a>
-      </nav>
-      <div class="user-chip">
-        <span class="user-pill">Signed in as <strong data-auth-name>Family</strong></span>
-        <button type="button" class="btn btn-ghost btn-sm" onclick="logout()">Sign out</button>
-      </div>
     </div>
-  </header>
-
-  <main class="page" style="max-width: 980px">
-    <div class="page-head">
-      <div>
-        <div class="eyebrow">Family portal</div>
-        <h1 class="page-title" id="greetingHeading">Kia ora</h1>
-      </div>
+    <div class="cs-privacy-note">Families see only nurse-approved updates—never raw clinical notes (Health Information Privacy Code 2020).</div>
+    <div class="cs-trust-row">
+      <span><b>✓</b> Nurse-Checked Updates</span>
+      <span><b>✓</b> Plain-Language Clarity</span>
+      <span><b>✓</b> Direct Staff Messaging</span>
+      <span><b>✓</b> Single-Resident Privacy</span>
     </div>
+  </section>
 
+  <!-- Common Horizontal Feature Strip -->
+  <div class="cs-strip">
+    <div class="cs-strip-inner">
+      <span class="cs-strip-item">💌 Reassuring daily summaries.</span>
+      <span class="cs-strip-item">🩺 Reviewed by a Registered Nurse before sending.</span>
+      <span class="cs-strip-item">🔒 Linked strictly to your family member.</span>
+      <span class="cs-strip-item">⚡ Send questions or visit times to staff.</span>
+    </div>
+  </div>
+
+  <main class="page" style="max-width: 1040px">
     <div class="row">
       <!-- Left: Today's approved update -->
       <section class="card col-main">
         <div class="inline" style="gap: 14px">
-          <div id="resInitials" aria-hidden="true" style="width: 52px; height: 52px; border-radius: 50%; background: #E3F0EE; color: #0E6B66; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px">MT</div>
+          <div id="resInitials" aria-hidden="true" style="width: 52px; height: 52px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px">MT</div>
           <div>
             <h2 id="resTitle" style="font-size: 21px">Today's update</h2>
             <div class="small" id="resRoom">Kōwhai Gardens</div>
@@ -57,21 +61,19 @@
 
       <!-- Right: Message the care team -->
       <section class="card col-side">
-        <h2>Message the care team</h2>
+        <h2>Message the Care Team</h2>
         <label class="lbl" for="famMsg">
           <span class="small" style="font-weight: 400">Questions, or anything staff should know</span>
           <textarea id="famMsg" class="field" rows="3" placeholder="e.g. I'll visit Saturday morning with the grandkids"></textarea>
         </label>
         <div class="between">
           <p class="msg" id="famStatus"></p>
-          <button type="button" id="sendBtn" class="btn btn-primary" onclick="sendMessage()">Send</button>
+          <button type="button" id="sendBtn" class="btn btn-primary" onclick="sendMessage()">Send Message →</button>
         </div>
 
         <div id="sentList" class="stack"></div>
       </section>
     </div>
-
-    <p class="tiny">Families see only nurse-approved updates — never clinical notes (Health Information Privacy Code 2020).</p>
 
     <footer class="foot">
       Prototype for Team Trio · IA728001 Studio 5. All residents and staff are fictional.
@@ -114,7 +116,7 @@
 
         const meta = document.createElement("div");
         meta.className = "tiny inline";
-        meta.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5L20 7" fill="none" stroke="#0E6B66" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>`;
+        meta.innerHTML = `<span class="badge ok">✓ Nurse Approved</span>`;
         const span = document.createElement("span");
         span.textContent = "Approved by " + (latest.approved_by || "Registered Nurse") + " · " + (latest.sent_at || "").slice(11, 16);
         meta.appendChild(span);

@@ -188,12 +188,16 @@ def register_user(
 
 
 def authenticate_user(username: str, password: str) -> dict | None:
-    """Verify username and password against database."""
+    """Verify username or email and password against database."""
     clean_user = username.strip().lower()
     with _get_connection() as conn:
         cur = conn.cursor()
         cur.execute("SELECT * FROM users WHERE username = ?", (clean_user,))
         user = cur.fetchone()
+        if not user and "@" in clean_user:
+            prefix = clean_user.split("@", 1)[0]
+            cur.execute("SELECT * FROM users WHERE username = ?", (prefix,))
+            user = cur.fetchone()
         if not user:
             return None
 
@@ -305,3 +309,31 @@ def delete_user(username: str) -> bool:
         cur = conn.execute("DELETE FROM users WHERE username = ?", (username.strip().lower(),))
         conn.execute("DELETE FROM user_sessions WHERE username = ?", (username.strip().lower(),))
         return cur.rowcount > 0
+
+
+
+def firebase_sync_user(
+    email: str,
+    full_name: str = "",
+    role: str = "carer",
+    resident_id: int | None = None,
+) -> dict:
+    """Verify that a Firebase/Google email is already registered, and return its assigned role."""
+    clean_email = email.strip().lower()
+    if not clean_email or "@" not in clean_email:
+        raise ValueError("A valid email address is required.")
+
+    with _get_connection() as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM users WHERE username = ?", (clean_email,))
+        user = cur.fetchone()
+        if not user:
+            raise ValueError(f"Account '{clean_email}' is not registered. Please sign up first.")
+
+        return {
+            "id": user["id"],
+            "username": user["username"],
+            "full_name": user["full_name"],
+            "role": user["role"],
+            "resident_id": user["resident_id"],
+        }

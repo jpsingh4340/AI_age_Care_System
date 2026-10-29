@@ -3,139 +3,467 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Sign in · Age-Care Intelligence</title>
+  <title>Sign In &amp; Sign Up · AgeCare</title>
   <link rel="icon" type="image/png" href="/static/img/favicon.png">
   <link rel="stylesheet" href="/static/app.css">
+  <style>
+    .auth-shell {
+      max-width: 520px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .auth-card {
+      background: var(--card);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 34px 32px;
+      box-shadow: var(--shadow);
+    }
+    .auth-brand-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .auth-brand-badge {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #ffffff;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 17px;
+      box-shadow: 0 0 18px var(--accent-glow);
+    }
+    .auth-brand-name {
+      font-family: var(--serif);
+      font-size: 21px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .auth-title {
+      font-family: var(--serif);
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--ink);
+      margin: 0 0 6px;
+    }
+    .auth-sub {
+      font-size: 15px;
+      color: var(--muted);
+      margin: 0 0 22px;
+    }
+    .google-btn {
+      width: 100%;
+      min-height: 50px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.96);
+      color: #0f172a;
+      font: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+    }
+    .google-btn:hover {
+      transform: translateY(-1px);
+      border-color: var(--accent);
+      box-shadow: 0 6px 20px rgba(15, 23, 42, 0.14);
+    }
+    .or-divider {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin: 22px 0;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .or-divider::before,
+    .or-divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--line);
+    }
+    .input-group {
+      margin-bottom: 16px;
+    }
+    .input-group label {
+      display: block;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 7px;
+    }
+    .icon-field {
+      position: relative;
+      display: flex;
+      align-items: center;
+      background: rgba(15, 23, 42, 0.65);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    html[data-theme="light"] .icon-field {
+      background: #f1f5f9;
+    }
+    .icon-field:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    .icon-field .lead-ico {
+      padding-left: 14px;
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      pointer-events: none;
+    }
+    .icon-field input {
+      width: 100%;
+      border: none !important;
+      background: transparent !important;
+      padding: 13px 14px;
+      font: inherit;
+      font-size: 15px;
+      color: var(--ink);
+      outline: none;
+      box-shadow: none !important;
+    }
+    .icon-field .eye-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      padding: 0 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      font-size: 16px;
+    }
+    .icon-field .eye-btn:hover {
+      color: var(--ink);
+    }
+    .remember-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin: 4px 0 20px;
+      font-size: 14px;
+    }
+    .remember-lbl {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      cursor: pointer;
+      user-select: none;
+    }
+    .remember-lbl input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+    }
+    .forgot-link {
+      background: none;
+      border: none;
+      padding: 0;
+      color: var(--accent-ink);
+      font: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .forgot-link:hover {
+      text-decoration: underline;
+    }
+    .submit-auth-btn {
+      width: 100%;
+      min-height: 50px;
+      border-radius: 12px;
+      border: none;
+      background: var(--accent);
+      color: #ffffff;
+      font: inherit;
+      font-size: 16px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      cursor: pointer;
+      box-shadow: 0 0 26px var(--accent-glow);
+      transition: background 0.15s, transform 0.15s;
+    }
+    .submit-auth-btn:hover {
+      background: var(--accent-dark);
+      transform: translateY(-1px);
+    }
+    .submit-auth-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .switch-auth-row {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14.5px;
+      color: var(--muted);
+    }
+    .switch-auth-btn {
+      background: none;
+      border: none;
+      padding: 0;
+      margin-left: 4px;
+      color: var(--accent-ink);
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .switch-auth-btn:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
-<body>
-  <header class="topbar">
-    <div class="topbar-inner">
-      <a class="brand" href="/welcome">
-        <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true">
-          <rect width="36" height="36" rx="9" fill="#0E6B66"></rect>
-          <path d="M18 26s-8-4.8-8-10.4A4.6 4.6 0 0 1 18 13a4.6 4.6 0 0 1 8 2.6C26 21.2 18 26 18 26z" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round"></path>
-        </svg>
-        <div>
-          <div class="brand-title">Age-Care Intelligence</div>
-          <div class="brand-sub">Kōwhai Gardens Rest Home · Four-role portal · fake test data only</div>
-        </div>
+<body class="has-bg-video">
+  <div class="bg-video-wrap" aria-hidden="true">
+    <video class="bg-video" autoplay muted loop playsinline preload="auto">
+      <source src="/static/age-care-anatomy.mp4" type="video/mp4">
+    </video>
+    <div class="bg-video-overlay"></div>
+  </div>
+  <header class="topbar"></header>
+
+  <!-- Common ClearScan Hero -->
+  <section class="cs-hero">
+    <div class="cs-hero-watermark" aria-hidden="true">Role Verified Access</div>
+    <div class="cs-hero-eyebrow">Residential Aged-Care Portal</div>
+    <h1>Care Team &amp; Whānau Sign In</h1>
+    <p class="cs-sub">
+      Dedicated, role-verified access for Carers, Registered Nurses, Facility Managers, and Resident Families.
+    </p>
+    <div class="cs-cta-row">
+      <a class="cs-glow-btn" href="#authCard">
+        <span>🩺</span> 24/7 Clinical &amp; Whānau Portal Access
       </a>
-      <a class="btn btn-ghost btn-sm" href="/welcome">Project overview</a>
     </div>
-  </header>
-
-  <main class="page" style="max-width: 560px">
-    <div class="page-head">
-      <div>
-        <div class="eyebrow">Role-Based Access</div>
-        <h1 class="page-title">Sign in to your portal</h1>
-      </div>
+    <div class="cs-trust-row">
+      <span><b>✓</b> Carer Shift Logging</span>
+      <span><b>✓</b> Registered Nurse Clinical Sign-Off</span>
+      <span><b>✓</b> Manager Governance &amp; Audit</span>
+      <span><b>✓</b> Approved Whānau Updates</span>
     </div>
+  </section>
 
-    <section class="card">
-      <div class="role-nav" role="tablist" aria-label="Sign in or register" style="align-self: flex-start">
-        <button type="button" class="btn btn-sm" id="tabLogin" aria-current="page" onclick="switchTab('login')" style="background:#0E6B66; color:#fff;">Sign in</button>
-        <button type="button" class="btn btn-sm" id="tabRegister" onclick="switchTab('register')">Create account</button>
-      </div>
+  <!-- Common Horizontal Feature Strip -->
+  <div class="cs-strip">
+    <div class="cs-strip-inner">
+      <span class="cs-strip-item">💊 Carer: tasks, vitals &amp; concerns.</span>
+      <span class="cs-strip-item">🩺 Nurse: priority review &amp; approvals.</span>
+      <span class="cs-strip-item">📊 Manager: KPIs, accounts &amp; audit trail.</span>
+      <span class="cs-strip-item">💌 Family: nurse-approved updates only.</span>
+    </div>
+  </div>
 
-      <div id="alertBox" class="notice hidden" role="alert"></div>
-
-      <!-- Sign-in form -->
-      <form id="loginForm" class="stack" onsubmit="handleLogin(event)">
-        <p class="small">Each role (Carer, Nurse, Manager, Family) signs in with its own credentials and opens its dedicated workspace.</p>
-
-        <label class="lbl" for="loginUsername">
-          Username
-          <input id="loginUsername" class="field" type="text" required autocomplete="username" placeholder="e.g. carer1, nurse1, manager1, family1">
-        </label>
-
-        <label class="lbl" for="loginPassword">
-          Password
-          <input id="loginPassword" class="field" type="password" required autocomplete="current-password" placeholder="••••••••">
-        </label>
-
-        <button type="submit" class="btn btn-primary" id="btnLogin">Sign in</button>
-      </form>
-
-      <!-- Register form -->
-      <form id="registerForm" class="stack hidden" onsubmit="handleRegister(event)">
-        <p class="small">Create a login for a Carer, Nurse, Manager, or Family member.</p>
-
-        <label class="lbl" for="regFullName">
-          Full name
-          <input id="regFullName" class="field" type="text" required placeholder="e.g. Aroha T.">
-        </label>
-
-        <div class="grid-fields">
-          <label class="lbl" for="regUsername">
-            Username
-            <input id="regUsername" class="field" type="text" required minlength="3" placeholder="e.g. aroha">
-          </label>
-          <label class="lbl" for="regPassword">
-            Password
-            <input id="regPassword" class="field" type="password" required minlength="6" placeholder="Min 6 characters">
-          </label>
+  <main class="page">
+    <div class="auth-shell" id="authCard">
+      <section class="auth-card">
+        <div class="auth-brand-row">
+          <span class="auth-brand-badge">✚</span>
+          <span class="auth-brand-name">AgeCare</span>
         </div>
 
-        <div class="stack" style="gap: 6px">
-          <span style="font-weight: 700; font-size: 15px">Role</span>
-          <div class="choices" role="radiogroup" aria-label="Role">
-            <label class="choice"><input type="radio" name="regRole" value="carer" checked onchange="onRoleChange()"> Carer</label>
-            <label class="choice"><input type="radio" name="regRole" value="nurse" onchange="onRoleChange()"> Nurse</label>
-            <label class="choice"><input type="radio" name="regRole" value="manager" onchange="onRoleChange()"> Manager</label>
-            <label class="choice"><input type="radio" name="regRole" value="family" onchange="onRoleChange()"> Family</label>
+        <h2 class="auth-title" id="authHeading">Welcome back</h2>
+        <p class="auth-sub" id="authSubtitle">Log in to access your AgeCare role workspace.</p>
+
+        <!-- Shown ONLY on Log In (hidden on Sign Up) -->
+        <div id="googleLoginSection">
+          <button type="button" class="google-btn" id="btnGoogle" onclick="handleGoogleSignIn()">
+            <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">
+              <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+              <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+              <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+              <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+            </svg>
+            <span>Continue with Google</span>
+          </button>
+
+          <div class="or-divider">OR CONTINUE WITH EMAIL</div>
+        </div>
+
+        <div id="alertBox" class="notice hidden" role="alert" style="margin-bottom: 16px"></div>
+
+        <!-- EMAIL LOG IN FORM -->
+        <form id="loginForm" onsubmit="handleLogin(event)">
+          <div class="input-group">
+            <label for="loginEmail">Email</label>
+            <div class="icon-field">
+              <span class="lead-ico">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="3 7 12 13 21 7"/></svg>
+              </span>
+              <input id="loginEmail" type="text" required autocomplete="email" placeholder="Your email address">
+            </div>
           </div>
-        </div>
 
-        <label class="lbl hidden" id="residentPickerWrap" for="regResident">
-          Linked resident (Family accounts see only this resident's approved updates)
-          <select id="regResident" class="field"></select>
-        </label>
+          <div class="input-group">
+            <label for="loginPassword">Password</label>
+            <div class="icon-field">
+              <span class="lead-ico">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+              </span>
+              <input id="loginPassword" type="password" required autocomplete="current-password" placeholder="Your password">
+              <button type="button" class="eye-btn" onclick="togglePassword('loginPassword', this)" aria-label="Show or hide password" title="Show/hide password">👁</button>
+            </div>
+          </div>
 
-        <button type="submit" class="btn btn-primary" id="btnRegister">Create account &amp; sign in</button>
-      </form>
+          <div class="remember-row">
+            <label class="remember-lbl">
+              <input type="checkbox" id="rememberMe" checked>
+              <span>Remember me</span>
+            </label>
+            <button type="button" class="forgot-link" onclick="handleForgotPassword()">Forgot password?</button>
+          </div>
 
-      <div class="divider stack" style="gap: 8px">
-        <div class="section-label">Quick demo logins (password: password123)</div>
-        <div class="grid-fields">
-          <button type="button" class="btn btn-ghost btn-sm" onclick="quickFill('carer1', 'password123')">Carer · Priya P.</button>
-          <button type="button" class="btn btn-ghost btn-sm" onclick="quickFill('nurse1', 'password123')">Nurse · RN Sarah J.</button>
-          <button type="button" class="btn btn-ghost btn-sm" onclick="quickFill('manager1', 'password123')">Manager · Tom B.</button>
-          <button type="button" class="btn btn-ghost btn-sm" onclick="quickFill('family1', 'password123')">Family · Claire T.</button>
-        </div>
-      </div>
-    </section>
+          <button type="submit" class="submit-auth-btn" id="btnLogin">
+            <span>➔</span> <span>Log in</span>
+          </button>
 
-    <footer class="foot">
-      Age-Care Intelligence · Four roles (Carer, Nurse, Manager, Family) with individual credentials. All residents and staff are fictional.
-    </footer>
+          <div class="switch-auth-row">
+            Don't have an account?
+            <button type="button" class="switch-auth-btn" onclick="switchTab('register')">Sign up</button>
+          </div>
+        </form>
+
+        <!-- EMAIL SIGN UP FORM -->
+        <form id="registerForm" class="hidden" onsubmit="handleRegister(event)">
+          <div class="input-group">
+            <label for="regFullName">Full Name</label>
+            <div class="icon-field">
+              <span class="lead-ico">👤</span>
+              <input id="regFullName" type="text" required placeholder="e.g. Sarah Johnson">
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="regEmail">Email</label>
+            <div class="icon-field">
+              <span class="lead-ico">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="3 7 12 13 21 7"/></svg>
+              </span>
+              <input id="regEmail" type="text" required autocomplete="email" placeholder="Your email address">
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="regPassword">Password</label>
+            <div class="icon-field">
+              <span class="lead-ico">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+              </span>
+              <input id="regPassword" type="password" required minlength="6" autocomplete="new-password" placeholder="Create a password (min 6 chars)">
+              <button type="button" class="eye-btn" onclick="togglePassword('regPassword', this)" aria-label="Show or hide password">👁</button>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label>Select Role Portal</label>
+            <div class="choices" role="radiogroup" aria-label="Role">
+              <label class="choice"><input type="radio" name="regRole" value="carer" checked onchange="onRoleChange()"> Carer</label>
+              <label class="choice"><input type="radio" name="regRole" value="nurse" onchange="onRoleChange()"> Nurse</label>
+              <label class="choice"><input type="radio" name="regRole" value="manager" onchange="onRoleChange()"> Manager</label>
+              <label class="choice"><input type="radio" name="regRole" value="family" onchange="onRoleChange()"> Family</label>
+            </div>
+          </div>
+
+          <div class="input-group hidden" id="residentPickerWrap">
+            <label for="regResident">Linked Resident (Family Portal)</label>
+            <select id="regResident" class="field"></select>
+          </div>
+
+          <button type="submit" class="submit-auth-btn" id="btnRegister" style="margin-top: 8px">
+            <span>➔</span> <span>Create account</span>
+          </button>
+
+          <div class="switch-auth-row">
+            Already have an account?
+            <button type="button" class="switch-auth-btn" onclick="switchTab('login')">Log in</button>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <footer class="foot"></footer>
   </main>
 
-  <script>
-    const HOME_BY_ROLE = { carer: "/carer", nurse: "/nurse", manager: "/manager", family: "/family" };
+  <script src="/static/firebase-config.js"></script>
+  <script src="/static/auth.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
+      GoogleAuthProvider,
+      signInWithPopup,
+      sendPasswordResetEmail,
+      updateProfile
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-    function switchTab(mode) {
+    const HOME_BY_ROLE = { carer: "/carer", nurse: "/nurse", manager: "/manager", family: "/family" };
+    const cfg = window.FIREBASE_CONFIG || {};
+    const isFirebaseReady = Boolean(cfg.apiKey && cfg.projectId);
+    let fbAuth = null;
+
+    if (isFirebaseReady) {
+      try {
+        const app = initializeApp(cfg);
+        fbAuth = getAuth(app);
+      } catch (e) {
+        console.warn("Firebase init warning:", e);
+      }
+    }
+
+    window.togglePassword = function (inputId, btn) {
+      const inp = document.getElementById(inputId);
+      if (!inp) return;
+      const isPwd = inp.type === "password";
+      inp.type = isPwd ? "text" : "password";
+      btn.textContent = isPwd ? "🙈" : "👁";
+    };
+
+    window.switchTab = function (mode) {
       const isLogin = mode === "login";
       document.getElementById("loginForm").classList.toggle("hidden", !isLogin);
       document.getElementById("registerForm").classList.toggle("hidden", isLogin);
-      const tLogin = document.getElementById("tabLogin");
-      const tReg = document.getElementById("tabRegister");
-      tLogin.style.background = isLogin ? "#0E6B66" : "transparent";
-      tLogin.style.color = isLogin ? "#FFFFFF" : "#1A2B2E";
-      tReg.style.background = !isLogin ? "#0E6B66" : "transparent";
-      tReg.style.color = !isLogin ? "#FFFFFF" : "#1A2B2E";
+      const googleSec = document.getElementById("googleLoginSection");
+      if (googleSec) googleSec.classList.toggle("hidden", !isLogin);
+      document.getElementById("authHeading").textContent = isLogin ? "Welcome back" : "Create your account";
+      document.getElementById("authSubtitle").textContent = isLogin
+        ? "Log in to access your AgeCare role workspace."
+        : "Sign up with your email and select your aged-care role.";
       hideAlert();
-    }
+    };
 
-    function selectedRegRole() {
+    if (window.location.hash === "#register") window.switchTab("register");
+
+    window.selectedRegRole = function () {
       const checked = document.querySelector("input[name='regRole']:checked");
       return checked ? checked.value : "carer";
-    }
+    };
 
-    function onRoleChange() {
-      const wrap = document.getElementById("residentPickerWrap");
-      wrap.classList.toggle("hidden", selectedRegRole() !== "family");
-    }
+    window.onRoleChange = function () {
+      document.getElementById("residentPickerWrap").classList.toggle("hidden", window.selectedRegRole() !== "family");
+    };
 
     function showAlert(text, kind) {
       const box = document.getElementById("alertBox");
@@ -158,80 +486,188 @@
       } else {
         localStorage.removeItem("agecare_resident_id");
       }
-      const dest = HOME_BY_ROLE[data.role] || "/carer";
-      window.location.href = dest;
+      window.location.href = HOME_BY_ROLE[data.role] || "/carer";
     }
 
-    function quickFill(user, pass) {
-      switchTab("login");
-      document.getElementById("loginUsername").value = user;
-      document.getElementById("loginPassword").value = pass;
-      document.getElementById("loginForm").requestSubmit();
+    async function syncFirebaseWithBackend(email, fullName, role, residentId, uid) {
+      const res = await fetch("/api/auth/firebase", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email,
+          full_name: fullName || "",
+          role: role || "carer",
+          resident_id: residentId || null,
+          firebase_uid: uid || ""
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "Could not sync Firebase account with AgeCare.");
+      return data;
     }
 
-    async function handleLogin(e) {
+    window.handleGoogleSignIn = async function () {
+      hideAlert();
+      if (!fbAuth) {
+        showAlert("Firebase is not initialized yet. Please refresh the page.", "err");
+        return;
+      }
+      try {
+        const provider = new GoogleAuthProvider();
+        const cred = await signInWithPopup(fbAuth, provider);
+        const role = window.selectedRegRole();
+        const residentId = role === "family" ? Number(document.getElementById("regResident").value) : null;
+        const session = await syncFirebaseWithBackend(
+          cred.user.email,
+          cred.user.displayName || "",
+          role,
+          residentId,
+          cred.user.uid
+        );
+        showAlert("Signed in with Google as " + session.full_name + " (" + session.role + ").", "ok");
+        setTimeout(() => saveSessionAndGo(session), 250);
+      } catch (err) {
+        if (err && err.code === "auth/unauthorized-domain" && window.location.hostname === "127.0.0.1") {
+          window.location.href = "http://localhost:" + (window.location.port || "8000") + "/login";
+          return;
+        }
+        showAlert(err.message || "Google sign-in failed.", "err");
+      }
+    };
+
+    window.handleForgotPassword = async function () {
+      hideAlert();
+      const email = document.getElementById("loginEmail").value.trim();
+      if (!email || !email.includes("@")) {
+        showAlert("Enter your email address above first, then click 'Forgot password?'.", "err");
+        return;
+      }
+      if (!fbAuth) {
+        showAlert("Paste your Firebase config in static/firebase-config.js to send password reset emails.", "err");
+        return;
+      }
+      try {
+        await sendPasswordResetEmail(fbAuth, email);
+        showAlert("Password reset email sent to " + email + ". Check your inbox.", "ok");
+      } catch (err) {
+        showAlert(err.message || "Could not send password reset email.", "err");
+      }
+    };
+
+    window.handleLogin = async function (e) {
       e.preventDefault();
       hideAlert();
       const btn = document.getElementById("btnLogin");
       btn.disabled = true;
+      const emailOrUser = document.getElementById("loginEmail").value.trim();
+      const password = document.getElementById("loginPassword").value;
+
       try {
+        // 1. If Firebase is configured and user entered an email, authenticate with Firebase Email/Password first
+        if (fbAuth && emailOrUser.includes("@")) {
+          try {
+            const cred = await signInWithEmailAndPassword(fbAuth, emailOrUser, password);
+            const role = window.selectedRegRole();
+            const residentId = role === "family" ? Number(document.getElementById("regResident").value) : null;
+            const session = await syncFirebaseWithBackend(
+              cred.user.email,
+              cred.user.displayName || "",
+              role,
+              residentId,
+              cred.user.uid
+            );
+            showAlert("Signed in as " + session.full_name + " (" + session.role + "). Opening your portal…", "ok");
+            setTimeout(() => saveSessionAndGo(session), 250);
+            return;
+          } catch (fbErr) {
+            // Fall through to local database check if account exists in local SQLite
+          }
+        }
+
+        // 2. Authenticate against AgeCare backend (supports email or username)
         const res = await fetch("/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: document.getElementById("loginUsername").value.trim(),
-            password: document.getElementById("loginPassword").value,
-          }),
+          body: JSON.stringify({ username: emailOrUser, password: password })
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Invalid username or password.");
+        if (!res.ok) throw new Error(data.detail || "Invalid email or password.");
         showAlert("Signed in as " + data.full_name + " (" + data.role + "). Opening your portal…", "ok");
-        setTimeout(() => saveSessionAndGo(data), 300);
+        setTimeout(() => saveSessionAndGo(data), 250);
       } catch (err) {
         showAlert(err.message, "err");
       } finally {
         btn.disabled = false;
       }
-    }
+    };
 
-    async function handleRegister(e) {
+    window.handleRegister = async function (e) {
       e.preventDefault();
       hideAlert();
       const btn = document.getElementById("btnRegister");
       btn.disabled = true;
-      const role = selectedRegRole();
-      const payload = {
-        full_name: document.getElementById("regFullName").value.trim(),
-        username: document.getElementById("regUsername").value.trim(),
-        password: document.getElementById("regPassword").value,
-        role: role,
-        resident_id: role === "family" ? Number(document.getElementById("regResident").value) : null,
-      };
+      const fullName = document.getElementById("regFullName").value.trim();
+      const email = document.getElementById("regEmail").value.trim();
+      const password = document.getElementById("regPassword").value;
+      const role = window.selectedRegRole();
+      const residentId = role === "family" ? Number(document.getElementById("regResident").value) : null;
+
       try {
+        // 1. Create account in Firebase Auth if configured and Email/Password provider is enabled
+        if (fbAuth && email.includes("@")) {
+          try {
+            const cred = await createUserWithEmailAndPassword(fbAuth, email, password);
+            if (fullName) {
+              try { await updateProfile(cred.user, { displayName: fullName }); } catch (e) {}
+            }
+          } catch (fbErr) {
+            if (fbErr && fbErr.code === "auth/weak-password") {
+              throw new Error("Password should be at least 6 characters.");
+            }
+            // If email already exists in Firebase (e.g. from Google popup), still allow registering in AgeCare DB
+            console.warn("Firebase registration note:", fbErr.code || fbErr.message);
+          }
+        }
+
+        // 2. Register role account in AgeCare SQLite backend
         const res = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          body: JSON.stringify({
+            full_name: fullName,
+            username: email,
+            password: password,
+            role: role,
+            resident_id: residentId
+          })
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || "Could not create account.");
-        showAlert("Account created for " + data.full_name + ". Opening your portal…", "ok");
-        setTimeout(() => saveSessionAndGo(data), 300);
+
+        // Clear any active session and redirect to the Log In view
+        localStorage.removeItem("agecare_session");
+        localStorage.removeItem("agecare_token");
+        document.getElementById("registerForm").reset();
+        window.switchTab("login");
+        document.getElementById("loginEmail").value = email;
+        document.getElementById("loginPassword").value = "";
+        document.getElementById("loginPassword").focus();
+        showAlert("Account created for " + data.full_name + " (" + data.role + "). Please log in now.", "ok");
       } catch (err) {
         showAlert(err.message, "err");
       } finally {
         btn.disabled = false;
       }
-    }
+    };
 
-    // Load residents for the family registration dropdown
     fetch("/api/residents")
       .then((r) => (r.ok ? r.json() : []))
       .then((list) => {
         const sel = document.getElementById("regResident");
-        list.forEach((p) => sel.add(new Option(p.name + " · Room " + (100 + p.resident_id), p.resident_id)));
-      })
-      .catch(() => {});
+        sel.innerHTML = list
+          .map((p) => `<option value="${p.resident_id}">${p.name} (Room ${p.room || p.resident_id})</option>`)
+          .join("");
+      });
   </script>
 </body>
 </html>

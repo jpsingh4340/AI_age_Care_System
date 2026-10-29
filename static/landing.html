@@ -1,51 +1,118 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#112f2e"><meta name="description" content="Age-Care Intelligence System — a student-built, nurse-led aged-care guidance prototype.">
-<title>Age-Care Intelligence — Designed around people</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<style>
-:root{--pine:#103d39;--forest:#092c2c;--mint:#c9ecde;--cream:#f8f7f2;--white:#fff;--ink:#15332f;--muted:#687c77;--line:#dfebe5;--gold:#d9bd81;--r:26px}
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);-webkit-font-smoothing:antialiased}a{text-decoration:none;color:inherit}button{font:inherit;cursor:pointer}img{width:100%;height:100%;object-fit:cover;display:block}.shell{width:min(1300px,calc(100% - 80px));margin:auto}
-.top{height:82px;display:flex;align-items:center;justify-content:space-between;gap:24px;position:absolute;z-index:30;top:0;left:0;right:0;color:white}.brand{display:flex;align-items:center;gap:11px;font-family:Manrope,sans-serif;font-size:22px;font-weight:800;letter-spacing:-1px}.brand-icon{width:37px;height:37px;border-radius:11px;background:#d1ecdc;color:#12443e;display:grid;place-items:center;font-size:22px}.nav{display:flex;align-items:center;gap:35px;font-size:14px;color:#eef6f1}.nav a:hover{color:#b1eed7}.nav-right{display:flex;gap:12px}.btn{min-height:48px;display:inline-flex;align-items:center;justify-content:center;gap:12px;border-radius:100px;padding:0 23px;font-size:14px;font-weight:700;transition:transform .22s,background .22s,box-shadow .22s}.btn:hover{transform:translateY(-3px)}.btn-solid{background:#d6f0e0;color:#173f37}.btn-outline{color:white;border:1px solid #ffffff88}.btn-dark{background:var(--pine);color:#fff}.btn-white{background:#fff;color:var(--pine)}
-.hero{min-height:790px;height:min(850px,95vh);position:relative;overflow:hidden;color:white;background:#13322c}.hero-photo{position:absolute;inset:0;background-image:linear-gradient(90deg,rgba(4,31,30,.93) 0%,rgba(4,31,30,.78) 32%,rgba(4,31,30,.20) 66%,rgba(4,31,30,.12) 100%),url('https://images.credenzahealth.com/media/original_images/long_term_care_jobs_xoGTCvx.jpeg');background-size:cover;background-position:center 37%;transform:scale(1.04);animation:slowzoom 18s ease-out forwards}.hero::after{content:'';position:absolute;inset:0;background:linear-gradient(0deg,#0a2828aa,transparent 32%);pointer-events:none}.hero-inner{position:relative;z-index:2;display:flex;align-items:center;min-height:100%;padding-top:76px}.hero-copy{max-width:720px}.kicker{display:inline-flex;align-items:center;gap:10px;text-transform:uppercase;letter-spacing:2.4px;font-size:11px;font-weight:700}.kicker .dot{height:8px;width:8px;background:#a3e9c8;border-radius:50%;box-shadow:0 0 0 6px #a3e9c822}.hero h1{font-family:Manrope,sans-serif;font-size:clamp(58px,6.6vw,102px);line-height:1.065;letter-spacing:-5px;font-weight:600;margin:27px 0 24px}.hero h1 em{font-family:Georgia,serif;font-style:italic;font-weight:400;color:#c1ecd7;letter-spacing:-4px}.hero p{font-size:17px;line-height:1.8;max-width:570px;color:#e0ebe7;margin-bottom:32px}.hero-actions{display:flex;flex-wrap:wrap;gap:12px}.hero-foot{position:absolute;z-index:3;bottom:36px;left:0;right:0;display:flex;align-items:center;justify-content:space-between;gap:20px}.hero-foot small{color:#dceae4;letter-spacing:1.1px;font-size:11px;text-transform:uppercase}.hero-foot .scroll{display:flex;align-items:center;gap:11px}.hero-foot .scroll span{width:38px;height:38px;border:1px solid #ffffff70;border-radius:50%;display:grid;place-items:center}.proof{display:flex;gap:20px;align-items:center;border:1px solid #ffffff65;border-radius:100px;padding:9px 18px;backdrop-filter:blur(14px);background:#ffffff17;font-size:12px}.proof b{color:#c1ecd7}
-.section{padding:110px 0}.eyebrow{font-size:11px;font-weight:800;letter-spacing:2.2px;text-transform:uppercase;color:#377f6c}.heading{font:600 clamp(39px,4.5vw,65px)/1.15 Manrope,sans-serif;letter-spacing:-2.8px;margin:18px 0}.muted{color:var(--muted);font-size:16px;line-height:1.8}.intro{display:flex;justify-content:space-between;align-items:end;gap:36px;margin-bottom:44px}.intro .heading{max-width:720px}.intro .muted{max-width:390px}.light{background:#fff}.photo-ribbon{display:grid;grid-template-columns:1.14fr .86fr;gap:22px}.photo-main,.photo-side{height:500px;position:relative;border-radius:var(--r);overflow:hidden;background:#cbded8}.photo-side{height:500px}.photo-side img{filter:saturate(.86)}.photo-main::after,.photo-side::after{content:'';position:absolute;inset:40% 0 0;background:linear-gradient(transparent,#092923bb)}.photo-label{position:absolute;bottom:28px;left:31px;z-index:2;color:white}.photo-label strong{display:block;font:600 31px/1.2 Manrope,sans-serif;letter-spacing:-1.2px;margin-bottom:8px}.photo-label small{font-size:13px;color:#deefe7}
-.story{display:grid;grid-template-columns:1fr 1fr;gap:7vw;align-items:center}.story-copy{padding:30px 0}.story-photo{height:610px;border-radius:28px;overflow:hidden;position:relative}.story-photo .photo-badge{position:absolute;bottom:24px;left:24px;right:24px;background:#fffef2ee;border-radius:20px;padding:23px;backdrop-filter:blur(12px);display:flex;gap:16px;align-items:center}.badge-symbol{font-size:30px}.photo-badge b{font:700 17px Manrope}.photo-badge p{color:#667a73;font-size:13px;margin:5px 0 0}.points{margin:33px 0;display:grid;gap:22px}.point{display:flex;gap:19px;align-items:start}.point-icon{background:#e0efe6;width:47px;height:47px;border-radius:14px;display:grid;place-items:center;font-size:21px;flex:none}.point h3{margin:0 0 5px;font-size:16px}.point p{margin:0;color:var(--muted);line-height:1.65;font-size:14px}
-.dark{background:#0b2c2b;color:white}.dark .eyebrow{color:#97dfbd}.dark .muted{color:#b8cfca}.cap-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.cap{background:#17423f;border:1px solid #456760;border-radius:23px;overflow:hidden}.cap-image{height:245px;background:#315b54;position:relative}.cap-image:after{content:'';position:absolute;inset:0;background:linear-gradient(transparent,#0d342e7f)}.cap-body{padding:29px}.cap-index{font-size:11px;color:#b5ebd1;letter-spacing:1.5px}.cap h3{font:650 24px/1.3 Manrope;margin:12px 0;letter-spacing:-.6px}.cap p{color:#c0d5cf;line-height:1.7;font-size:14px;margin:0 0 20px}.cap .tag{display:inline-block;border:1px solid #638b7c;padding:7px 12px;border-radius:30px;color:#d2efe1;font-size:11px}
-.workflow{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:43px}.step{border-top:1px solid #afc9bd;padding:25px 8px 10px 0}.step i{font-style:normal;font:500 42px Georgia,serif;color:#70a78f}.step h3{margin:24px 0 10px;font-size:17px}.step p{line-height:1.7;color:#6c8078;font-size:14px}.safety-band{display:grid;grid-template-columns:1fr 1fr;gap:0;border-radius:25px;overflow:hidden;background:#dfede4;min-height:470px}.safety-band .image{background:url('https://www.klinikum-neumarkt.de/media/_processed_/8/1/csm_AdobeStock_715461720_Halfpoint_a7b9af1b69.webp') center/cover}.safety-text{padding:66px 64px}.safety-text .heading{font-size:clamp(36px,3.5vw,49px)}.safety-text p{color:#48675d;line-height:1.8}.checks{display:grid;gap:11px;margin:26px 0}.checks div{font-size:14px}.checks span{color:#15866d;font-weight:bold;margin-right:9px}
-.last{padding:100px 0 30px}.end-panel{border-radius:30px;min-height:420px;position:relative;overflow:hidden;background:#0c3531;color:white;display:flex;align-items:center;padding:70px}.end-panel:before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,#0b2e2de8 0%,#123f3dc5 56%,transparent 100%),url('https://www.klinikum-neumarkt.de/media/_processed_/8/1/csm_AdobeStock_715461720_Halfpoint_a7b9af1b69.webp') center/cover;opacity:.94}.end-panel>div{position:relative;z-index:1;max-width:630px}.end-panel h2{font:600 clamp(40px,5vw,68px)/1.12 Manrope;letter-spacing:-2px;margin:15px 0}.end-panel p{color:#d3e6df;line-height:1.8}.footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:30px;padding:38px 0 45px;color:#71847c;font-size:12px}.footer strong{font-size:16px;color:#183e36}.footer .disclaimer{max-width:430px;line-height:1.65}
-.reveal{opacity:0;transform:translateY(24px);transition:opacity .85s,transform .85s}.reveal.show{opacity:1;transform:none}@keyframes slowzoom{to{transform:scale(1)}}
-@media(max-width:1000px){.shell{width:min(100% - 42px,1300px)}.nav{gap:15px}.hero h1{letter-spacing:-3px}.story{gap:35px}.safety-text{padding:40px}.cap-grid{gap:12px}}@media(max-width:750px){.top{height:70px}.nav{display:none}.nav-right .btn-outline{display:none}.hero{height:auto;min-height:760px}.hero-photo{background-position:65% center;background-image:linear-gradient(90deg,#062726e8,#06272683),url('https://images.credenzahealth.com/media/original_images/long_term_care_jobs_xoGTCvx.jpeg')}.hero-inner{padding:140px 0 125px}.hero h1{font-size:clamp(48px,11vw,70px);letter-spacing:-3px}.hero-foot{bottom:24px}.hero-foot .proof{display:none}.section{padding:75px 0}.intro{display:block}.intro .muted{max-width:100%}.photo-ribbon,.story,.safety-band{grid-template-columns:1fr}.photo-main,.photo-side{height:420px}.story-photo{height:430px;order:-1}.cap-grid{grid-template-columns:1fr}.cap-image{height:280px}.workflow{grid-template-columns:1fr 1fr}.safety-band .image{min-height:380px}.end-panel{padding:50px 30px}.last{padding-top:70px}}@media(max-width:480px){.shell{width:calc(100% - 32px)}.brand{font-size:18px}.brand-icon{width:31px;height:31px}.nav-right .btn{padding:0 14px;min-height:41px}.hero p{font-size:15px}.heading{letter-spacing:-1.8px}.workflow{grid-template-columns:1fr}.photo-label strong{font-size:26px}.safety-text{padding:35px 24px}.hero-foot small{font-size:10px}}@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AgeCare · Understand Resident Care Instantly</title>
+  <link rel="icon" type="image/png" href="/static/img/favicon.png">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body class="has-bg-video">
+  <div class="bg-video-wrap" aria-hidden="true">
+    <video class="bg-video" autoplay muted loop playsinline preload="auto">
+      <source src="/static/age-care-anatomy.mp4" type="video/mp4">
+    </video>
+    <div class="bg-video-overlay"></div>
+  </div>
+  <header class="topbar"></header>
 
-/* Anatomy video feature: stable full-body framing, native silent loop */
-.hero{background:radial-gradient(ellipse at 76% 42%,#245b50 0%,#103b37 48%,#092623 100%)}
-.hero-photo{display:none}
-.hero-inner{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(330px,.85fr);gap:4.5vw;align-items:center;padding-bottom:92px}
-.hero-copy{max-width:700px}
-.anatomy-display{position:relative;width:100%;height:min(690px,75vh);min-height:490px;display:flex;align-items:center;justify-content:center;isolation:isolate}
-.anatomy-display::before{content:'';position:absolute;inset:5% -5%;border-radius:45%;background:radial-gradient(ellipse,#79e0ce45,transparent 68%);filter:blur(25px);z-index:-1}
-.anatomy-frame{position:relative;height:100%;width:min(100%,470px);overflow:hidden;border-radius:30px;background:#f6fafd;border:1px solid #ffffff55;box-shadow:0 35px 95px #001a1b80,0 0 0 8px #ffffff0a}
-.anatomy-frame video{width:100%;height:100%;display:block;object-fit:contain;object-position:center;background:#f6fafd}
-.anatomy-label{position:absolute;bottom:22px;left:19px;right:19px;z-index:2;background:#0b302dbb;color:white;backdrop-filter:blur(16px);border:1px solid #ffffff50;padding:14px 17px;border-radius:15px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:11px;letter-spacing:1px;text-transform:uppercase}
-.anatomy-label .live-dot{width:8px;height:8px;border-radius:50%;background:#8de7c6;box-shadow:0 0 0 5px #8de7c62e;flex:none}
-.hero-foot{bottom:24px}
-@media(max-width:1000px){.hero-inner{gap:24px;grid-template-columns:1fr .85fr}.anatomy-display{min-height:420px;height:590px}.hero h1{font-size:clamp(48px,5.5vw,75px)}}
-@media(max-width:750px){.hero{height:auto;min-height:unset}.hero-inner{display:flex;flex-direction:column;align-items:stretch;padding-top:120px;padding-bottom:125px}.hero-copy{max-width:100%}.anatomy-display{min-height:0;height:540px;margin:10px auto 0}.anatomy-frame{max-width:360px}.hero-foot{bottom:24px}}
-@media(max-width:480px){.anatomy-display{height:470px}.anatomy-frame{max-width:320px}.anatomy-label{font-size:9px;padding:10px 12px}.hero-inner{padding-bottom:112px}}
+  <!-- ClearScan-style Hero -->
+  <section class="cs-hero">
+    <div class="cs-hero-watermark" aria-hidden="true">Understand Resident Care</div>
+    <h1>Care Insights Instantly</h1>
+    <p class="cs-sub">
+      Transform shift notes, vital signs, and medical records into clear, nurse-reviewed insights across all four aged-care roles.
+    </p>
+    <div class="cs-privacy-note">Your resident information is processed locally and privately via Ollama.</div>
+    <div class="cs-trust-row">
+      <span><b>✓</b> Source-Backed AI</span>
+      <span><b>✓</b> Local &amp; Private</span>
+      <span><b>✓</b> Nurse-Approved</span>
+      <span><b>✓</b> 4 Role Credentials</span>
+    </div>
+  </section>
 
-</style>
-</head><body>
-<header class="top shell"><a class="brand" href="/welcome"><span class="brand-icon">✳</span> age-care<span style="color:#b7ead1">.</span></a><nav class="nav"><a href="#vision">Our vision</a><a href="#features">Capabilities</a><a href="#process">How it works</a><a href="#safety">Safety</a></nav><div class="nav-right"><a class="btn btn-outline" href="/carer">Carer</a><a class="btn btn-outline" href="/nurse">Nurse</a><a class="btn btn-outline" href="/manager">Manager</a><a class="btn btn-outline" href="/family">Family</a><a class="btn btn-solid" href="/login">Sign In <span aria-hidden="true">↗</span></a></div></header>
-<main>
-<section class="hero"><div class="hero-inner shell"><div class="hero-copy"><div class="kicker"><span class="dot"></span> A more human future for care</div><h1>Where intelligent care meets <em>human kindness.</em></h1><p>Thoughtful AI assistance for aged-care teams. Turn trusted records into clear guidance—while keeping nurses firmly in control of every decision.</p><div class="hero-actions"><a class="btn btn-solid" href="/login">Sign In to Portal ➔</a><a class="btn btn-outline" href="/carer">Carer</a><a class="btn btn-outline" href="/nurse">Nurse</a><a class="btn btn-outline" href="/manager">Manager</a><a class="btn btn-outline" href="/family">Family</a></div></div><div class="anatomy-display"><div class="anatomy-frame"><video id="anatomy-loop" autoplay muted loop playsinline preload="auto" disablepictureinpicture aria-label="Looping 3D anatomical human-body medical visualisation"><source src="/static/age-care-anatomy.mp4" type="video/mp4">Your browser does not support video playback.</video><div class="anatomy-label"><span>3D anatomy · AI-assisted health visualisation</span><span class="live-dot" aria-hidden="true"></span></div></div></div></div><div class="hero-foot shell"><small>Designed around people. Guided by care.</small><div class="proof"><span>✦</span> <b>Human-reviewed</b> AI-supported guidance</div><a href="#vision" class="scroll"><small>Scroll to explore</small><span>↓</span></a></div></section>
-<section class="section light" id="vision"><div class="shell"><div class="intro reveal"><div><div class="eyebrow">Beyond the technology</div><h2 class="heading">Better information.<br>More meaningful care.</h2></div><p class="muted">Designed to support those who care for older adults, our student prototype puts clear information and human judgment side by side.</p></div><div class="photo-ribbon reveal"><div class="photo-main"><img src="https://www.klinikum-neumarkt.de/media/_processed_/8/1/csm_AdobeStock_715461720_Halfpoint_a7b9af1b69.webp" alt="A caregiver shares a smile with an older woman" loading="lazy"><div class="photo-label"><strong>Compassion comes first.</strong><small>Human connection is at the heart of every interaction.</small></div></div><div class="photo-side"><img src="https://images.credenzahealth.com/media/original_images/long_term_care_jobs_xoGTCvx.jpeg" alt="Senior resident smiling with her caregiver" loading="lazy"><div class="photo-label"><strong>Clarity makes a difference.</strong><small>Information that helps carers act thoughtfully.</small></div></div></div></div></section>
-<section class="section" id="about"><div class="shell story"><div class="story-copy reveal"><div class="eyebrow">Built for caregivers</div><h2 class="heading">Technology should support care. <em style="font-family:Georgia,serif;font-weight:400;color:#47967d">Not replace it.</em></h2><p class="muted">Age-Care Intelligence brings together resident information, approved references and responsible AI drafting in an experience designed for ease and trust.</p><div class="points"><div class="point"><span class="point-icon">♡</span><div><h3>Person-centred approach</h3><p>Care guidance begins with a resident's own records and needs.</p></div></div><div class="point"><span class="point-icon">✦</span><div><h3>Evidence you can inspect</h3><p>Draft guidance identifies supporting sources for review.</p></div></div><div class="point"><span class="point-icon">✓</span><div><h3>Human accountability</h3><p>A nurse checks proposed guidance before it can reach carers.</p></div></div></div><a class="btn btn-dark" href="#features">Explore capabilities ↗</a></div><div class="story-photo reveal"><img src="https://www.klinikum-neumarkt.de/media/_processed_/8/1/csm_AdobeStock_715461720_Halfpoint_a7b9af1b69.webp" alt="Supportive interaction between a healthcare worker and older resident" loading="lazy"><div class="photo-badge"><span class="badge-symbol">✧</span><div><b>Care with confidence</b><p>Clear information. Professional oversight. Human connection.</p></div></div></div></div></section>
-<section class="section dark" id="features"><div class="shell"><div class="intro reveal"><div><div class="eyebrow">Explore the system</div><h2 class="heading">Three capabilities.<br>One shared purpose.</h2></div><p class="muted">An integrated vision for assisting aged-care professionals—from source-backed guidance to preparing information for clinical review.</p></div><div class="cap-grid"><article class="cap reveal"><div class="cap-image"><img src="https://images.credenzahealth.com/media/original_images/long_term_care_jobs_xoGTCvx.jpeg" alt="Caregiver assisting an older resident" loading="lazy"></div><div class="cap-body"><span class="cap-index">01 / GUIDANCE</span><h3>AI-assisted care guidance</h3><p>Prepare source-linked notes about symptoms to watch for and practical prevention steps.</p><span class="tag">Working prototype</span></div></article><article class="cap reveal"><div class="cap-image"><img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1000&q=85" alt="Doctor reviewing patient information" loading="lazy"></div><div class="cap-body"><span class="cap-index">02 / PREPAREDNESS</span><h3>Emergency doctor summary</h3><p>Present existing facts, allergies and concerns in a structured report for nurse review.</p><span class="tag">In development</span></div></article><article class="cap reveal"><div class="cap-image"><img src="https://www.klinikum-neumarkt.de/media/_processed_/8/1/csm_AdobeStock_715461720_Halfpoint_a7b9af1b69.webp" alt="Caregiver carefully supporting an older woman" loading="lazy"></div><div class="cap-body"><span class="cap-index">03 / OBSERVATION</span><h3>Facial-cue support</h3><p>Researching gentle prompts for possible discomfort, with consent and nursing oversight.</p><span class="tag">Early research</span></div></article></div></div></section>
-<section class="section light" id="process"><div class="shell"><div class="eyebrow reveal">The responsible AI journey</div><h2 class="heading reveal">From trusted source<br>to reviewed guidance.</h2><p class="muted reveal" style="max-width:660px">Our approach is designed so that AI proposes, safety rules filter, and qualified humans make care decisions.</p><div class="workflow"><div class="step reveal"><i>01</i><h3>Gather care information</h3><p>Use resident care plans and approved reference notes.</p></div><div class="step reveal"><i>02</i><h3>Draft source-linked notes</h3><p>The local AI generates suggestions with cited supporting text.</p></div><div class="step reveal"><i>03</i><h3>Apply safety checks</h3><p>Automatically remove unsupported lines and disallowed medical advice.</p></div><div class="step reveal"><i>04</i><h3>Nurse reviews</h3><p>A nurse must approve guidance before it can be shared with carers.</p></div></div></div></section>
-<section class="section" id="safety" style="padding-top:0"><div class="shell"><div class="safety-band reveal"><div class="image" role="img" aria-label="An older woman speaking with her caregiver"></div><div class="safety-text"><span class="eyebrow">Safety is not optional</span><h2 class="heading">AI assists.<br>People decide.</h2><p>This is an educational prototype—not a diagnostic or medical decision-making tool. Resident examples use synthetic information.</p><div class="checks"><div><span>✓</span> Source checks for guidance</div><div><span>✓</span> No medication or dose suggestions</div><div><span>✓</span> No automatic diagnosis</div><div><span>✓</span> Nurse oversight before sharing</div></div><a class="btn btn-dark" href="/guidance">View example guidance ↗</a></div></div></div></section>
-<section class="last"><div class="shell"><div class="end-panel reveal"><div><div class="kicker">Built with care, shaped by purpose</div><h2>Let's make every moment of care count.</h2><p>Explore how our student prototype supports the people who give care—and the people who receive it.</p><a class="btn btn-white" href="/">Open the dashboard ↗</a></div></div><footer class="footer"><div><strong>age-care.</strong><p>Age-Care Intelligence System<br>BIT student capstone prototype</p></div><div class="disclaimer">Demo uses fictional residents and is not a clinical device. AI-generated drafts require nurse review. Photography is illustrative and does not depict actual residents from this prototype.</div><div>© 2026 Age-Care Intelligence</div></footer></div></section>
-</main><script>if('IntersectionObserver'in window){const ob=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('show');ob.unobserve(e.target)}}),{threshold:.10});document.querySelectorAll('.reveal').forEach(e=>ob.observe(e))}else document.querySelectorAll('.reveal').forEach(e=>e.classList.add('show'));</script>
-<script>const anatomyVideo=document.getElementById('anatomy-loop'); if(anatomyVideo){anatomyVideo.muted=true;anatomyVideo.defaultMuted=true;anatomyVideo.play().catch(()=>{});document.addEventListener('visibilitychange',()=>{if(!document.hidden && anatomyVideo.paused)anatomyVideo.play().catch(()=>{});});}</script>
-</body></html>
+  <!-- Common Horizontal Feature Strip -->
+  <div class="cs-strip">
+    <div class="cs-strip-inner">
+      <span class="cs-strip-item">💊 Person-centred care plans.</span>
+      <span class="cs-strip-item">📋 Save time writing shift handovers.</span>
+      <span class="cs-strip-item">✅ Nurse-verified clinical guidance.</span>
+      <span class="cs-strip-item">🩺 Understand vital sign trends.</span>
+      <span class="cs-strip-item">⚡ Warm plain-language family updates.</span>
+    </div>
+  </div>
+
+  <main class="page">
+    <!-- ClearScan-style Split Showcase -->
+    <section class="cs-showcase">
+      <div>
+        <div class="eyebrow">Understand Every Role in the Facility</div>
+        <h2>Unlock Clearer Insights Across All Four Roles</h2>
+        <p class="small" style="margin-top: 12px; max-width: 460px">
+          Every person in the rest home signs in with their own credentials and sees a workspace tailored to their responsibility—connected through a single SQLite &amp; local-SLM backend.
+        </p>
+      </div>
+
+      <div class="cs-feature-list">
+        <div class="cs-feature-item">
+          <span class="cs-check-circle">✓</span>
+          <div>
+            <h3>1. Carer Shift Portal</h3>
+            <p class="small">Record daily care tasks, spot vitals, and shift concern notes that immediately sync to the Registered Nurse.</p>
+          </div>
+        </div>
+        <div class="cs-feature-item">
+          <span class="cs-check-circle">✓</span>
+          <div>
+            <h3>2. Nurse Clinical Review</h3>
+            <p class="small">Triage care priorities (Green/Amber/Red), approve source-linked AI guidance, read health reports via OCR, and approve family updates.</p>
+          </div>
+        </div>
+        <div class="cs-feature-item">
+          <span class="cs-check-circle">✓</span>
+          <div>
+            <h3>3. Manager &amp; Compliance</h3>
+            <p class="small">Monitor live facility KPIs, manage staff and family user accounts, and inspect the full clinical audit trail.</p>
+          </div>
+        </div>
+        <div class="cs-feature-item">
+          <span class="cs-check-circle">✓</span>
+          <div>
+            <h3>4. Family Portal</h3>
+            <p class="small">Read warm, nurse-approved daily updates for their linked loved one and message the care team directly.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Four Role Overview Cards (no direct links) -->
+    <div class="kpis">
+      <div class="card">
+        <span class="section-label">Role 01 · Frontline</span>
+        <h2>Carer Portal</h2>
+        <p class="small">Log tasks, spot vitals, and observations during your shift.</p>
+      </div>
+      <div class="card">
+        <span class="section-label">Role 02 · Clinical RN</span>
+        <h2>Nurse Portal</h2>
+        <p class="small">Review care priorities, approve AI drafts, and send family updates.</p>
+      </div>
+      <div class="card">
+        <span class="section-label">Role 03 · Governance</span>
+        <h2>Manager Portal</h2>
+        <p class="small">Facility KPIs, role account credentials, and compliance audit log.</p>
+      </div>
+      <div class="card">
+        <span class="section-label">Role 04 · Whānau</span>
+        <h2>Family Portal</h2>
+        <p class="small">Nurse-approved daily updates and direct messages to the care team.</p>
+      </div>
+    </div>
+
+    <footer class="foot"></footer>
+  </main>
+
+  <script src="/static/auth.js"></script>
+</body>
+</html>
