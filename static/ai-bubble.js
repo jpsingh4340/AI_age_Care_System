@@ -2,50 +2,209 @@
 // On the dashboard it reads the selected resident and role, so answers use that resident's approved guidance.
 (function () {
   const css = `
-    #ain-btn, #ain-panel { --a: var(--accent, #0a7c73); --s: var(--surface, #fff); --i: var(--ink, #0f1f1e);
-      --i2: var(--ink2, #44595a); --l: var(--line, #d9e0de); --b: var(--bg, #edf0ee); --r: var(--rail, #0c3b3a);
-      font-family: "Schibsted Grotesk", system-ui, "Segoe UI", Arial, sans-serif; }
-    #ain-btn { position: fixed; right: 22px; bottom: 22px; z-index: 9999; background: var(--r); color: #fff;
-      border: 1px solid rgba(255,255,255,.14); border-radius: 999px; padding: 12px 20px 12px 16px; font-size: 14.5px;
-      font-weight: 600; display: flex; align-items: center; gap: 9px; cursor: pointer;
-      box-shadow: 0 10px 28px -10px rgba(12,59,58,.55); transition: transform .2s, box-shadow .2s; }
-    #ain-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 32px -10px rgba(12,59,58,.65); }
-    #ain-btn .pulse { width: 9px; height: 9px; border-radius: 50%; background: #5ccb8b; box-shadow: 0 0 0 3px rgba(92,203,139,.25); }
-    #ain-btn.off .pulse { background: #f2766e; box-shadow: 0 0 0 3px rgba(242,118,110,.25); }
-    #ain-panel { position: fixed; right: 22px; bottom: 82px; z-index: 9999; width: 380px; max-width: calc(100vw - 32px);
-      height: 540px; max-height: calc(100vh - 110px); background: var(--s); color: var(--i); border: 1px solid var(--l);
-      border-radius: 18px; box-shadow: 0 24px 60px -20px rgba(0,0,0,.35); display: none; flex-direction: column;
-      font-size: 14.5px; line-height: 1.5; overflow: hidden; }
-    #ain-panel.open { display: flex; animation: ain-in .22s ease-out; }
-    @keyframes ain-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-    #ain-head { padding: 14px 16px 12px; background: var(--r); color: #fff; }
-    #ain-head .top { display: flex; justify-content: space-between; align-items: center; }
-    #ain-head b { font-size: 16px; font-weight: 600; letter-spacing: -.01em; }
-    #ain-about { font-size: 12.5px; color: rgba(255,255,255,.78); margin: 2px 0 10px; }
-    #ain-close { background: rgba(255,255,255,.12); border: 0; color: #fff; font-size: 12.5px; border-radius: 8px;
-      padding: 4px 10px; cursor: pointer; }
-    #ain-model { width: 100%; padding: 7px 9px; border: 1px solid rgba(255,255,255,.22); border-radius: 10px; font: inherit;
-      font-size: 13.5px; background: rgba(255,255,255,.1); color: #fff; }
-    #ain-model option { color: #0f1f1e; }
-    #ain-msgs { flex: 1; overflow-y: auto; padding: 14px; background: var(--b); }
-    .ain-msg { margin-bottom: 10px; padding: 9px 12px; border-radius: 14px; white-space: pre-wrap; max-width: 88%;
-      background: var(--s); border: 1px solid var(--l); }
-    .ain-user { background: #0a7c73; border-color: transparent; color: #fff; margin-left: auto; border-bottom-right-radius: 4px; }
-    .ain-bot { border-bottom-left-radius: 4px; }
-    .ain-err { background: var(--bad-soft, #fce8e6); color: var(--bad, #b3261e); border-color: transparent; }
-    .ain-tag { display: inline-block; font-size: 11.5px; font-weight: 600; border-radius: 6px; padding: 0 7px; margin-bottom: 5px; }
-    .ain-tag.ok { background: var(--good-soft, #e3f3e9); color: var(--good, #1f7a4a); }
-    .ain-tag.gen { background: var(--warn-soft, #fff1d6); color: var(--warn, #9a5700); }
-    .ain-text { display: block; }
-    .ain-meta { display: block; font-size: 11.5px; color: var(--i2); margin-top: 6px; }
-    #ain-form { display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--l); background: var(--s); }
-    #ain-input { flex: 1; padding: 9px 11px; border: 1px solid var(--l); border-radius: 12px; font: inherit; resize: none;
-      height: 42px; background: var(--s); color: var(--i); }
-    #ain-input:focus { outline: 2px solid var(--a); outline-offset: 0; }
-    #ain-send { background: #0a7c73; color: #fff; border: 0; border-radius: 12px; padding: 0 16px; font-weight: 600; cursor: pointer; }
-    #ain-send:disabled { opacity: .55; cursor: wait; }
-    @media (max-width: 520px) { #ain-panel { right: 16px; bottom: 76px; } #ain-btn { right: 16px; bottom: 16px; } }
-    @media (prefers-reduced-motion: reduce) { #ain-panel.open { animation: none; } #ain-btn { transition: none; } }
+    #ain-btn, #ain-panel {
+      --a: var(--accent, #0F5F5A);
+      --s: var(--card, #FFFFFF);
+      --i: var(--ink, #1C1F1E);
+      --i2: var(--ink-secondary, #4A5553);
+      --l: var(--line, #E3E1DC);
+      --b: var(--bg, #F6F5F2);
+      font-family: var(--font-sans, "Source Sans 3", -apple-system, sans-serif);
+    }
+    #ain-btn {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      z-index: 9999;
+      background: var(--a);
+      color: #FFFFFF;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: var(--radius-pill, 999px);
+      padding: 10px 18px 10px 14px;
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      transition: background-color 120ms ease;
+    }
+    #ain-btn:hover {
+      background: var(--accent-hover, #0A4541);
+    }
+    #ain-btn .pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #48A856;
+    }
+    #ain-btn.off .pulse {
+      background: #E0584E;
+    }
+    #ain-panel {
+      position: fixed;
+      right: 20px;
+      bottom: 74px;
+      z-index: 9999;
+      width: 380px;
+      max-width: calc(100vw - 32px);
+      height: 520px;
+      max-height: calc(100vh - 100px);
+      background: var(--s);
+      color: var(--i);
+      border: 1px solid var(--l);
+      border-radius: var(--radius-card, 6px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      display: none;
+      flex-direction: column;
+      font-size: 14px;
+      line-height: 1.45;
+      overflow: hidden;
+    }
+    #ain-panel.open {
+      display: flex;
+    }
+    #ain-head {
+      padding: 12px 14px;
+      background: var(--a);
+      color: #FFFFFF;
+    }
+    #ain-head .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #ain-head b {
+      font-size: 15px;
+      font-weight: 600;
+    }
+    #ain-about {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.85);
+      margin: 2px 0 8px;
+    }
+    #ain-close {
+      background: rgba(255, 255, 255, 0.15);
+      border: 0;
+      color: #FFFFFF;
+      font-size: 12px;
+      border-radius: var(--radius-input, 4px);
+      padding: 4px 8px;
+      cursor: pointer;
+    }
+    #ain-close:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+    #ain-model {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: var(--radius-input, 4px);
+      font: inherit;
+      font-size: 12.5px;
+      background: rgba(255, 255, 255, 0.15);
+      color: #FFFFFF;
+    }
+    #ain-model option {
+      color: #1C1F1E;
+      background: #FFFFFF;
+    }
+    #ain-msgs {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      background: var(--b);
+    }
+    .ain-msg {
+      margin-bottom: 8px;
+      padding: 8px 10px;
+      border-radius: var(--radius-card, 6px);
+      white-space: pre-line;
+      max-width: 90%;
+      background: var(--s);
+      border: 1px solid var(--l);
+      font-size: 13.5px;
+    }
+    .ain-user {
+      background: var(--accent-soft, #E6F0EF);
+      border-color: var(--accent-border, #BCD9D6);
+      color: var(--accent, #0F5F5A);
+      margin-left: auto;
+    }
+    .ain-bot {
+      margin-right: auto;
+    }
+    .ain-err {
+      background: var(--red-soft, #FDF0EF);
+      color: var(--red, #A1281F);
+      border-color: var(--red-border, #F5C7C3);
+    }
+    .ain-tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: var(--radius-pill, 999px);
+      padding: 1px 6px;
+      margin-bottom: 4px;
+    }
+    .ain-tag.ok {
+      background: var(--green-soft, #EBF5EE);
+      color: var(--green, #2F6B3A);
+    }
+    .ain-tag.gen {
+      background: var(--amber-soft, #FDF6E7);
+      color: var(--amber, #8A5A00);
+    }
+    .ain-text {
+      display: block;
+    }
+    .ain-meta {
+      display: block;
+      font-size: 11px;
+      color: var(--i2);
+      margin-top: 4px;
+    }
+    #ain-form {
+      display: flex;
+      gap: 6px;
+      padding: 10px;
+      border-top: 1px solid var(--l);
+      background: var(--s);
+    }
+    #ain-input {
+      flex: 1;
+      padding: 8px 10px;
+      border: 1px solid var(--l);
+      border-radius: var(--radius-input, 4px);
+      font: inherit;
+      resize: none;
+      height: 38px;
+      background: var(--s);
+      color: var(--i);
+    }
+    #ain-input:focus {
+      outline: 2px solid var(--a);
+      outline-offset: 0;
+    }
+    #ain-send {
+      background: var(--a);
+      color: #FFFFFF;
+      border: 0;
+      border-radius: var(--radius-input, 4px);
+      padding: 0 14px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    #ain-send:disabled {
+      opacity: 0.5;
+      cursor: wait;
+    }
+    @media (max-width: 520px) {
+      #ain-panel { right: 12px; bottom: 68px; }
+      #ain-btn { right: 12px; bottom: 12px; }
+    }
   `;
 
   function el(tag, attrs, text) {
@@ -55,7 +214,6 @@
     return e;
   }
 
-  // the dashboard keeps its data in a global called state
   function pageContext() {
     try {
       if (typeof state === "object" && state) {
@@ -98,7 +256,7 @@
     const role = ctx.role ? ctx.role[0].toUpperCase() + ctx.role.slice(1) : null;
     about.textContent = ctx.name
       ? "About " + ctx.name + (role ? " · " + role : "")
-      : "General questions · fake data only";
+      : "General questions · Fictional data only";
   }
 
   let loaded = false;
@@ -115,7 +273,7 @@
         loaded = false;
         return;
       }
-      for (const name of data.models) {
+      for (const name of (data.models || [])) {
         const label = name === data.default ? name + " (recommended)" : name;
         model.add(new Option(label, name, false, name === data.default));
       }
@@ -131,7 +289,7 @@
     if (panel.classList.contains("open")) {
       showAbout();
       if (!loaded) loadModels();
-      if (!msgs.children.length) addMsg("bot", "Hi, ask me about the selected resident's care. I answer from the nurse-approved guidance. Always check with the RN in charge.");
+      if (!msgs.children.length) addMsg("bot", "Kia ora, ask me about the selected resident's care. Answers are drawn from nurse-approved guidance. Always verify with the RN in charge.");
       input.focus();
     }
   });
@@ -146,7 +304,7 @@
     addMsg("user", question);
     input.value = "";
     send.disabled = true;
-    const wait = addMsg("bot", "Thinking... on CPU this can take a little while.");
+    const wait = addMsg("bot", "Reading notes on local model…");
     const started = Date.now();
     try {
       const headers = { "Content-Type": "application/json" };
@@ -166,7 +324,7 @@
         el("span", { className: "ain-text" }, data.answer)
       );
       let meta = data.model + " · " + ((Date.now() - started) / 1000).toFixed(1) + "s";
-      if (data.sources.length) meta += " · " + data.sources.join(", ");
+      if (data.sources && data.sources.length) meta += " · Sources: " + data.sources.join(", ");
       wait.appendChild(el("span", { className: "ain-meta" }, meta));
     } catch (err) {
       wait.className = "ain-msg ain-err";
