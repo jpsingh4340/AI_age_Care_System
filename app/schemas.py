@@ -291,7 +291,7 @@ class RecordsOut(BaseModel):
 
 # ---------- Authentication & Roles ----------
 class RegisterRequest(BaseModel):
-    username: str = Field(min_length=3, max_length=50)
+    username: str = Field(min_length=3, max_length=120)
     password: str = Field(min_length=6, max_length=100)
     full_name: str = Field(min_length=2, max_length=100)
     # Manager accounts are not self-registered: a manager creates them on /manager.
@@ -322,7 +322,7 @@ class AuthResponse(BaseModel):
 
 class CreateUserRequest(BaseModel):
     """A manager creating a login for a staff member or family member."""
-    username: str = Field(min_length=3, max_length=50)
+    username: str = Field(min_length=3, max_length=120)
     password: str = Field(min_length=6, max_length=100)
     full_name: str = Field(min_length=2, max_length=100)
     role: Literal["carer", "nurse", "manager", "family"]
@@ -340,3 +340,12 @@ class FamilyUpdateSendRequest(BaseModel):
 
 class FamilyMessageRequest(BaseModel):
     text: str = Field(min_length=2, max_length=1000)
+
+
+
+class FirebaseAuthRequest(BaseModel):
+    email: str = Field(min_length=3, max_length=120)
+    full_name: str = ""
+    role: Literal["carer", "nurse", "manager", "family"] = "carer"
+    resident_id: int | None = None
+    firebase_uid: str = ""

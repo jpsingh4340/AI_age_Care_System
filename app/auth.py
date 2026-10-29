@@ -188,12 +188,16 @@ def register_user(
 
 
 def authenticate_user(username: str, password: str) -> dict | None:
-    """Verify username and password against database."""
+    """Verify username or email and password against database."""
     clean_user = username.strip().lower()
     with _get_connection() as conn:
         cur = conn.cursor()
         cur.execute("SELECT * FROM users WHERE username = ?", (clean_user,))
         user = cur.fetchone()
+        if not user and "@" in clean_user:
+            prefix = clean_user.split("@", 1)[0]
+            cur.execute("SELECT * FROM users WHERE username = ?", (prefix,))
+            user = cur.fetchone()
         if not user:
             return None
 
@@ -305,3 +309,54 @@ def delete_user(username: str) -> bool:
         cur = conn.execute("DELETE FROM users WHERE username = ?", (username.strip().lower(),))
         conn.execute("DELETE FROM user_sessions WHERE username = ?", (username.strip().lower(),))
         return cur.rowcount > 0
+
+
+
+def firebase_sync_user(
+    email: str,
+    full_name: str = "",
+    role: str = "carer",
+    resident_id: int | None = None,
+) -> dict:
+    """Find or create a local role account for a Firebase-authenticated user."""
+    clean_email = email.strip().lower()
+    if not clean_email or "@" not in clean_email:
+        raise ValueError("A valid email address is required.")
+    clean_role = role.strip().lower() if role else "carer"
+    if clean_role not in ROLES:
+        clean_role = "carer"
+
+    with _get_connection() as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM users WHERE username = ?", (clean_email,))
+        user = cur.fetchone()
+        if not user:
+            prefix = clean_email.split("@", 1)[0]
+            cur.execute("SELECT * FROM users WHERE username = ?", (prefix,))
+            user = cur.fetchone()
+
+        if user:
+            return {
+                "id": user["id"],
+                "username": user["username"],
+                "full_name": user["full_name"],
+                "role": user["role"],
+                "resident_id": user["resident_id"],
+            }
+
+        display_name = full_name.strip() or clean_email.split("@", 1)[0].replace(".", " ").title()
+        linked_res = (resident_id or 1) if clean_role == "family" else None
+        pwd_hash, salt = _hash_password(secrets.token_hex(16))
+        now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        cur.execute(
+            "INSERT INTO users (username, password_hash, salt, full_name, role, resident_id, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (clean_email, pwd_hash, salt, display_name, clean_role, linked_res, now),
+        )
+        return {
+            "id": cur.lastrowid,
+            "username": clean_email,
+            "full_name": display_name,
+            "role": clean_role,
+            "resident_id": linked_res,
+        }
