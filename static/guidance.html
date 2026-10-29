@@ -8,104 +8,103 @@
   <link rel="stylesheet" href="/static/app.css">
   <style>
     ul.lines { list-style: none; margin: 0; padding: 0; }
-    ul.lines li { padding: 12px 0; border-top: 1px solid var(--line); }
+    ul.lines li { padding: 10px 0; border-top: 1px solid var(--line); }
     ul.lines li:first-child { border-top: 0; }
-    .src { display: inline-block; background: var(--accent-soft); color: var(--accent-ink); border-radius: 6px; padding: 2px 10px; font-size: 12.5px; font-weight: 600; margin-top: 6px; }
-    details { margin-top: 6px; font-size: 13.5px; color: var(--muted); }
+    .src-pill { display: inline-block; background-color: var(--accent-soft); color: var(--accent); border-radius: var(--radius-input); padding: 2px 8px; font-size: 12px; font-weight: 600; margin-top: 4px; }
+    details { margin-top: 4px; font-size: 13px; color: var(--ink-secondary); }
     summary { cursor: pointer; }
     q { display: block; margin-top: 4px; font-style: italic; color: var(--ink); }
-    .empty { color: var(--muted); font-style: italic; }
-    .reason { color: var(--red); font-size: 13px; margin-top: 4px; }
+    .empty-line { color: var(--muted); font-style: italic; font-size: 13px; }
+    .dropped-reason { color: var(--red); font-size: 12.5px; font-weight: 600; margin-top: 2px; }
   </style>
 </head>
 <body>
   <header class="topbar"></header>
 
-  <!-- Common ClearScan Hero -->
-  <section class="cs-hero">
-    <div class="cs-hero-watermark" aria-hidden="true">Source Backed Guidance</div>
-    <div class="cs-hero-eyebrow">Nurse Clinical Tool · RAG + Safety Filter</div>
-    <h1>Care Guidance Instantly</h1>
-    <p class="cs-sub">
-      Generate source-linked symptoms to watch for and practical prevention steps from approved references—automatically filtered for clinical safety.
-    </p>
-    <div class="cs-cta-row">
-      <button id="go" type="button" class="cs-glow-btn">
-        <span>✓</span> Draft Resident Guidance
-      </button>
+  <main class="page-container page-narrow">
+    <div class="demo-banner alert-warn">
+      <strong>Demo data only.</strong> Fictional residents. The AI drafts signs to watch for and prevention steps from approved clinical reference notes. A Registered Nurse makes the final decision and must approve guidance before carers see it.
     </div>
-    <div class="cs-privacy-note">Every line must cite an approved reference source; unsupported or medical-dose lines are stripped automatically.</div>
-    <div class="cs-trust-row">
-      <span><b>✓</b> Exact Quote Citations</span>
-      <span><b>✓</b> Zero Dose / Diagnosis</span>
-      <span><b>✓</b> Local SLM (Ollama)</span>
-      <span><b>✓</b> Nurse Review Required</span>
-    </div>
-  </section>
 
-  <!-- Common Horizontal Feature Strip -->
-  <div class="cs-strip">
-    <div class="cs-strip-inner">
-      <span class="cs-strip-item">💊 Matches resident conditions to approved sources.</span>
-      <span class="cs-strip-item">📋 Inspect exact quotes from clinical references.</span>
-      <span class="cs-strip-item">✅ Automatic safety filter removes unsafe lines.</span>
-      <span class="cs-strip-item">🩺 Nurse approves before carers see guidance.</span>
+    <!-- Main question: One clear task -->
+    <div class="page-question-banner">
+      <h1 class="q-title">Draft resident care guidance</h1>
+      <p>Generate source-grounded symptoms and prevention steps for a resident's recorded conditions, checked by an automated safety filter.</p>
     </div>
-  </div>
 
-  <main class="page">
+    <!-- Steps 1 & 2 Card -->
     <section class="card">
-      <div class="between">
-        <h2>1. Choose a Resident</h2>
-        <span class="badge warn">Demo data only · Fictional residents</span>
+      <div class="numbered-steps">
+        <div class="step-chip active"><span class="num">1</span><span>Choose resident</span></div>
+        <div class="step-chip active"><span class="num">2</span><span>Draft guidance</span></div>
+        <div class="step-chip"><span class="num">3</span><span>Review &amp; approve</span></div>
       </div>
-      <div class="inline" style="gap: 14px; align-items: flex-end">
-        <label class="lbl" for="resident" style="min-width: 260px">
-          Resident
-          <select id="resident" class="field"><option>Loading...</option></select>
-        </label>
-        <div class="pills" id="conditions"></div>
+
+      <div class="form-group">
+        <label for="resident">1. Select resident</label>
+        <div class="inline" style="flex-wrap: wrap; gap: 12px;">
+          <select id="resident" class="field" style="max-width: 300px;"><option>Loading...</option></select>
+          <div class="pills" id="conditions"></div>
+        </div>
       </div>
-      <div class="notice info hidden" id="status"></div>
+
+      <div class="between" style="margin-top: 18px;">
+        <button id="go" type="button" class="btn btn-primary" style="padding: 10px 20px;">
+          Draft guidance
+        </button>
+        <div class="alert-box alert-info hidden" id="status" style="margin-bottom:0; padding:6px 12px;"></div>
+      </div>
     </section>
 
+    <!-- Step 3: Result Area -->
     <div id="result" class="stack" hidden>
-      <div class="notice warn">
+      <div class="alert-box alert-warn">
         <strong>AI DRAFT:</strong> A Registered Nurse must approve this before carers see it on their shift sheet.
       </div>
 
-      <div class="notice warn" id="gaps" hidden></div>
+      <div class="alert-box alert-warn hidden" id="gaps"></div>
 
-      <div class="row">
-        <section class="card col-main" style="flex: 1 1 380px">
-          <h2>Symptoms to watch for</h2>
+      <div class="grid-equal">
+        <section class="card">
+          <div class="card-header no-border">
+            <h2 class="card-title">Symptoms to watch for</h2>
+          </div>
           <ul class="lines" id="watch"></ul>
         </section>
-        <section class="card col-main" style="flex: 1 1 380px">
-          <h2>Prevention steps</h2>
+
+        <section class="card">
+          <div class="card-header no-border">
+            <h2 class="card-title">Prevention steps</h2>
+          </div>
           <ul class="lines" id="prevent"></ul>
         </section>
       </div>
 
-      <section class="card danger">
-        <h2>Removed by the automatic safety check</h2>
-        <p class="small">The AI wrote these, but the safety filter removed them. Nobody else sees them.</p>
+      <!-- Removed by safety filter -->
+      <section class="card" style="border-left: 4px solid var(--red);">
+        <div class="card-header no-border">
+          <h2 class="card-title" style="color: var(--red);">Removed by automatic safety filter</h2>
+        </div>
+        <p class="sub-text" style="margin-bottom: 8px;">The language model drafted these lines, but the safety check removed them (e.g. invalid source quote, medication reference, or diagnosis claim). Carers never see them.</p>
         <ul class="lines" id="dropped"></ul>
       </section>
 
+      <!-- Approved reference sources -->
       <section class="card">
         <details class="sources">
-          <summary><strong>Approved sources the AI was allowed to use</strong> (click to open)</summary>
-          <ul class="lines" id="sources"></ul>
+          <summary><strong>Approved sources used for this resident</strong> (click to inspect exact quotes)</summary>
+          <ul class="lines" id="sources" style="margin-top: 10px;"></ul>
         </details>
-        <p class="tiny" id="meta"></p>
+        <p class="text-mono text-muted text-sm" id="meta" style="margin-top: 12px;"></p>
       </section>
-    </div>
 
-    <footer class="foot">
-      Age-Care Intelligence · Team Trio · IA728001 Studio 5. All residents and staff are fictional.
-    </footer>
+      <div style="text-align: right;">
+        <a href="/nurse" class="btn btn-secondary">Return to Nurse Dashboard</a>
+      </div>
+    </div>
   </main>
+
+  <footer class="foot"></footer>
 
   <script src="/static/auth.js"></script>
   <script>
@@ -125,7 +124,9 @@
       box.replaceChildren();
       const chosen = residents.find((r) => String(r.resident_id) === $("resident").value);
       if (!chosen) return;
-      for (const name of chosen.conditions) box.append(el("span", "badge draft", name));
+      for (const name of (chosen.conditions || [])) {
+        box.append(el("span", "badge badge-neutral", name));
+      }
     }
 
     async function loadResidents() {
@@ -149,9 +150,9 @@
       const box = $("status");
       box.textContent = message || "";
       if (!message) {
-        box.className = "notice info hidden";
+        box.className = "alert-box alert-info hidden";
       } else {
-        box.className = "notice " + (kind === "error" ? "err" : "info");
+        box.className = "alert-box " + (kind === "error" ? "alert-danger" : kind === "busy" ? "alert-info" : "alert-success");
       }
     }
 
@@ -160,16 +161,16 @@
       list.replaceChildren();
       if (!lines.length) {
         const item = el("li");
-        item.append(el("span", "empty", emptyText));
+        item.append(el("span", "empty-line", emptyText));
         list.append(item);
         return;
       }
       for (const line of lines) {
         const item = el("li");
-        item.append(el("div", "", line.text));
-        item.append(el("span", "src", line.source_id + " · " + line.source));
+        item.append(el("div", "text-sm", line.text));
+        item.append(el("span", "src-pill", line.source_id + " · " + line.source));
         const details = el("details");
-        details.append(el("summary", "", "Exact words from the source"));
+        details.append(el("summary", "", "Exact words from source citation"));
         details.append(el("q", "", line.quote));
         item.append(details);
         list.append(item);
@@ -178,40 +179,45 @@
 
     function render(data) {
       const gaps = $("gaps");
-      gaps.hidden = !data.gaps.length;
-      gaps.textContent = data.gaps.length
-        ? "No line was kept about: " + data.gaps.join(", ") + ". A nurse should add one if it is needed."
-        : "";
-      fillLines("watch", data.watch_for, "No line passed the checks.");
-      fillLines("prevent", data.prevention, "No line passed the checks.");
+      if (data.gaps && data.gaps.length) {
+        gaps.classList.remove("hidden");
+        gaps.textContent = "No reference line was found for: " + data.gaps.join(", ") + ". A Registered Nurse should manually add instructions if needed.";
+      } else {
+        gaps.classList.add("hidden");
+        gaps.textContent = "";
+      }
+
+      fillLines("watch", data.watch_for || [], "No symptom lines passed safety checks.");
+      fillLines("prevent", data.prevention || [], "No prevention lines passed safety checks.");
 
       const dropped = $("dropped");
       dropped.replaceChildren();
-      if (!data.dropped.length) {
+      if (!data.dropped || !data.dropped.length) {
         const item = el("li");
-        item.append(el("span", "empty", "Nothing was removed."));
+        item.append(el("span", "empty-line", "All drafted lines passed safety checks. None removed."));
         dropped.append(item);
-      }
-      for (const line of data.dropped) {
-        const item = el("li");
-        item.append(el("div", "", line.text || "(empty line)"));
-        item.append(el("div", "reason", "Removed: " + line.reason));
-        dropped.append(item);
+      } else {
+        for (const line of data.dropped) {
+          const item = el("li");
+          item.append(el("div", "text-sm", line.text || "(empty line)"));
+          item.append(el("div", "dropped-reason", "Removed by filter: " + line.reason));
+          dropped.append(item);
+        }
       }
 
       const sources = $("sources");
       sources.replaceChildren();
-      for (const s of data.sources) {
+      for (const s of (data.sources || [])) {
         const item = el("li");
-        item.append(el("span", "src", s.id + " · " + s.source));
-        item.append(el("div", "", s.text));
+        item.append(el("span", "src-pill", s.id + " · " + s.source));
+        item.append(el("div", "text-sm", s.text));
         sources.append(item);
       }
 
       $("meta").textContent =
-        "Model: " + data.model + " (runs on this laptop). Time: " + data.seconds + " seconds. " +
-        "Lines kept: " + (data.watch_for.length + data.prevention.length) +
-        ". Lines removed: " + data.dropped.length + ".";
+        "Model: " + data.model + " (local Ollama). Latency: " + data.seconds + "s. " +
+        "Lines kept: " + ((data.watch_for || []).length + (data.prevention || []).length) +
+        ". Removed by filter: " + (data.dropped || []).length + ".";
       $("result").hidden = false;
     }
 
@@ -219,7 +225,7 @@
       const button = $("go");
       button.disabled = true;
       $("result").hidden = true;
-      setStatus("The AI is working on this laptop. This can take a minute...", "busy");
+      setStatus("The local model is reading reference notes on this device. Please wait a moment…", "busy");
       try {
         const response = await fetch("/api/guidance/draft", {
           method: "POST",
