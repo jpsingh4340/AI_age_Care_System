@@ -3,81 +3,78 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Ask AI · AgeCare</title>
+  <title>Ask AI Assistant · AgeCare</title>
   <link rel="icon" type="image/png" href="/static/img/favicon.png">
   <link rel="stylesheet" href="/static/app.css">
   <style>
-    #answer { white-space: pre-wrap; font-size: 16px; line-height: 1.65; }
+    #answer {
+      white-space: pre-line;
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--ink);
+    }
   </style>
 </head>
 <body>
   <header class="topbar"></header>
 
-  <!-- Common ClearScan Hero -->
-  <section class="cs-hero">
-    <div class="cs-hero-watermark" aria-hidden="true">Ask Care Intelligence</div>
-    <div class="cs-hero-eyebrow">Staff Assistant · Grounded RAG + Local SLM</div>
-    <h1>Care Answers Instantly</h1>
-    <p class="cs-sub">
-      Ask practical care questions in plain English. Answers are grounded in approved reference notes and run locally via Ollama.
-    </p>
-    <div class="cs-cta-row">
-      <button id="sendHero" type="button" class="cs-glow-btn" onclick="document.getElementById('question').focus()">
-        <span>✓</span> Ask a Care Question
-      </button>
+  <main class="page-container page-narrow">
+    <div class="demo-banner alert-info">
+      <strong>Clinical support assistant:</strong> Ask practical aged-care questions in plain English. Answers cite approved guidance where available and run locally on facility hardware.
     </div>
-    <div class="cs-privacy-note">Runs 100% locally on facility hardware.</div>
-    <div class="cs-trust-row">
-      <span><b>✓</b> Grounded in Guidance</span>
-      <span><b>✓</b> Source Citations</span>
-      <span><b>✓</b> Private Local Model</span>
-      <span><b>✓</b> For Carers &amp; Nurses</span>
-    </div>
-  </section>
 
-  <!-- Common Horizontal Feature Strip -->
-  <div class="cs-strip">
-    <div class="cs-strip-inner">
-      <span class="cs-strip-item">💊 Mobility &amp; transfer checks.</span>
-      <span class="cs-strip-item">📋 Hydration &amp; nutrition reminders.</span>
-      <span class="cs-strip-item">✅ Clearly badges grounded vs general answers.</span>
-      <span class="cs-strip-item">⚡ Supports multiple local Ollama models.</span>
+    <!-- Main question: One clear task -->
+    <div class="page-question-banner">
+      <h1 class="q-title">Ask care intelligence</h1>
+      <p>Clinical and practical aged-care assistant. Grounded in approved care references and local language models.</p>
     </div>
-  </div>
 
-  <main class="page" style="max-width: 860px">
+    <!-- Step indicators -->
+    <div class="numbered-steps">
+      <div class="step-chip active"><span class="num">1</span><span>Choose model</span></div>
+      <div class="step-chip active"><span class="num">2</span><span>Type care question</span></div>
+      <div class="step-chip"><span class="num">3</span><span>Read verified answer</span></div>
+    </div>
+
+    <!-- Input Card -->
     <section class="card">
-      <div class="between">
-        <h2>Ask the Local AI Assistant</h2>
-        <div id="ollama" class="msg"></div>
+      <div class="card-header no-border">
+        <div>
+          <h2 class="card-title">Ask a question</h2>
+          <p class="sub-text">Never diagnoses conditions or prescribes drug doses.</p>
+        </div>
+        <div id="ollama" class="text-sm"></div>
       </div>
 
-      <label class="lbl" for="model">
-        AI model
-        <select id="model" class="field"><option>Loading...</option></select>
-      </label>
+      <div class="form-group">
+        <label for="model">1. Local AI model</label>
+        <select id="model" class="field"><option>Loading models...</option></select>
+      </div>
 
-      <label class="lbl" for="question">
-        Your question
-        <textarea id="question" class="field" rows="4" placeholder="e.g. What should I check before helping a resident stand up?"></textarea>
-      </label>
+      <div class="form-group">
+        <label for="question">2. Your care question</label>
+        <textarea id="question" class="field" rows="4" placeholder="e.g. What safety checks should be completed before helping a resident stand with a walking frame?"></textarea>
+      </div>
 
-      <div class="between">
-        <span class="small">Runs on this computer. Smaller models answer faster.</span>
-        <button id="send" type="button" class="btn btn-primary">Ask AI →</button>
+      <div class="between" style="margin-top: 14px;">
+        <span class="sub-text">Press Ctrl+Enter to submit</span>
+        <button id="send" type="button" class="btn btn-primary">Ask question</button>
       </div>
     </section>
 
+    <!-- Step 3: Result Area -->
     <section class="card" id="result" hidden>
-      <div><span id="badge" class="badge"></span></div>
-      <div id="answer"></div>
-      <div id="meta" class="tiny divider"></div>
-    </section>
+      <div class="card-header">
+        <h2 class="card-title">3. Clinical response</h2>
+        <span id="badge" class="badge"></span>
+      </div>
 
-    <footer class="foot">
-      Age-Care Intelligence · Team Trio · IA728001 Studio 5. All residents and staff are fictional.
-    </footer>
+      <div id="answer" style="padding: 10px 0;"></div>
+      <div id="meta" class="sub-text text-mono" style="border-top: 1px solid var(--line); padding-top: 10px; margin-top: 10px;"></div>
+    </section>
   </main>
+
+  <footer class="foot"></footer>
 
   <script src="/static/auth.js"></script>
   <script>
@@ -90,57 +87,70 @@
         const r = await fetch("/api/ask/models");
         const data = await r.json();
         defaultModel = data.default;
-        select.innerHTML = "";
+        select.replaceChildren();
         if (!data.ollama_running) {
-          select.add(new Option("No models found", ""));
+          select.add(new Option("No local models found", ""));
           setStatus("Ollama is not running. Start it with: ollama serve", "err");
           return;
         }
-        for (const name of data.models) {
+        for (const name of (data.models || [])) {
           const label = name === data.default ? name + " (recommended)" : name;
           select.add(new Option(label, name, false, name === data.default));
         }
-        setStatus(data.models.length + " model(s) installed", "ok");
+        setStatus((data.models || []).length + " model(s) available locally", "ok");
       } catch (e) {
-        setStatus("Could not reach the server", "err");
+        setStatus("Could not connect to model server", "err");
       }
     }
 
     function setStatus(text, kind) {
-      $("ollama").textContent = text;
-      $("ollama").className = "msg " + kind;
+      const el = $("ollama");
+      el.textContent = text;
+      el.className = "text-sm " + (kind === "ok" ? "badge badge-green" : "badge badge-amber");
     }
 
     async function ask() {
       const question = $("question").value.trim();
-      if (question.length < 3) { $("question").focus(); return; }
+      if (question.length < 3) {
+        $("question").focus();
+        return;
+      }
       const btn = $("send");
-      btn.disabled = true; btn.textContent = "Thinking...";
+      btn.disabled = true;
+      btn.textContent = "Thinking…";
       $("result").hidden = false;
-      $("badge").textContent = ""; $("badge").className = "badge";
-      $("answer").className = ""; $("answer").textContent = "Waiting for the model. On CPU this can take a little while.";
+      $("badge").textContent = "";
+      $("badge").className = "badge";
+      $("answer").textContent = "The local model is reading clinical notes. Please wait…";
       $("meta").textContent = "";
+
       const started = Date.now();
       try {
         const r = await fetch("/api/ask", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ question, model: $("model").value || null }),
+          body: JSON.stringify({ question: question, model: $("model").value || null }),
         });
         const data = await r.json();
-        if (!r.ok) throw new Error(data.detail || "Something went wrong");
-        $("badge").textContent = data.grounded ? "From approved guidance" : "General answer, not from approved guidance";
-        $("badge").className = "badge " + (data.grounded ? "grounded" : "general");
+        if (!r.ok) throw new Error(data.detail || "Something went wrong.");
+
+        $("badge").textContent = data.grounded ? "Grounded in approved guidance" : "General clinical guidance";
+        $("badge").className = "badge " + (data.grounded ? "badge-green" : "badge-amber");
         $("answer").textContent = data.answer;
+
         const secs = ((Date.now() - started) / 1000).toFixed(1);
         let meta = "Model: " + data.model + " · " + secs + "s";
-        if (data.sources.length) meta += " · Sources: " + data.sources.join(", ");
+        if (data.sources && data.sources.length) {
+          meta += " · Sources: " + data.sources.join(", ");
+        }
         $("meta").textContent = meta;
       } catch (e) {
-        $("answer").className = "msg err";
         $("answer").textContent = typeof e.message === "string" ? e.message : "Something went wrong";
+        $("badge").textContent = "Error";
+        $("badge").className = "badge badge-red";
       } finally {
-        btn.disabled = false; btn.textContent = "Ask AI →";
+        btn.disabled = false;
+        btn.textContent = "Ask question";
       }
     }
 
@@ -148,6 +158,7 @@
     $("question").addEventListener("keydown", (e) => {
       if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) ask();
     });
+
     loadModels();
   </script>
 </body>
