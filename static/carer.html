@@ -3,86 +3,73 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Carer Portal · AgeCare</title>
+  <title>Carer Shift Sheet · AgeCare</title>
   <link rel="icon" type="image/png" href="/static/img/favicon.png">
   <link rel="stylesheet" href="/static/app.css">
+  <style>
+    .grid-vitals-inputs {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+  </style>
 </head>
 <body>
   <header class="topbar"></header>
 
-  <!-- Common ClearScan Hero -->
-  <section class="cs-hero">
-    <div class="cs-hero-watermark" aria-hidden="true">Frontline Shift Care</div>
-    <div class="cs-hero-eyebrow">Role 01 · Carer Workspace</div>
-    <h1>Today's Shift Care</h1>
-    <p class="cs-sub">
-      Record daily care tasks, check spot vitals, and flag observations so the Registered Nurse can review them immediately.
-    </p>
-    <div class="cs-cta-row">
-      <a class="cs-glow-btn" href="#carerWorkspace">
-        <span>✓</span> Record Shift Care
-      </a>
+  <main class="page-container">
+    <div class="demo-banner alert-warn">
+      <strong>Demo data only.</strong> Fictional residents. Record routine shift care, spot vital signs, or observations. The Registered Nurse is notified of any concerns or out-of-range readings.
     </div>
-    <div class="cs-privacy-note">Every task, vital sign, and concern syncs live to the Nurse dashboard.</div>
-    <div class="cs-trust-row">
-      <span><b>✓</b> Fast Task Logging</span>
-      <span><b>✓</b> Vital Sign Range Checks</span>
-      <span><b>✓</b> Direct Nurse Alerts</span>
-      <span><b>✓</b> RN-Approved Guidance</span>
-    </div>
-  </section>
 
-  <!-- Common Horizontal Feature Strip -->
-  <div class="cs-strip">
-    <div class="cs-strip-inner">
-      <span class="cs-strip-item">💊 Check nurse-approved guidance first.</span>
-      <span class="cs-strip-item">📋 Log meals, hydration &amp; mobility.</span>
-      <span class="cs-strip-item">🩺 Out-of-range vitals flag the nurse.</span>
-      <span class="cs-strip-item">⚡ Instant shift log per resident.</span>
-    </div>
-  </div>
-
-  <main class="page" id="carerWorkspace">
-    <div class="page-head">
-      <div>
-        <div class="eyebrow">Carer Shift Sheet</div>
-        <h2 class="page-title">Select Resident &amp; Record Care</h2>
-      </div>
-      <div class="inline">
-        <label class="inline small" for="carer" style="font-weight:700; color:var(--ink)">
-          Carer on duty:
-          <input id="carer" class="field" style="width: 200px; min-height: 40px; padding: 6px 12px" placeholder="e.g. Priya">
-        </label>
+    <!-- Main question: What do I need to do and record now? -->
+    <div class="page-question-banner">
+      <div class="between">
+        <div>
+          <h1 class="q-title">What do I need to do and record now?</h1>
+          <p>Select your assigned resident, check their nurse-approved guidance, and log tasks, vitals, or concerns.</p>
+        </div>
+        <div class="inline">
+          <label for="carer" style="margin-bottom:0; font-size:13px; font-weight:600;">Carer on duty:</label>
+          <input id="carer" class="field" style="width: 180px; min-height: 36px; padding: 4px 8px;" placeholder="e.g. Priya">
+        </div>
       </div>
     </div>
 
-    <!-- Resident chooser pills + select -->
-    <div class="between">
-      <div id="residentPills" class="pills" role="group" aria-label="Choose resident"></div>
-      <label class="inline small" for="resident">
-        Resident:
-        <select id="resident" class="field" style="width: auto; min-height: 40px; padding: 6px 12px"></select>
-      </label>
-    </div>
+    <!-- Top: Resident chooser pills -->
+    <section class="card" style="padding: 12px 16px; margin-bottom: 20px;">
+      <div class="between" style="flex-wrap: wrap; gap: 10px;">
+        <div class="inline" style="flex-wrap: wrap; gap: 8px;">
+          <strong class="text-sm">Assigned resident:</strong>
+          <div id="residentPills" class="pills" role="group" aria-label="Choose resident"></div>
+        </div>
+        <div style="min-width: 220px;">
+          <select id="resident" class="field" style="min-height: 36px; font-size: 13.5px;" aria-label="Select resident"></select>
+        </div>
+      </div>
+    </section>
 
-    <div class="row">
-      <!-- Left column: Record Care Task, Spot Vitals, Raise Concern -->
-      <div class="col-main">
+    <div class="grid-layout">
+      <!-- Left column: Fast entry forms (44px touch targets, minimal fields) -->
+      <div class="stack">
         <!-- 1. Care Task -->
         <section class="card">
-          <div class="between">
-            <h2>1. Record a care task</h2>
-            <span class="small" id="residentConditions"></span>
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">1. Record a care task</h2>
+              <p class="sub-text" id="residentConditions"></p>
+            </div>
           </div>
 
-          <label class="lbl" for="task">
-            Task item
+          <div class="form-group">
+            <label for="task">Care activity</label>
             <select id="task" class="field"></select>
-          </label>
+          </div>
 
-          <div class="stack" style="gap: 6px">
-            <span style="font-weight: 700; font-size: 14.5px">Status of task</span>
-            <div class="choices" role="radiogroup" aria-label="Status of task">
+          <div class="form-group">
+            <label>Task status</label>
+            <div class="choices" role="radiogroup" aria-label="Task status">
               <label class="choice">
                 <input type="radio" name="status" value="given" checked>
                 Given / Done
@@ -98,95 +85,101 @@
             </div>
           </div>
 
-          <div class="between">
-            <p class="msg" id="taskMsg"></p>
+          <div class="between" style="margin-top: 14px;">
+            <p class="text-sm" id="taskMsg"></p>
             <button type="button" id="saveTask" class="btn btn-primary">Save care task</button>
           </div>
         </section>
 
         <!-- 2. Spot Vitals -->
         <section class="card">
-          <div>
-            <h2>2. Record spot vitals</h2>
-            <p class="small">Fill in only what you checked. Out-of-range readings flag the nurse.</p>
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">2. Record spot vitals</h2>
+              <p class="sub-text">Enter only the values you checked. Out-of-range readings flag the nurse immediately.</p>
+            </div>
           </div>
 
-          <div class="grid-fields">
-            <label class="lbl" for="pulse">
-              Pulse (bpm)
-              <input id="pulse" class="field" type="number" placeholder="60 - 100">
-            </label>
-            <label class="lbl" for="systolic">
-              BP Systolic
-              <input id="systolic" class="field" type="number" placeholder="100 - 140">
-            </label>
-            <label class="lbl" for="diastolic">
-              BP Diastolic
-              <input id="diastolic" class="field" type="number" placeholder="60 - 90">
-            </label>
-            <label class="lbl" for="temperature">
-              Temp (°C)
-              <input id="temperature" class="field" type="number" step="0.1" placeholder="36.5">
-            </label>
-            <label class="lbl" for="spo2">
-              Oxygen (%)
-              <input id="spo2" class="field" type="number" placeholder="95 - 100">
-            </label>
+          <div class="grid-vitals-inputs">
+            <div>
+              <label for="pulse">Pulse (bpm)</label>
+              <input id="pulse" class="field text-mono num-tabular" type="number" placeholder="50 - 100">
+            </div>
+            <div>
+              <label for="systolic">BP Systolic</label>
+              <input id="systolic" class="field text-mono num-tabular" type="number" placeholder="100 - 160">
+            </div>
+            <div>
+              <label for="diastolic">BP Diastolic</label>
+              <input id="diastolic" class="field text-mono num-tabular" type="number" placeholder="60 - 90">
+            </div>
+            <div>
+              <label for="temperature">Temp (°C)</label>
+              <input id="temperature" class="field text-mono num-tabular" type="number" step="0.1" placeholder="36.0 - 37.8">
+            </div>
+            <div>
+              <label for="spo2">Oxygen SpO2 (%)</label>
+              <input id="spo2" class="field text-mono num-tabular" type="number" placeholder="94 - 100">
+            </div>
           </div>
 
           <div class="between">
-            <p class="msg" id="vitalsMsg"></p>
+            <p class="text-sm" id="vitalsMsg"></p>
             <button type="button" id="saveVitals" class="btn btn-primary">Save vitals</button>
           </div>
         </section>
 
-        <!-- 3. Raise a Concern / Shift Note -->
-        <section class="card danger">
-          <div>
-            <h2>3. Raise a concern / shift note to nurse</h2>
-            <p class="small">Alerts the nurse on duty immediately and appears on the nurse handover board.</p>
+        <!-- 3. Raise Concern -->
+        <section class="card" style="border-left: 4px solid var(--amber);">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">3. Raise a concern to the nurse</h2>
+              <p class="sub-text">Alerts the Registered Nurse on duty immediately and logs in handover.</p>
+            </div>
           </div>
 
-          <label class="lbl" for="ctype">
-            Concern type
+          <div class="form-group">
+            <label for="ctype">Concern type</label>
             <select id="ctype" class="field"></select>
-          </label>
+          </div>
 
-          <label class="lbl" for="cnote">
-            Quick note (what did you observe?)
-            <textarea id="cnote" class="field" rows="3" placeholder="e.g. Helped with shower, said her knee is sore today, or refused lunch"></textarea>
-          </label>
+          <div class="form-group">
+            <label for="cnote">What did you observe?</label>
+            <textarea id="cnote" class="field" rows="3" placeholder="e.g. Unsteady when standing up from chair, refused water at lunch."></textarea>
+          </div>
 
           <div class="between">
-            <p class="msg" id="concernMsg"></p>
-            <button type="button" id="saveConcern" class="btn btn-danger">Send to nurse</button>
+            <p class="text-sm" id="concernMsg"></p>
+            <button type="button" id="saveConcern" class="btn btn-danger">Send concern to nurse</button>
           </div>
         </section>
       </div>
 
-      <!-- Right column: Nurse-Approved Guidance & Today's Shift Log -->
-      <aside class="col-side">
+      <!-- Right column: Approved Guidance ONLY + Today's Shift Log -->
+      <aside class="stack">
+        <!-- Approved guidance only -->
         <section class="card">
-          <div class="between">
-            <h2>Nurse-approved guidance</h2>
-            <span class="badge ok">RN checked</span>
+          <div class="card-header">
+            <h2 class="card-title">Approved guidance</h2>
+            <span class="badge badge-green">Nurse approved</span>
           </div>
-          <div id="guide" class="small">Loading guidance…</div>
+          <div id="guide" class="text-sm">Loading guidance…</div>
         </section>
 
+        <!-- Today's shift log for selected resident -->
         <section class="card">
-          <div class="between">
-            <h2>Today's shift log — <span id="todayName">–</span></h2>
+          <div class="card-header">
+            <h2 class="card-title">Shift log · <span id="todayName">–</span></h2>
+            <span class="sub-text">Today's recorded care</span>
           </div>
-          <p class="small">Everything recorded for this resident today.</p>
 
           <div class="table-wrap">
             <table class="tbl">
               <thead>
                 <tr>
-                  <th>Time</th>
+                  <th style="width: 60px;">Time</th>
                   <th>Recorded item</th>
-                  <th>By</th>
+                  <th style="width: 80px;">By</th>
                 </tr>
               </thead>
               <tbody id="todayRows"></tbody>
@@ -195,14 +188,11 @@
         </section>
       </aside>
     </div>
-
-    <footer class="foot">
-      Prototype for Team Trio · IA728001 Studio 5. Carers record tasks, vitals and concerns; a Registered Nurse reviews and approves guidance.
-    </footer>
   </main>
+
+  <footer class="foot"></footer>
 
   <script src="/static/auth.js"></script>
   <script src="/static/carer.js"></script>
-  <script src="/ai-bubble.js"></script>
 </body>
 </html>
