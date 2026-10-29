@@ -1,100 +1,126 @@
-// Client-side authentication and role-based access guard
+// Client-side authentication, strict role guard, and shared prototype topbar
 (function () {
-  const token = localStorage.getItem("agecare_token");
-  const role = localStorage.getItem("agecare_role");
-  const name = localStorage.getItem("agecare_name");
-  const path = window.location.pathname.toLowerCase();
+  const HOME_BY_ROLE = {
+    carer: "/carer",
+    nurse: "/nurse",
+    manager: "/manager",
+    family: "/family",
+  };
 
-  // Pages requiring Nurse role
-  const NURSE_PAGES = ["/nurse", "/guidance", "/ocr"];
-  // Pages requiring Carer role
-  const CARER_PAGES = ["/carer"];
-  // Pages requiring Patient role
-  const PATIENT_PAGES = ["/patient"];
+  const ALLOWED_ROLES_BY_PATH = {
+    "/carer": ["carer", "nurse"],
+    "/nurse": ["nurse"],
+    "/guidance": ["nurse"],
+    "/ocr": ["nurse"],
+    "/vision": ["nurse"],
+    "/ask": ["carer", "nurse"],
+    "/manager": ["manager"],
+    "/family": ["family"],
+  };
+
+  const ROLE_LABELS = {
+    carer: "Carer",
+    nurse: "Nurse",
+    manager: "Manager",
+    family: "Family",
+  };
+
+  const token = localStorage.getItem("agecare_token") || "";
+  const role = (localStorage.getItem("agecare_role") || "").toLowerCase();
+  const fullName = localStorage.getItem("agecare_name") || "";
+  const username = localStorage.getItem("agecare_username") || "";
+  const residentId = localStorage.getItem("agecare_resident_id") || "";
+  const path = window.location.pathname.toLowerCase();
 
   function redirect(url) {
     window.location.replace(url);
   }
 
-  // Check page access
-  if (NURSE_PAGES.some((p) => path === p || path.startsWith(p + "/"))) {
-    if (!token) {
-      redirect("/login?next=" + encodeURIComponent(path));
-      return;
+  // Check if current page requires authentication and specific role
+  for (const [routePrefix, allowedRoles] of Object.entries(ALLOWED_ROLES_BY_PATH)) {
+    if (path === routePrefix || path.startsWith(routePrefix + "/")) {
+      if (!token || !role) {
+        redirect("/login?next=" + encodeURIComponent(path));
+        return;
+      }
+      if (!allowedRoles.includes(role)) {
+        const dest = HOME_BY_ROLE[role] || "/login";
+        redirect(dest);
+        return;
+      }
+      break;
     }
-    if (role !== "nurse") {
-      const dest = role === "patient" ? "/patient" : "/carer";
-      alert("Access Denied: This clinical section requires Registered Nurse (RN) credentials.");
-      redirect(dest);
-      return;
-    }
-  } else if (CARER_PAGES.some((p) => path === p || path.startsWith(p + "/"))) {
-    if (!token) {
-      redirect("/login?next=" + encodeURIComponent(path));
-      return;
-    }
-    if (role === "patient") {
-      redirect("/patient");
-      return;
-    }
-  } else if (PATIENT_PAGES.some((p) => path === p || path.startsWith(p + "/"))) {
-    // Bedside tablet is an accessible in-room kiosk: allow direct view without bouncing to login
   }
 
   // Global authenticated fetch helper
   window.authFetch = async function (url, options) {
     options = options || {};
     options.headers = options.headers || {};
-    if (token) {
-      options.headers["Authorization"] = "Bearer " + token;
-      options.headers["X-Session-Token"] = token;
-      options.headers["X-Role"] = role || "";
+    const curToken = localStorage.getItem("agecare_token") || token;
+    const curRole = localStorage.getItem("agecare_role") || role;
+    if (curToken) {
+      options.headers["Authorization"] = "Bearer " + curToken;
+      options.headers["X-Session-Token"] = curToken;
+    }
+    if (curRole) {
+      options.headers["X-Role"] = curRole;
     }
     return fetch(url, options);
   };
 
+  // Global toast notification helper
+  window.showToast = function (text, isError) {
+    let host = document.getElementById("toastHost");
+    if (!host) {
+      host = document.createElement("div");
+      host.id = "toastHost";
+      host.className = "toast-host";
+      host.setAttribute("aria-live", "polite");
+      document.body.appendChild(host);
+    }
+    const item = document.createElement("div");
+    item.className = "toast" + (isError ? " err" : "");
+    item.textContent = text;
+    host.appendChild(item);
+    setTimeout(function () {
+      item.remove();
+    }, 3500);
+  };
+
   // Global logout helper
   window.logout = async function () {
-    if (token) {
+    const curToken = localStorage.getItem("agecare_token") || token;
+    if (curToken) {
       try {
         await fetch("/api/auth/logout", {
           method: "POST",
-          headers: { "Authorization": "Bearer " + token, "X-Session-Token": token }
+          headers: {
+            Authorization: "Bearer " + curToken,
+            "X-Session-Token": curToken,
+          },
         });
       } catch (e) {
-        // ignore network error on logout
+        // ignore network error
       }
     }
     localStorage.removeItem("agecare_session");
     localStorage.removeItem("agecare_token");
     localStorage.removeItem("agecare_role");
     localStorage.removeItem("agecare_name");
+    localStorage.removeItem("agecare_username");
+    localStorage.removeItem("agecare_resident_id");
     redirect("/login");
   };
 
-  // Auto-inject logged in profile badge into sidebar if present
+  // Populate signed-in user name and nav links on DOM ready
   document.addEventListener("DOMContentLoaded", function () {
-    if (!token) return;
-    const side = document.querySelector(".rail, .side");
-    if (!side) return;
-
-    // Create user profile snippet
-    const userBox = document.createElement("div");
-    userBox.style.cssText = "margin-top:auto; padding:12px; background:rgba(255,255,255,0.08); border-radius:10px; margin-bottom:12px; font-size:12.5px;";
-    userBox.innerHTML = `
-      <div style="color:#b2edd9; font-weight:700; margin-bottom:2px; display:flex; align-items:center; justify-content:space-between;">
-        <span>${role === 'nurse' ? '🩺 Nurse' : role === 'patient' ? '🧓 Resident' : '📋 Carer'}</span>
-        <button onclick="logout()" style="background:transparent; border:none; color:#f6a8a3; font-size:11.5px; font-weight:600; cursor:pointer; text-decoration:underline; padding:0;">Sign Out</button>
-      </div>
-      <div style="color:#ffffff; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${name || 'Staff Member'}</div>
-    `;
-
-    // Insert above foot / switch-card
-    const foot = side.querySelector(".foot, .side-note, .switch-card");
-    if (foot) {
-      side.insertBefore(userBox, foot);
-    } else {
-      side.appendChild(userBox);
-    }
+    const nameEls = document.querySelectorAll("[data-auth-name]");
+    nameEls.forEach(function (el) {
+      el.textContent = fullName || username || "Signed-in user";
+    });
+    const roleEls = document.querySelectorAll("[data-auth-role]");
+    roleEls.forEach(function (el) {
+      el.textContent = ROLE_LABELS[role] || role;
+    });
   });
 })();
