@@ -3,78 +3,117 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Nurse Portal · Handover &amp; Clinical Review · AgeCare</title>
+  <title>Nurse Dashboard · AgeCare</title>
   <link rel="icon" type="image/png" href="/static/img/favicon.png">
   <link rel="stylesheet" href="/static/app.css">
+  <style>
+    .priority-badge-lg {
+      font-size: 13px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: var(--radius-pill);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .priority-badge-lg.Red { background-color: var(--red-soft); color: var(--red); border: 1px solid var(--red-border); }
+    .priority-badge-lg.Amber { background-color: var(--amber-soft); color: var(--amber); border: 1px solid var(--amber-border); }
+    .priority-badge-lg.Green { background-color: var(--green-soft); color: var(--green); border: 1px solid var(--green-border); }
+
+    .triage-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .triage-card {
+      background-color: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-card);
+      padding: 12px 14px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      transition: background-color 120ms ease, border-color 120ms ease;
+    }
+    .triage-card:hover {
+      background-color: var(--bg-subtle);
+      border-color: var(--line-strong);
+    }
+    .triage-card.selected {
+      border-color: var(--accent);
+      background-color: var(--accent-soft);
+    }
+    .triage-card.is-Red { border-left: 4px solid var(--red); }
+    .triage-card.is-Amber { border-left: 4px solid var(--amber); }
+    .triage-card.is-Green { border-left: 4px solid var(--green); }
+  </style>
 </head>
 <body>
   <header class="topbar"></header>
 
-  <!-- Common ClearScan Hero -->
-  <section class="cs-hero">
-    <div class="cs-hero-watermark" aria-hidden="true">Clinical Review &amp; Handover</div>
-    <div class="cs-hero-eyebrow">Role 02 · Registered Nurse Portal</div>
-    <h1>Clinical Review Instantly</h1>
-    <p class="cs-sub">
-      Review AI-supported care priorities, inspect vital signs and carer shift notes, and approve guidance or family updates with full clinical control.
-    </p>
-    <div class="cs-cta-row">
-      <a class="cs-glow-btn" href="/guidance">
-        <span>✓</span> Draft Care Guidance
-      </a>
-      <a class="btn btn-ghost" href="/ocr">Read Health Report (OCR)</a>
+  <main class="page-container">
+    <div class="demo-banner alert-warn" id="banner">
+      <strong>Demo data only.</strong> These residents are fake. The nurse makes the final clinical decision. The AI never prescribes medicines or diagnoses conditions.
     </div>
-    <div class="cs-privacy-note" id="banner">AI drafts are suggestions only. Nothing reaches carers or a family until a nurse approves it.</div>
-    <div class="cs-trust-row">
-      <span><b>✓</b> Priority Triage</span>
-      <span><b>✓</b> Source-Backed Guidance</span>
-      <span><b>✓</b> Family Update Approval</span>
-      <span><b>✓</b> Full Audit Log</span>
-    </div>
-  </section>
 
-  <!-- Common Horizontal Feature Strip -->
-  <div class="cs-strip">
-    <div class="cs-strip-inner">
-      <span class="cs-strip-item">🩺 Accept or change care priority levels.</span>
-      <span class="cs-strip-item">📋 Live sync with carer tasks &amp; concerns.</span>
-      <span class="cs-strip-item">✅ Approve plain-language family updates.</span>
-      <span class="cs-strip-item">⚡ Inspect OCR reports &amp; room alerts.</span>
-    </div>
-  </div>
-
-  <main class="page">
-    <div class="page-head">
-      <div>
-        <div class="eyebrow">Nurse / Team Leader</div>
-        <h2 class="page-title">Resident Handover &amp; Clinical Oversight</h2>
+    <!-- Main question at top: Who needs me first? -->
+    <div class="page-question-banner">
+      <div class="between">
+        <div>
+          <h1 class="q-title">Who needs me first?</h1>
+          <p>Residents sorted by care priority. Pick a resident to review clinical evidence, latest vitals, and today's shift records.</p>
+        </div>
+        <div class="inline">
+          <a href="/guidance" class="btn btn-secondary btn-sm">Draft guidance</a>
+          <a href="/ocr" class="btn btn-secondary btn-sm">Read health report (OCR)</a>
+        </div>
       </div>
-      <div class="pills" id="tabs" role="tablist" aria-label="Residents"></div>
     </div>
 
-    <div class="row">
-      <!-- Left column -->
-      <div class="col-main">
+    <!-- Triage priority list -->
+    <section style="margin-bottom: 20px;">
+      <div class="triage-strip" id="priorityTriage"></div>
+    </section>
+
+    <!-- Main clinical workbench -->
+    <div class="grid-layout">
+      <!-- Main column: Selected resident clinical review -->
+      <div class="stack">
+        <!-- 1. Care priority card -->
         <section class="card" id="priority"></section>
+
+        <!-- 2. Selected resident & Latest vitals -->
         <section class="card" id="resident"></section>
+
+        <!-- 3. Today's care -->
         <section class="card" id="care"></section>
+
+        <!-- 4. Approved guidance -->
         <section class="card" id="guide"></section>
       </div>
 
-      <!-- Right column -->
-      <aside class="col-side">
+      <!-- Side column: Waiting for nurse, Family updates, Messages, Contacts, Audit -->
+      <aside class="stack">
+        <!-- Items waiting for a nurse -->
         <section class="card" id="needs"></section>
+
+        <!-- Family updates to approve -->
         <section class="card" id="familyUpdates"></section>
+
+        <!-- Messages from families -->
         <section class="card" id="familyMessages"></section>
+
+        <!-- Who to call -->
         <section class="card" id="contacts"></section>
-        <section class="card dark" id="activity"></section>
+
+        <!-- Recent activity / Audit log -->
+        <section class="card" id="activity"></section>
       </aside>
     </div>
-
-    <footer class="foot">
-      Prototype for Team Trio · IA728001 Studio 5. Local small language model via Ollama with rule fallback. All residents and staff are fictional.
-    </footer>
   </main>
+
+  <footer class="foot"></footer>
 
   <script src="/static/auth.js"></script>
   <script>
@@ -91,6 +130,7 @@
       thinking: new Set(),
       famUpdates: [],
       famMessages: [],
+      visionAlerts: [],
       famEdits: new Map(),
       draftingFam: false,
     };
@@ -111,10 +151,12 @@
     }
 
     function fill(id, ...kids) {
-      $(id).replaceChildren(...kids.flat().filter(Boolean));
+      const el = $(id);
+      if (el) el.replaceChildren(...kids.flat().filter(Boolean));
     }
 
     function whenText(iso) {
+      if (!iso) return "";
       const d = new Date(iso);
       return isNaN(d) ? iso : d.toLocaleString([], { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
     }
@@ -137,30 +179,39 @@
 
     async function addCarerEntries() {
       const today = await api("/api/carer/today");
-      if (!today.ok) return;
+      if (!today.ok || !today.data) return;
       const find = (id) => {
         for (const [k, r] of state.records) if (String(k) === String(id)) return r;
         return null;
       };
-      for (const t of today.data.tasks) {
-        const rec = find(t.resident_id);
-        if (rec) rec.care_record.push({ time: t.created_at.slice(11, 16), task: t.task, status: t.status, by: t.carer });
+      if (Array.isArray(today.data.tasks)) {
+        for (const t of today.data.tasks) {
+          const rec = find(t.resident_id);
+          if (rec && rec.care_record) {
+            rec.care_record.push({ time: (t.created_at || "").slice(11, 16), task: t.task, status: t.status, by: t.carer });
+          }
+        }
       }
-      for (const c of today.data.concerns) {
-        const rec = find(c.resident_id);
-        if (rec) rec.concerns.push({ time: c.created_at.slice(11, 16), type: c.type, text: c.note + " (" + c.carer + ")" });
+      if (Array.isArray(today.data.concerns)) {
+        for (const c of today.data.concerns) {
+          const rec = find(c.resident_id);
+          if (rec && rec.concerns) {
+            rec.concerns.push({ time: (c.created_at || "").slice(11, 16), type: c.type, text: c.note + " (" + c.carer + ")" });
+          }
+        }
       }
     }
 
     async function loadAll() {
       const list = await api("/api/residents");
       if (!list.ok) {
-        $("banner").className = "msg err";
-        $("banner").textContent = "Can't reach the server. Start it with: python -m uvicorn app.main:app --reload";
+        $("banner").className = "alert-box alert-danger";
+        $("banner").textContent = "Could not reach the server. Is the backend running?";
         return;
       }
       state.people = list.data;
       state.selected = state.people[0] && state.people[0].resident_id;
+
       await Promise.all(
         state.people.map(async (p) => {
           const [rec, ok] = await Promise.all([
@@ -171,83 +222,122 @@
           state.approved.set(p.resident_id, ok.ok ? ok.data : null);
         })
       );
+
       await addCarerEntries();
-      const [pending, audit, famU, famM] = await Promise.all([
+
+      // Pre-fetch fast rule decisions so the top triage bar sorts correctly
+      await Promise.all(
+        state.people.map(async (p) => {
+          const d = await api("/api/residents/" + p.resident_id + "/decision?use_ai=false");
+          if (d.ok) state.decisions.set(p.resident_id, d.data);
+        })
+      );
+
+      const [pending, audit, famU, famM, visionA] = await Promise.all([
         api("/api/guidance/pending"),
         api("/api/audit?limit=10"),
         api("/api/family-updates"),
         api("/api/messages"),
+        api("/api/vision/alerts?open_only=true"),
       ]);
+
       state.pending = pending;
       state.audit = audit;
       state.famUpdates = famU.ok ? famU.data : [];
       state.famMessages = famM.ok ? famM.data : [];
+      state.visionAlerts = visionA.ok && Array.isArray(visionA.data) ? visionA.data : [];
+
       renderAll();
       loadDecision(state.selected);
     }
 
-    function renderTabs() {
+    function renderTriageStrip() {
+      const rank = { Red: 1, Amber: 2, Green: 3 };
+      const sorted = [...state.people].sort((a, b) => {
+        const da = state.decisions.get(a.resident_id);
+        const db = state.decisions.get(b.resident_id);
+        const ra = da ? (rank[da.level] || 4) : 4;
+        const rb = db ? (rank[db.level] || 4) : 4;
+        return ra - rb;
+      });
+
       fill(
-        "tabs",
-        state.people.map((p) => {
-          const on = p.resident_id === state.selected;
-          const tab = h("button", {
-            type: "button",
-            role: "tab",
-            class: "pill",
-            "aria-selected": String(on),
-            "aria-pressed": String(on),
-            text: p.name + " · Room " + (100 + p.resident_id),
-          });
-          tab.addEventListener("click", () => select(p.resident_id));
-          return tab;
+        "priorityTriage",
+        sorted.map((p) => {
+          const d = state.decisions.get(p.resident_id);
+          const lvl = d ? d.level : "Green";
+          const isSelected = p.resident_id === state.selected;
+          const card = h("div", {
+            class: "triage-card is-" + lvl + (isSelected ? " selected" : ""),
+            role: "button",
+            tabindex: "0",
+            "aria-pressed": String(isSelected)
+          },
+            h("div", { class: "between" },
+              h("strong", { text: p.name + " · Room " + (100 + p.resident_id) }),
+              h("span", { class: "badge badge-" + lvl.toLowerCase(), text: lvl })
+            ),
+            h("span", { class: "sub-text", text: d ? (d.reasons[0] ? d.reasons[0].text : d.next_step) : "Checking priority…" })
+          );
+          card.addEventListener("click", () => select(p.resident_id));
+          card.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") select(p.resident_id); });
+          return card;
         })
       );
     }
 
     function renderResident(person, rec) {
       if (!rec) {
-        fill("resident", h("h2", { text: person.name }), h("p", { class: "small", text: "No records found." }));
+        fill("resident", h("h2", { class: "card-title", text: person.name }), h("p", { class: "text-muted", text: "No records found." }));
         return;
       }
-      const hist = rec.readings_history;
+      const hist = rec.readings_history || {};
       const last = (key) => (hist[key] && hist[key].length ? hist[key][hist[key].length - 1].value : null);
       const rows = [
         ["Pulse", last("pulse"), "bpm"],
         ["Blood pressure", last("systolic") != null && last("diastolic") != null ? last("systolic") + "/" + last("diastolic") : null, "mmHg"],
         ["Temperature", last("temperature"), "°C"],
-        ["Oxygen", last("spo2"), "%"],
+        ["Oxygen saturation (SpO2)", last("spo2"), "%"],
       ].filter((r) => r[1] != null);
-      const allergies = rec.allergies.join(", ") || "None recorded";
+
+      const allergies = (rec.allergies && rec.allergies.length) ? rec.allergies.join(", ") : "None recorded";
       fill(
         "resident",
-        h("div", { class: "between" },
-          h("h2", { text: person.name + " · Room " + (100 + person.resident_id) }),
-          h("span", { class: "small", text: person.conditions.join(" · ") })
+        h("div", { class: "card-header" },
+          h("div", {},
+            h("h2", { class: "card-title", text: person.name + " · Room " + (100 + person.resident_id) }),
+            h("p", { class: "sub-text", text: (person.conditions || []).join(" · ") })
+          ),
+          h("div", { class: "text-sm" },
+            h("strong", { text: "Allergies: " }),
+            h("span", { text: allergies })
+          )
         ),
-        h("p", {}, h("strong", { text: "Allergies: " }), allergies),
         rows.length
           ? h(
               "table",
               { class: "tbl" },
-              h("thead", {}, h("tr", {}, h("th", { text: "Latest vital signs" }), h("th", { text: "Value" }))),
-              h("tbody", {}, rows.map((r) => h("tr", {}, h("td", { text: r[0] }), h("td", { text: r[1] + " " + r[2] }))))
+              h("thead", {}, h("tr", {}, h("th", { text: "Latest vital signs" }), h("th", { text: "Recorded value" }))),
+              h("tbody", {}, rows.map((r) => h("tr", {}, h("td", { text: r[0] }), h("td", { class: "num-tabular", text: r[1] + " " + r[2] }))))
             )
-          : null
+          : h("p", { class: "text-muted", text: "No vital signs recorded yet." })
       );
     }
 
     function renderCare(person, rec) {
-      const list = rec ? [...rec.care_record].sort((a, b) => a.time.localeCompare(b.time)) : [];
+      const list = rec && rec.care_record ? [...rec.care_record].sort((a, b) => (a.time || "").localeCompare(b.time || "")) : [];
       const label = { given: "Given", refused: "Refused", not_done: "Not done" };
       fill(
         "care",
-        h("h2", { text: "Today's care" }),
+        h("div", { class: "card-header" },
+          h("h2", { class: "card-title", text: "Today's care" }),
+          h("span", { class: "sub-text", text: list.length + " tasks logged" })
+        ),
         list.length
           ? h(
               "table",
               { class: "tbl" },
-              h("thead", {}, h("tr", {}, h("th", { text: "Time" }), h("th", { text: "Task" }), h("th", { text: "Status" }), h("th", { text: "By" }))),
+              h("thead", {}, h("tr", {}, h("th", { text: "Time" }), h("th", { text: "Task" }), h("th", { text: "Status" }), h("th", { text: "Recorded by" }))),
               h(
                 "tbody",
                 {},
@@ -255,15 +345,15 @@
                   h(
                     "tr",
                     {},
-                    h("td", { class: "mono", text: c.time }),
+                    h("td", { class: "text-mono", text: c.time }),
                     h("td", { text: c.task }),
-                    h("td", { class: "st-" + c.status, text: label[c.status] || c.status }),
+                    h("td", {}, h("span", { class: "badge st-" + c.status, text: label[c.status] || c.status })),
                     h("td", { text: c.by })
                   )
                 )
               )
             )
-          : h("p", { class: "small", text: "Nothing recorded yet today." })
+          : h("p", { class: "text-muted", text: "Nothing recorded yet today." })
       );
     }
 
@@ -272,31 +362,33 @@
       if (!ok) {
         fill(
           "guide",
-          h("div", { class: "between" },
-            h("h2", { text: "Approved guidance" }),
-            h("a", { class: "btn btn-ghost btn-sm", href: "/guidance", text: "Draft guidance" })
+          h("div", { class: "card-header" },
+            h("h2", { class: "card-title", text: "Approved guidance" }),
+            h("a", { class: "btn btn-secondary btn-sm", href: "/guidance", text: "Draft guidance" })
           ),
-          h("p", { class: "small", text: "No approved guidance yet for this resident." })
+          h("p", { class: "text-muted", text: "No approved guidance yet for this resident." })
         );
         return;
       }
       const list = (lines) =>
         h(
           "ul",
-          { style: "margin:4px 0; padding-left:20px" },
-          lines.map((l) => h("li", {}, l.text, h("span", { class: "tiny", style: "display:block", text: l.edited ? "Written by a nurse" : l.source })))
+          { style: "margin: 6px 0 12px; padding-left: 20px;" },
+          lines.map((l) => h("li", {}, l.text, h("span", { class: "text-muted text-sm", style: "display:block", text: l.edited ? "Written by nurse" : l.source })))
         );
       fill(
         "guide",
-        h("div", { class: "between" },
-          h("h2", { text: "Approved guidance" }),
-          h("a", { class: "btn btn-ghost btn-sm", href: "/guidance", text: "Update guidance" })
+        h("div", { class: "card-header" },
+          h("div", {},
+            h("h2", { class: "card-title", text: "Approved guidance" }),
+            h("p", { class: "sub-text", text: "Approved by " + ok.approved_by + ", " + whenText(ok.approved_at) })
+          ),
+          h("a", { class: "btn btn-secondary btn-sm", href: "/guidance", text: "Update guidance" })
         ),
-        h("p", { class: "small", text: "Approved by " + ok.approved_by + ", " + whenText(ok.approved_at) }),
-        h("p", {}, h("strong", { text: "Signs to watch for" })),
-        list(ok.watch_for),
-        h("p", {}, h("strong", { text: "Prevention steps" })),
-        list(ok.prevention)
+        h("p", { style: "font-weight: 600; margin-top: 6px;" }, "Signs to watch for"),
+        list(ok.watch_for || []),
+        h("p", { style: "font-weight: 600; margin-top: 6px;" }, "Prevention steps"),
+        list(ok.prevention || [])
       );
     }
 
@@ -304,34 +396,54 @@
       const items = [];
       for (const p of state.people) {
         const rec = state.records.get(p.resident_id);
-        if (rec) {
+        if (rec && rec.concerns) {
           for (const c of rec.concerns) {
             items.push(
-              h("li", { class: "list-item", style: "flex-direction:column; gap:4px" },
+              h("li", { class: "list-item", style: "flex-direction:column; gap:2px;" },
                 h("div", { class: "between", style: "width:100%" },
                   h("strong", { text: p.name + " · " + c.type }),
-                  h("span", { class: "mono", text: c.time })
+                  h("span", { class: "mono-time", text: c.time })
                 ),
-                h("span", { class: "small", text: "“" + c.text + "”" })
+                h("span", { class: "sub-text", text: "“" + c.text + "”" })
               )
             );
           }
         }
       }
-      if (state.pending && state.pending.ok) {
+
+      if (state.pending && state.pending.ok && Array.isArray(state.pending.data)) {
         for (const d of state.pending.data) {
           items.push(
-            h("li", { class: "list-item", style: "flex-direction:column; gap:4px" },
+            h("li", { class: "list-item", style: "flex-direction:column; gap:2px;" },
               h("strong", { text: d.resident + " · AI guidance draft" }),
-              h("span", { class: "small", text: d.lines + " lines waiting for a nurse" })
+              h("span", { class: "sub-text", text: d.lines + " lines waiting for nurse review" })
             )
           );
         }
       }
+
+      if (state.visionAlerts && state.visionAlerts.length) {
+        for (const a of state.visionAlerts) {
+          const rName = state.people.find((p) => p.resident_id === a.resident_id);
+          items.push(
+            h("li", { class: "list-item", style: "flex-direction:column; gap:2px;" },
+              h("div", { class: "between", style: "width:100%" },
+                h("strong", { style: "color:var(--red)", text: "Camera Alert: " + (a.alert_type === "high_cue" ? "Face check" : a.alert_type) }),
+                h("span", { class: "mono-time", text: (a.created_at || "").slice(11, 16) })
+              ),
+              h("span", { class: "sub-text", text: (rName ? rName.name + ": " : "") + a.message })
+            )
+          );
+        }
+      }
+
       fill(
         "needs",
-        h("h2", { text: "Needs a nurse" }),
-        items.length ? h("ul", { class: "list" }, items) : h("p", { class: "small", text: "Nothing needs attention." })
+        h("div", { class: "card-header" },
+          h("h2", { class: "card-title", text: "Items waiting for a nurse" }),
+          h("span", { class: "badge " + (items.length ? "badge-red" : "badge-neutral"), text: items.length + " pending" })
+        ),
+        items.length ? h("ul", { class: "audit-list" }, items) : h("p", { class: "text-muted", text: "No concerns or alerts waiting for review." })
       );
     }
 
@@ -339,10 +451,11 @@
       const latest = state.famUpdates.find((u) => Number(u.resident_id) === Number(person.resident_id));
       const draftBtn = h("button", {
         type: "button",
-        class: "btn btn-ghost btn-sm",
+        class: "btn btn-secondary btn-sm",
         disabled: state.draftingFam ? "disabled" : false,
         text: state.draftingFam ? "Drafting…" : latest && latest.status === "draft" ? "Re-draft with AI" : "Draft update with AI",
       });
+
       draftBtn.addEventListener("click", async () => {
         state.draftingFam = true;
         renderFamilyUpdates(person);
@@ -363,12 +476,19 @@
         renderActivity();
       });
 
-      const head = h("div", { class: "between" }, h("h2", { text: "Family updates to approve" }), draftBtn);
+      const head = h("div", { class: "card-header" },
+        h("div", {},
+          h("h2", { class: "card-title", text: "Family update" }),
+          h("p", { class: "sub-text", text: "For " + person.name + "'s whānau" })
+        ),
+        draftBtn
+      );
+
       if (!latest) {
         fill(
           "familyUpdates",
           head,
-          h("p", { class: "small", text: "No family update drafted yet for " + person.name + ". Click “Draft update with AI” to prepare a plain-language update for their family." })
+          h("p", { class: "text-muted", text: "No family update prepared today. Click 'Draft update with AI' to prepare a warm summary." })
         );
         return;
       }
@@ -377,7 +497,8 @@
       const val = isPending && state.famEdits.has(latest.id) ? state.famEdits.get(latest.id) : latest.text;
       const box = h("textarea", {
         class: "field",
-        rows: "4",
+        rows: "3",
+        style: "margin-bottom: 8px;",
         readonly: !isPending ? "readonly" : false,
       });
       box.value = val;
@@ -386,6 +507,7 @@
       const approveBtn = isPending
         ? h("button", { type: "button", class: "btn btn-primary btn-sm", text: "Approve and send to family" })
         : null;
+
       if (approveBtn) {
         approveBtn.addEventListener("click", async () => {
           const textToSend = (state.famEdits.has(latest.id) ? state.famEdits.get(latest.id) : latest.text).trim();
@@ -398,7 +520,7 @@
             const list = await api("/api/family-updates");
             if (list.ok) state.famUpdates = list.data;
             state.audit = await api("/api/audit?limit=10");
-            if (window.showToast) window.showToast("Approved and sent to family portal");
+            if (window.showToast) window.showToast("Update approved and sent to family");
             renderFamilyUpdates(person);
             renderActivity();
           }
@@ -408,13 +530,13 @@
       fill(
         "familyUpdates",
         head,
-        h("div", { class: "between" },
-          h("strong", { text: "For " + person.name + "'s family" }),
-          h("span", { class: "badge " + (isPending ? "draft" : "ok"), text: isPending ? "Needs nurse approval" : "Sent " + (latest.sent_at || "").slice(11, 16) })
+        h("div", { class: "between", style: "margin-bottom: 6px;" },
+          h("span", { class: "text-sm text-muted", text: isPending ? "Drafted by " + latest.drafted_by : "Approved by " + (latest.approved_by || "Nurse") }),
+          h("span", { class: "badge " + (isPending ? "badge-amber" : "badge-green"), text: isPending ? "Needs nurse review" : "Sent " + (latest.sent_at || "").slice(11, 16) })
         ),
         box,
         h("div", { class: "between" },
-          h("span", { class: "tiny", text: isPending ? "Drafted by " + latest.drafted_by : "Approved by " + (latest.approved_by || "Nurse") }),
+          h("span", { class: "sub-text", text: isPending ? "Edit text above if needed" : "" }),
           approveBtn
         )
       );
@@ -422,20 +544,25 @@
 
     function renderFamilyMessages() {
       const unread = state.famMessages.filter((m) => !m.read_by).length;
-      const head = h("h2", { text: "Messages from families (" + unread + " new)" });
+      const head = h("div", { class: "card-header" },
+        h("h2", { class: "card-title", text: "Messages from families" }),
+        h("span", { class: "badge " + (unread ? "badge-amber" : "badge-neutral"), text: unread + " new" })
+      );
+
       if (!state.famMessages.length) {
-        fill("familyMessages", head, h("p", { class: "small", text: "No messages from families yet." }));
+        fill("familyMessages", head, h("p", { class: "text-muted", text: "No messages from families yet." }));
         return;
       }
+
       fill(
         "familyMessages",
         head,
         h(
           "ul",
-          { class: "list" },
-          state.famMessages.slice(0, 6).map((m) => {
+          { class: "audit-list" },
+          state.famMessages.slice(0, 5).map((m) => {
             const markBtn = !m.read_by
-              ? h("button", { type: "button", class: "btn btn-ghost btn-sm", text: "Mark as read" })
+              ? h("button", { type: "button", class: "btn btn-secondary btn-sm", style: "margin-top:4px;", text: "Mark read" })
               : null;
             if (markBtn) {
               markBtn.addEventListener("click", async () => {
@@ -447,9 +574,12 @@
             }
             return h(
               "li",
-              { class: "list-item" + (!m.read_by ? " unread" : ""), style: "flex-direction:column; gap:6px" },
-              h("div", { class: "tiny", text: m.from_name + " · " + (m.created_at || "").slice(11, 16) }),
-              h("div", { text: m.text }),
+              { class: "list-item", style: "flex-direction:column; gap:4px;" },
+              h("div", { class: "between", style: "width:100%" },
+                h("strong", { text: m.from_name }),
+                h("span", { class: "mono-time", text: (m.created_at || "").slice(11, 16) })
+              ),
+              h("div", { class: "text-sm", text: m.text }),
               markBtn
             );
           })
@@ -461,24 +591,28 @@
       if (!rec) { fill("contacts"); return; }
       fill(
         "contacts",
-        h("h2", { text: "Who to call" }),
+        h("div", { class: "card-header no-border" },
+          h("h2", { class: "card-title", text: "Who to call" })
+        ),
         h(
           "ul",
-          { style: "margin:4px 0; padding-left:20px" },
-          h("li", {}, rec.doctor.name + " (doctor) · " + rec.doctor.phone),
+          { style: "margin:4px 0; padding-left:20px; font-size:13.5px;" },
+          h("li", {}, rec.doctor.name + " (Doctor) · " + rec.doctor.phone),
           rec.contacts.map((c) => h("li", { text: c.name + " (" + c.relationship + ") · " + c.phone }))
         )
       );
     }
 
     function renderActivity() {
-      const head = h("h2", { text: "Audit log" });
+      const head = h("div", { class: "card-header no-border" },
+        h("h2", { class: "card-title", text: "Clinical audit log" })
+      );
       if (!state.audit || !state.audit.ok) {
-        fill("activity", head, h("p", { class: "tiny", text: "Only a nurse can see the audit log." }));
+        fill("activity", head, h("p", { class: "text-muted", text: "Only a nurse can view the audit log." }));
         return;
       }
       if (!state.audit.data.length) {
-        fill("activity", head, h("p", { class: "tiny", text: "No activity yet." }));
+        fill("activity", head, h("p", { class: "text-muted", text: "No activity logged yet." }));
         return;
       }
       fill(
@@ -486,13 +620,16 @@
         head,
         h(
           "ol",
-          { class: "audit" },
-          state.audit.data.map((e) =>
+          { class: "audit-list" },
+          state.audit.data.slice(0, 8).map((e) =>
             h(
               "li",
               {},
-              h("span", { class: "t", text: (e.at || "").slice(11, 16) }),
-              h("span", {}, h("strong", { text: e.actor }), " " + e.action.replace(/_/g, " ") + (e.detail ? " · " + e.detail : ""))
+              h("span", { class: "audit-time", text: (e.at || "").slice(11, 16) }),
+              h("span", { class: "text-sm" },
+                h("strong", { text: e.actor }),
+                " " + (e.action || "").replace(/_/g, " ") + (e.detail ? " · " + e.detail : "")
+              )
             )
           )
         )
@@ -503,33 +640,48 @@
       state.thinking.add(id);
       const quick = await api("/api/residents/" + id + "/decision?use_ai=false");
       if (quick.ok && !state.decisions.has(id)) state.decisions.set(id, quick.data);
-      if (state.selected === id) renderPriority();
+      if (state.selected === id) {
+        renderPriority();
+        renderTriageStrip();
+      }
       const full = await api("/api/residents/" + id + "/decision");
       state.thinking.delete(id);
       if (full.ok) state.decisions.set(id, full.data);
-      if (state.selected === id) renderPriority();
+      if (state.selected === id) {
+        renderPriority();
+        renderTriageStrip();
+      }
     }
 
     function renderPriority() {
       const d = state.decisions.get(state.selected);
       if (!d) {
-        fill("priority", h("h2", { text: "Care priority" }), h("p", { class: "small", text: "Checking…" }));
+        fill("priority",
+          h("div", { class: "card-header" }, h("h2", { class: "card-title", text: "Care priority" })),
+          h("p", { class: "text-muted", text: "Checking priority rules…" })
+        );
         return;
       }
       const thinking = state.thinking.has(d.resident_id);
       fill(
         "priority",
-        h("div", { class: "between" }, h("h2", { text: "Care priority" }), h("span", { class: "level " + d.level, text: d.level })),
-        h("p", { style: "font-weight:700", text: d.next_step + (thinking ? " (vital signs only so far)" : "") }),
+        h("div", { class: "card-header" },
+          h("div", {},
+            h("h2", { class: "card-title", text: "Care priority recommendation" }),
+            h("p", { class: "sub-text", text: "Evaluated from NZEWS vital sign rules and today's carer shift notes." })
+          ),
+          h("span", { class: "priority-badge-lg " + d.level, text: d.level + " Priority" })
+        ),
+        h("p", { style: "font-weight: 700; margin-bottom: 8px;", text: d.next_step + (thinking ? " (vital signs only so far)" : "") }),
         d.reasons.length
           ? h(
               "ul",
-              { style: "margin:4px 0; padding-left:20px" },
-              d.reasons.map((r) => h("li", {}, r.text, h("span", { class: "tiny", style: "display:block", text: (r.quote ? "“" + r.quote + "” · " : "") + r.source })))
+              { style: "margin: 6px 0 12px; padding-left: 20px;" },
+              d.reasons.map((r) => h("li", {}, r.text, h("span", { class: "text-muted text-sm", style: "display:block", text: (r.quote ? "“" + r.quote + "” · " : "") + r.source })))
             )
-          : h("p", { class: "small", text: "Nothing needs attention." }),
-        thinking ? h("p", { class: "small", text: "Reading carer notes…" }) : null,
-        !thinking && d.ai.status === "error" ? h("p", { class: "msg err", text: "AI not available, so this uses vital signs only." }) : null,
+          : h("p", { class: "text-muted", text: "No warning signs detected." }),
+        thinking ? h("p", { class: "sub-text", text: "Reading carer notes…" }) : null,
+        !thinking && d.ai && d.ai.status === "error" ? h("div", { class: "alert-box alert-warn", text: "Local AI model not reachable; priority uses vital sign rules only." }) : null,
         thinking ? null : reviewPart(d)
       );
     }
@@ -540,17 +692,28 @@
 
     function reviewPart(d) {
       const r = d.last_review;
-      const done = r ? h("span", { class: "small", text: (r.action === "priority_accepted" ? "Accepted" : "Changed") + " by " + r.actor + ", " + whenText(r.at) }) : null;
-      const accept = h("button", { type: "button", class: "btn btn-primary btn-sm", text: "Accept" });
-      const change = h("button", { type: "button", class: "btn btn-ghost btn-sm", text: "Change" });
-      const box = h("div", { class: "inline" }, accept, change, done);
+      const done = r ? h("span", { class: "sub-text", text: (r.action === "priority_accepted" ? "Accepted" : "Changed") + " by " + r.actor + ", " + whenText(r.at) }) : null;
+      const accept = h("button", { type: "button", class: "btn btn-primary btn-sm", text: "Accept priority" });
+      const change = h("button", { type: "button", class: "btn btn-secondary btn-sm", text: "Change priority" });
+      const box = h("div", { class: "inline", style: "margin-top: 10px;" }, accept, change, done);
+
       accept.addEventListener("click", () => sendReview(d, d.level, ""));
       change.addEventListener("click", () => {
-        const pick = h("select", { class: "field", style: "width:auto", "aria-label": "New priority" }, ["Green", "Amber", "Red"].filter((l) => l !== d.level).map((l) => h("option", { value: l, text: l })));
-        const why = h("textarea", { class: "field", rows: "2", placeholder: "Reason for the change", "aria-label": "Reason for the change" });
-        const save = h("button", { type: "button", class: "btn btn-primary btn-sm", text: "Save" });
-        const cancel = h("button", { type: "button", class: "btn btn-ghost btn-sm", text: "Cancel" });
-        save.addEventListener("click", () => { if (!why.value.trim()) { why.focus(); return; } sendReview(d, pick.value, why.value); });
+        const pick = h("select", { class: "field", style: "width:auto; min-height:36px;", "aria-label": "New priority level" },
+          ["Green", "Amber", "Red"].filter((l) => l !== d.level).map((l) => h("option", { value: l, text: l }))
+        );
+        const why = h("textarea", { class: "field", rows: "2", placeholder: "Clinical reason for priority change (required)", "aria-label": "Reason for priority change" });
+        const save = h("button", { type: "button", class: "btn btn-primary btn-sm", text: "Save decision" });
+        const cancel = h("button", { type: "button", class: "btn btn-secondary btn-sm", text: "Cancel" });
+
+        save.addEventListener("click", () => {
+          if (!why.value.trim()) {
+            why.focus();
+            if (window.showToast) window.showToast("Please enter a reason for the change", true);
+            return;
+          }
+          sendReview(d, pick.value, why.value);
+        });
         cancel.addEventListener("click", renderPriority);
         box.replaceChildren(pick, why, save, cancel);
         pick.focus();
@@ -565,12 +728,15 @@
         body: JSON.stringify({ reviewer: nurseName(), suggested: d.level, final: final, note: note }),
       });
       if (!res.ok) {
-        alert("Could not save: " + (res.data && res.data.detail ? JSON.stringify(res.data.detail) : res.status));
+        const msg = res.data && res.data.detail ? res.data.detail : "Could not save review";
+        if (window.showToast) window.showToast(msg, true);
         return;
       }
       d.last_review = res.data;
       state.audit = await api("/api/audit?limit=10");
+      if (window.showToast) window.showToast("Priority decision saved to audit log");
       renderPriority();
+      renderTriageStrip();
       renderActivity();
     }
 
@@ -578,7 +744,7 @@
       const person = state.people.find((p) => p.resident_id === state.selected);
       if (!person) return;
       const rec = state.records.get(person.resident_id);
-      renderTabs();
+      renderTriageStrip();
       renderPriority();
       renderResident(person, rec);
       renderCare(person, rec);
@@ -598,6 +764,5 @@
 
     loadAll();
   </script>
-  <script src="/ai-bubble.js"></script>
 </body>
 </html>
