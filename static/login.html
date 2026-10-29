@@ -286,6 +286,22 @@
         <h2 class="auth-title" id="authHeading">Welcome back</h2>
         <p class="auth-sub" id="authSubtitle">Log in to access your AgeCare role workspace.</p>
 
+        <!-- Role Selector (applies to Google Sign-In and Email Sign-Up) -->
+        <div class="input-group" style="margin-bottom: 16px">
+          <label>Select Role Portal</label>
+          <div class="choices" role="radiogroup" aria-label="Role">
+            <label class="choice"><input type="radio" name="regRole" value="carer" checked onchange="onRoleChange()"> Carer</label>
+            <label class="choice"><input type="radio" name="regRole" value="nurse" onchange="onRoleChange()"> Nurse</label>
+            <label class="choice"><input type="radio" name="regRole" value="manager" onchange="onRoleChange()"> Manager</label>
+            <label class="choice"><input type="radio" name="regRole" value="family" onchange="onRoleChange()"> Family</label>
+          </div>
+        </div>
+
+        <div class="input-group hidden" id="residentPickerWrap" style="margin-bottom: 16px">
+          <label for="regResident">Linked Resident (Family Portal)</label>
+          <select id="regResident" class="field"></select>
+        </div>
+
         <!-- Continue with Google (Firebase) -->
         <button type="button" class="google-btn" id="btnGoogle" onclick="handleGoogleSignIn()">
           <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">
@@ -358,7 +374,7 @@
               <span class="lead-ico">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="3 7 12 13 21 7"/></svg>
               </span>
-              <input id="regEmail" type="email" required autocomplete="email" placeholder="Your email address">
+              <input id="regEmail" type="text" required autocomplete="email" placeholder="Your email address">
             </div>
           </div>
 
@@ -371,21 +387,6 @@
               <input id="regPassword" type="password" required minlength="6" autocomplete="new-password" placeholder="Create a password (min 6 chars)">
               <button type="button" class="eye-btn" onclick="togglePassword('regPassword', this)" aria-label="Show or hide password">👁</button>
             </div>
-          </div>
-
-          <div class="input-group">
-            <label>Select Your Role</label>
-            <div class="choices" role="radiogroup" aria-label="Role">
-              <label class="choice"><input type="radio" name="regRole" value="carer" checked onchange="onRoleChange()"> Carer</label>
-              <label class="choice"><input type="radio" name="regRole" value="nurse" onchange="onRoleChange()"> Nurse</label>
-              <label class="choice"><input type="radio" name="regRole" value="manager" onchange="onRoleChange()"> Manager</label>
-              <label class="choice"><input type="radio" name="regRole" value="family" onchange="onRoleChange()"> Family</label>
-            </div>
-          </div>
-
-          <div class="input-group hidden" id="residentPickerWrap">
-            <label for="regResident">Linked Resident (Family Portal)</label>
-            <select id="regResident" class="field"></select>
           </div>
 
           <button type="submit" class="submit-auth-btn" id="btnRegister" style="margin-top: 8px">
@@ -563,11 +564,13 @@
         if (fbAuth && emailOrUser.includes("@")) {
           try {
             const cred = await signInWithEmailAndPassword(fbAuth, emailOrUser, password);
+            const role = window.selectedRegRole();
+            const residentId = role === "family" ? Number(document.getElementById("regResident").value) : null;
             const session = await syncFirebaseWithBackend(
               cred.user.email,
               cred.user.displayName || "",
-              "carer",
-              null,
+              role,
+              residentId,
               cred.user.uid
             );
             showAlert("Signed in as " + session.full_name + " (" + session.role + "). Opening your portal…", "ok");

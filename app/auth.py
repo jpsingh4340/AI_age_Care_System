@@ -336,12 +336,18 @@ def firebase_sync_user(
             user = cur.fetchone()
 
         if user:
+            linked_res = (resident_id or user["resident_id"] or 1) if clean_role == "family" else None
+            if role and clean_role != user["role"] or linked_res != user["resident_id"]:
+                conn.execute(
+                    "UPDATE users SET role = ?, resident_id = ? WHERE id = ?",
+                    (clean_role, linked_res, user["id"]),
+                )
             return {
                 "id": user["id"],
                 "username": user["username"],
-                "full_name": user["full_name"],
-                "role": user["role"],
-                "resident_id": user["resident_id"],
+                "full_name": full_name.strip() or user["full_name"],
+                "role": clean_role if role else user["role"],
+                "resident_id": linked_res if role else user["resident_id"],
             }
 
         display_name = full_name.strip() or clean_email.split("@", 1)[0].replace(".", " ").title()
