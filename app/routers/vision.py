@@ -100,8 +100,8 @@ async def cue_check(file: UploadFile = File(...), resident_id: int | None = Form
     finally:
         del data  # the photo is never saved
     body = result.to_dict()
-    if result.level == "high":
-        alert = alerts.add_alert("cue_check", "high_cue", result.message,
+    if result.level in ("medium", "high"):
+        alert = alerts.add_alert("cue_check", f"{result.level}_cue", result.message,
                                  resident_id=resident_id, confidence=round(result.score, 2))
         body["alert_id"] = alert["id"]
     return body

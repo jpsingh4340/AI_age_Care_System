@@ -52,6 +52,10 @@ MEDIUM_MAX = 0.45
 # half-blink in a photo does not add to the score.
 EYES_CLOSED_THRESHOLD = 0.6
 
+# A sad face is one of the PAINAD signs nurses use for residents who cannot say
+# they are in pain. A strong sad look lifts "low" to "medium", never to "high".
+SAD_MIN = 0.5
+
 # The only words this tool ever shows. No diagnosis, no cause, no medicine.
 MESSAGES = {
     "low": "No change noticed. Keep to the usual care plan.",
@@ -105,6 +109,15 @@ def pspi_terms(blendshapes: Mapping[str, float]) -> dict[str, float]:
         "eyes_closed": 1.0 if blink >= EYES_CLOSED_THRESHOLD else 0.0,  # AU43
     }
 
+def sad_cue(blendshapes: Mapping[str, float]) -> float:
+    """How sad the face looks, 0..1: chin pushed up (AU17), mouth corners
+    down (AU15) or inner brows raised (AU1). A smile cancels it."""
+    chin = blendshapes.get("mouthShrugLower", 0.0)
+    frown = _pair(blendshapes, "mouthFrown")
+    inner_brow = blendshapes.get("browInnerUp", 0.0)
+    return max(0.0, max(chin, frown, inner_brow) - _pair(blendshapes, "mouthSmile"))
+
+
 
 def level_for(score: float) -> str:
     if score < LOW_MAX:
@@ -129,7 +142,14 @@ def score_blendshapes(
         terms = {k: max(0.0, v - baseline.get(k, 0.0)) for k, v in terms.items()}
     score = min(1.0, sum(terms.values()) / 4)
     level = level_for(score)
-    return CueResult(status="ok", level=level, score=score, cues=terms, message=MESSAGES[level])
+    sad = sad_cue(blendshapes)
+    if baseline:
+     sad = max(0.0, sad - baseline.get("sad_look", 0.0))
+    if level == "low" and sad >= SAD_MIN:
+     level = "medium"
+    cues = {**terms, "sad_look": sad}
+    return CueResult(status="ok", level=level, score=score, cues=cues, message=MESSAGES[level])
+    
 
 
 class FaceCueChecker:
