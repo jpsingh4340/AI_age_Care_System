@@ -294,8 +294,9 @@ class RegisterRequest(BaseModel):
     username: str = Field(min_length=3, max_length=50)
     password: str = Field(min_length=6, max_length=100)
     full_name: str = Field(min_length=2, max_length=100)
-    role: Literal["nurse", "carer", "patient"]
-    resident_id: int | None = None
+    # Manager accounts are not self-registered: a manager creates them on /manager.
+    role: Literal["carer", "nurse", "manager", "family"]
+    resident_id: int | None = None  # required for family: the one resident they can see
 
 
 class LoginRequest(BaseModel):
@@ -319,82 +320,23 @@ class AuthResponse(BaseModel):
     expires_at: str
 
 
-# ---------- Patient / Resident Portal Schemas ----------
-class PatientWellbeingRequest(BaseModel):
-    sentiment: Literal["great", "okay", "uncomfortable", "in_pain"]
-    note: str = ""
-
-
-class PatientCallBellRequest(BaseModel):
-    request_type: str = Field(min_length=2, max_length=100)
-
-
-class PatientScheduleItem(BaseModel):
-    time: str
-    title: str
-    status: str
-    completed_by: str | None = None
-
-
-class ResidentProfileDetails(BaseModel):
-    full_name: str
-    preferred_name: str
-    age: int
-    wing: str
-    primary_doctor: str
-    assigned_nurse: str
-    mobility_status: str
-    dietary_plan: str
-    emergency_contact: dict
-
-
-class MealPlanItem(BaseModel):
-    meal_type: str
-    dish: str
-    beverage: str
-    dietary_badge: str
-
-
-class ActivityItem(BaseModel):
-    time: str
-    title: str
-    location: str
-    joined: bool = False
-
-
-class FamilyMessage(BaseModel):
-    sender: str
-    relationship: str
-    timestamp: str
-    message: str
-
-
-class PatientDayResponse(BaseModel):
-    resident_id: int
-    name: str
-    room: str
-    schedule: list[PatientScheduleItem]
-    approved_guidance: list[str]
-    latest_sentiment: str | None = None
-    profile_details: ResidentProfileDetails | None = None
-    meals_today: list[MealPlanItem] = []
-    activities_today: list[ActivityItem] = []
-    family_messages: list[FamilyMessage] = []
-    water_cups_logged: int = 0
-    water_cups_target: int = 6
-
-
-class PatientWaterLogRequest(BaseModel):
-    amount_cups: int = 1
-
-
-class PatientCompanionRequest(BaseModel):
-    question: str = Field(min_length=1, max_length=500)
+class CreateUserRequest(BaseModel):
+    """A manager creating a login for a staff member or family member."""
+    username: str = Field(min_length=3, max_length=50)
+    password: str = Field(min_length=6, max_length=100)
+    full_name: str = Field(min_length=2, max_length=100)
+    role: Literal["carer", "nurse", "manager", "family"]
     resident_id: int | None = None
 
 
-class PatientCompanionResponse(BaseModel):
-    reply: str
-    speech_text: str
-    emergency_alert: bool = False
-    suggested_followups: list[str] = []
+# ---------- Family updates and messages ----------
+class FamilyUpdateDraftRequest(BaseModel):
+    resident_id: int
+
+
+class FamilyUpdateSendRequest(BaseModel):
+    text: str = Field(min_length=5, max_length=2000)
+
+
+class FamilyMessageRequest(BaseModel):
+    text: str = Field(min_length=2, max_length=1000)

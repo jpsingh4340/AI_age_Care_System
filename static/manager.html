@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Manager · Overview &amp; compliance · Age-Care Intelligence</title>
+  <link rel="icon" type="image/png" href="/static/img/favicon.png">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/manager">
+        <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true">
+          <rect width="36" height="36" rx="9" fill="#0E6B66"></rect>
+          <path d="M18 26s-8-4.8-8-10.4A4.6 4.6 0 0 1 18 13a4.6 4.6 0 0 1 8 2.6C26 21.2 18 26 18 26z" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round"></path>
+        </svg>
+        <div>
+          <div class="brand-title">Age-Care Intelligence</div>
+          <div class="brand-sub">Kōwhai Gardens Rest Home · Manager &amp; Compliance Portal</div>
+        </div>
+      </a>
+      <nav class="role-nav" aria-label="Manager pages">
+        <a href="/manager" aria-current="page">Overview &amp; compliance</a>
+        <a href="/welcome">Project overview</a>
+      </nav>
+      <div class="user-chip">
+        <span class="user-pill">Signed in as <strong data-auth-name>Manager</strong></span>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="logout()">Sign out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="page-head">
+      <div>
+        <div class="eyebrow">Admin / manager</div>
+        <h1 class="page-title">Overview and compliance</h1>
+      </div>
+      <button type="button" class="btn btn-ghost btn-sm" onclick="loadOverview()">Refresh</button>
+    </div>
+
+    <!-- KPI strip -->
+    <div class="kpis" id="kpiGrid"></div>
+
+    <div class="row">
+      <!-- Left: Residents overview + User accounts management -->
+      <div class="col-main">
+        <section class="card">
+          <h2>Residents</h2>
+          <div class="table-wrap">
+            <table class="tbl">
+              <thead>
+                <tr>
+                  <th>Resident</th>
+                  <th>Room</th>
+                  <th>Tasks today</th>
+                  <th>Concerns</th>
+                  <th>Family update</th>
+                </tr>
+              </thead>
+              <tbody id="residentRows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="between">
+            <h2>User logins &amp; role credentials</h2>
+            <span class="small">Create logins for carers, nurses, managers, and families</span>
+          </div>
+
+          <div class="table-wrap">
+            <table class="tbl">
+              <thead>
+                <tr>
+                  <th>Username</th>
+                  <th>Full name</th>
+                  <th>Role</th>
+                  <th>Linked resident</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="userRows"></tbody>
+            </table>
+          </div>
+
+          <form class="divider stack" onsubmit="createUser(event)">
+            <div class="section-label">Create a new login</div>
+            <div class="grid-fields">
+              <label class="lbl" for="uFullName">
+                Full name
+                <input id="uFullName" class="field" type="text" required placeholder="e.g. Mere Walker">
+              </label>
+              <label class="lbl" for="uUsername">
+                Username
+                <input id="uUsername" class="field" type="text" required minlength="3" placeholder="e.g. family2">
+              </label>
+              <label class="lbl" for="uPassword">
+                Password
+                <input id="uPassword" class="field" type="password" required minlength="6" placeholder="Min 6 chars">
+              </label>
+              <label class="lbl" for="uRole">
+                Role
+                <select id="uRole" class="field" onchange="toggleResSelect()">
+                  <option value="carer">Carer</option>
+                  <option value="nurse">Nurse</option>
+                  <option value="manager">Manager</option>
+                  <option value="family">Family</option>
+                </select>
+              </label>
+              <label class="lbl hidden" id="uResWrap" for="uResident">
+                Resident (Family only)
+                <select id="uResident" class="field"></select>
+              </label>
+            </div>
+            <div class="between">
+              <p class="msg" id="userMsg"></p>
+              <button type="submit" class="btn btn-primary btn-sm">Add user account</button>
+            </div>
+          </form>
+        </section>
+      </div>
+
+      <!-- Right: Compliance evidence & Audit log -->
+      <aside class="col-side">
+        <section class="card">
+          <h2>Compliance evidence</h2>
+          <ul class="list" style="background:transparent">
+            <li style="padding-bottom:10px; border-bottom:1px solid var(--line-soft)">
+              <strong>Human-in-the-loop (NZS 8134)</strong>
+              <div class="small">AI drafts are never shown to carers or families until a Registered Nurse approves them.</div>
+            </li>
+            <li style="padding-bottom:10px; border-bottom:1px solid var(--line-soft)">
+              <strong>Health Information Privacy Code 2020</strong>
+              <div class="small">Each role has its own login. Family accounts see only nurse-approved updates for their linked resident.</div>
+            </li>
+            <li style="padding-bottom:10px; border-bottom:1px solid var(--line-soft)">
+              <strong>Local AI processing</strong>
+              <div class="small">Small language model runs locally via Ollama so resident notes stay on facility hardware.</div>
+            </li>
+            <li>
+              <strong>Full audit trail</strong>
+              <div class="small">Every draft, nurse approval, priority review and account change is timestamped below.</div>
+            </li>
+          </ul>
+        </section>
+
+        <section class="card dark">
+          <h2>Audit log</h2>
+          <ol class="audit" id="auditList"></ol>
+        </section>
+      </aside>
+    </div>
+
+    <footer class="foot">
+      Prototype for Team Trio · IA728001 Studio 5. All residents and staff are fictional.
+    </footer>
+  </main>
+
+  <script src="/static/auth.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    let residentsMap = {};
+
+    function toggleResSelect() {
+      $("uResWrap").classList.toggle("hidden", $("uRole").value !== "family");
+    }
+
+    async function loadOverview() {
+      const [resP, ovRes, usrRes] = await Promise.all([
+        window.authFetch("/api/residents"),
+        window.authFetch("/api/manager/overview"),
+        window.authFetch("/api/manager/users"),
+      ]);
+
+      if (resP.ok) {
+        const list = await resP.json();
+        const sel = $("uResident");
+        sel.innerHTML = "";
+        list.forEach((p) => {
+          residentsMap[p.resident_id] = p.name;
+          sel.add(new Option(p.name + " (Room " + (100 + p.resident_id) + ")", p.resident_id));
+        });
+      }
+
+      if (ovRes.ok) {
+        const data = await ovRes.json();
+        const kpiGrid = $("kpiGrid");
+        kpiGrid.innerHTML = "";
+        data.kpis.forEach((k) => {
+          const card = document.createElement("div");
+          card.className = "kpi";
+          card.innerHTML = `
+            <div class="small">${k.label}</div>
+            <div class="kpi-value ${k.alert ? "alert" : ""}">${k.value}</div>
+            <div class="tiny">${k.sub}</div>
+          `;
+          kpiGrid.appendChild(card);
+        });
+
+        const rBody = $("residentRows");
+        rBody.innerHTML = "";
+        data.residents.forEach((r) => {
+          const tr = rBody.insertRow();
+          tr.insertCell().innerHTML = `<strong>${r.name}</strong>`;
+          tr.insertCell().textContent = r.room;
+          tr.insertCell().textContent = r.tasks;
+          const cCell = tr.insertCell();
+          cCell.textContent = r.concerns ? r.concerns + " flagged" : "None";
+          if (r.concerns) cCell.className = "st-concern";
+          tr.insertCell().textContent = r.family_update;
+        });
+
+        const auditList = $("auditList");
+        auditList.innerHTML = "";
+        if (!data.audit.length) {
+          auditList.innerHTML = `<li><span class="t">–</span><span>No audit events yet.</span></li>`;
+        } else {
+          data.audit.forEach((a) => {
+            const li = document.createElement("li");
+            const t = document.createElement("span");
+            t.className = "t";
+            t.textContent = (a.at || "").slice(11, 16);
+            const body = document.createElement("span");
+            const who = document.createElement("strong");
+            who.textContent = a.actor + " ";
+            body.appendChild(who);
+            body.appendChild(document.createTextNode(a.action.replace(/_/g, " ") + (a.detail ? " · " + a.detail : "")));
+            li.append(t, body);
+            auditList.appendChild(li);
+          });
+        }
+      }
+
+      if (usrRes.ok) {
+        const users = await usrRes.json();
+        const uBody = $("userRows");
+        uBody.innerHTML = "";
+        const myUser = (localStorage.getItem("agecare_username") || "").toLowerCase();
+        users.forEach((u) => {
+          const tr = uBody.insertRow();
+          tr.insertCell().innerHTML = `<span class="mono">${u.username}</span>`;
+          tr.insertCell().textContent = u.full_name;
+          tr.insertCell().innerHTML = `<span class="badge none">${u.role}</span>`;
+          tr.insertCell().textContent = u.resident_id ? (residentsMap[u.resident_id] || "Resident #" + u.resident_id) : "All / staff";
+          const act = tr.insertCell();
+          if (u.username.toLowerCase() !== myUser) {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "btn btn-ghost btn-sm";
+            btn.textContent = "Remove";
+            btn.onclick = () => removeUser(u.username);
+            act.appendChild(btn);
+          }
+        });
+      }
+    }
+
+    async function createUser(e) {
+      e.preventDefault();
+      const role = $("uRole").value;
+      const payload = {
+        full_name: $("uFullName").value.trim(),
+        username: $("uUsername").value.trim(),
+        password: $("uPassword").value,
+        role: role,
+        resident_id: role === "family" ? Number($("uResident").value) : null,
+      };
+      const res = await window.authFetch("/api/manager/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      const msg = $("userMsg");
+      if (!res.ok) {
+        msg.textContent = data.detail || "Could not create user.";
+        msg.className = "msg err";
+        return;
+      }
+      msg.textContent = "Created account " + data.username + " (" + data.role + ").";
+      msg.className = "msg ok";
+      $("uFullName").value = "";
+      $("uUsername").value = "";
+      $("uPassword").value = "";
+      if (window.showToast) window.showToast("Added user " + data.username);
+      loadOverview();
+    }
+
+    async function removeUser(username) {
+      const res = await window.authFetch("/api/manager/users/" + encodeURIComponent(username), { method: "DELETE" });
+      if (res.ok) {
+        if (window.showToast) window.showToast("Removed " + username);
+        loadOverview();
+      }
+    }
+
+    loadOverview();
+  </script>
+</body>
+</html>
