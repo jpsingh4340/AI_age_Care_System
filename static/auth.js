@@ -1,4 +1,4 @@
-// Client-side authentication, role navigation, and layout helpers
+// Shared by every page: sign-in check, navigation bar, footer, and small helpers.
 (function () {
   const HOME_BY_ROLE = {
     nurse: "/nurse",
@@ -16,28 +16,54 @@
     "/ask": ["carer", "nurse"],
     "/manager": ["manager"],
     "/family": ["family"],
+    "/": ["nurse"],
   };
 
   const ROLE_LABELS = {
-    nurse: "Registered Nurse",
-    carer: "Care Assistant",
-    manager: "Manager / Admin",
-    family: "Whānau / Family",
+    nurse: "Registered nurse",
+    carer: "Carer",
+    manager: "Manager",
+    family: "Family",
   };
+
+  const NAV_BY_ROLE = {
+    nurse: [
+      { href: "/nurse", label: "Dashboard" },
+      { href: "/guidance", label: "Guidance" },
+      { href: "/ocr", label: "Health reports" },
+      { href: "/vision", label: "Camera checks" },
+      { href: "/ask", label: "Ask AI" },
+      { href: "/carer", label: "Carer sheet" },
+    ],
+    carer: [
+      { href: "/carer", label: "My shift" },
+      { href: "/ask", label: "Ask AI" },
+    ],
+    manager: [{ href: "/manager", label: "User accounts" }],
+    family: [{ href: "/family", label: "Updates" }],
+  };
+
+  const PUBLIC_NAV = [
+    { href: "/welcome", label: "Overview" },
+    { href: "/static/privacy.html", label: "Privacy" },
+    { href: "/static/terms.html", label: "Terms" },
+  ];
 
   const token = localStorage.getItem("agecare_token") || "";
   const role = (localStorage.getItem("agecare_role") || "").toLowerCase();
   const fullName = localStorage.getItem("agecare_name") || "";
   const username = localStorage.getItem("agecare_username") || "";
   const path = window.location.pathname.toLowerCase();
+  const isPublicPage = path === "/welcome" || path === "/login" || path.startsWith("/static/");
 
   function redirect(url) {
     window.location.replace(url);
   }
 
-  // Enforce role guard on role-restricted pages
+  // Send people to sign in, or to their own home page, when they open a page for another role.
   for (const [routePrefix, allowedRoles] of Object.entries(ALLOWED_ROLES_BY_PATH)) {
-    if (path === routePrefix || path.startsWith(routePrefix + "/")) {
+    const matches = routePrefix === "/" ? path === "/" : path === routePrefix || path.startsWith(routePrefix + "/");
+    if (matches) {
       if (!token || !role) {
         redirect("/login?next=" + encodeURIComponent(path));
         return;
@@ -50,7 +76,7 @@
     }
   }
 
-  // Global authenticated fetch helper (preserves Authorization, X-Session-Token, and X-Role headers)
+  // Fetch with the session headers (Authorization, X-Session-Token, X-Role).
   window.authFetch = async function (url, options) {
     options = options || {};
     options.headers = options.headers || {};
@@ -66,7 +92,6 @@
     return fetch(url, options);
   };
 
-  // Toast notification helper
   window.showToast = function (text, isError) {
     let host = document.getElementById("toastHost");
     if (!host) {
@@ -85,7 +110,7 @@
     }, 3500);
   };
 
-  // Safe element builder helper
+  // Safe element builder: text always goes in with textContent.
   window.h = function (tag, props, ...kids) {
     const node = document.createElement(tag);
     for (const [key, value] of Object.entries(props || {})) {
@@ -100,8 +125,8 @@
     }
     return node;
   };
+  const h = window.h;
 
-  // Logout helper
   window.logout = async function () {
     const curToken = localStorage.getItem("agecare_token") || token;
     if (curToken) {
@@ -124,105 +149,126 @@
     redirect("/login");
   };
 
-  function buildNavLinks() {
-    if (path === "/welcome" || path === "/login") {
-      return "";
-    }
-    if (!token || !role) {
-      return "";
-    }
-    const links = [];
-    if (role === "nurse") {
-      links.push(
-        { href: "/nurse", label: "Nurse Dashboard" },
-        { href: "/guidance", label: "Guidance" },
-        { href: "/ocr", label: "Health Report OCR" },
-        { href: "/vision", label: "Face & Room Check" },
-        { href: "/ask", label: "Ask AI" }
-      );
-    } else if (role === "carer") {
-      links.push(
-        { href: "/carer", label: "Carer Sheet" },
-        { href: "/ask", label: "Ask AI" }
-      );
-    } else if (role === "manager") {
-      links.push(
-        { href: "/manager", label: "Manager & Accounts" }
-      );
-    } else if (role === "family") {
-      links.push(
-        { href: "/family", label: "Family Portal" }
-      );
-    }
-
-    if (!links.length) return "";
-    const items = links.map(function (l) {
-      const current = path === l.href ? ' aria-current="page"' : "";
-      return '<a class="nav-link" href="' + l.href + '"' + current + ">" + l.label + "</a>";
-    }).join("");
-
-    return '<nav class="topbar-nav" aria-label="Main Navigation">' + items + '</nav>';
+  // "Nurse Sarah Johnson (RN)" -> "SJ"
+  function initials(name) {
+    const words = String(name || "")
+      .replace(/\(.*?\)/g, "")
+      .split(/\s+/)
+      .filter((w) => w && !/^(nurse|carer|dr)$/i.test(w));
+    return words.slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "?";
   }
 
-  const FOOTER_HTML = `
-    <div class="foot-inner">
-      <div>
-        <strong>Age-Care Intelligence System</strong> · Student Prototype (Studio 5). Fictional resident data only. Local AI via Ollama. Photos are not saved. Not a medical device.
-      </div>
-      <div class="foot-links">
-        <a href="/welcome">Overview</a>
-        <a href="/static/privacy.html">Privacy</a>
-        <a href="/static/terms.html">Terms</a>
-      </div>
-    </div>
-  `;
+  function todayText() {
+    return new Date().toLocaleDateString("en-NZ", { weekday: "long", day: "numeric", month: "long" });
+  }
+
+  function buildTopbar(header) {
+    const signedIn = Boolean(token && role) && !isPublicPage;
+    const links = signedIn ? NAV_BY_ROLE[role] || [] : PUBLIC_NAV;
+
+    const brand = h(
+      "a",
+      { class: "brand", href: signedIn ? HOME_BY_ROLE[role] || "/welcome" : "/welcome" },
+      h("img", { src: "/static/img/favicon.png", alt: "", width: "28", height: "28" }),
+      h("span", { class: "brand-name", text: "AgeCare" }),
+      h("span", { class: "brand-sub", text: "Kōwhai Gardens rest home" })
+    );
+
+    const toggle = h("button", {
+      type: "button",
+      class: "btn-nav nav-toggle",
+      "aria-expanded": "false",
+      "aria-controls": "navPanel",
+      text: "Menu",
+    });
+    toggle.addEventListener("click", function () {
+      const open = header.classList.toggle("open");
+      toggle.setAttribute("aria-expanded", String(open));
+      toggle.textContent = open ? "Close" : "Menu";
+    });
+
+    const nav = h(
+      "nav",
+      { class: "nav-links", "aria-label": "Main" },
+      links.map(function (l) {
+        return h("a", {
+          class: "nav-link",
+          href: l.href,
+          "aria-current": path === l.href.toLowerCase() || (l.href === "/nurse" && path === "/") ? "page" : false,
+          text: l.label,
+        });
+      })
+    );
+
+    let user;
+    if (signedIn) {
+      const name = fullName || username || "Signed in";
+      const out = h("button", { type: "button", class: "btn-nav", text: "Sign out" });
+      out.addEventListener("click", window.logout);
+      user = h(
+        "div",
+        { class: "nav-user" },
+        h("span", { class: "avatar", "aria-hidden": "true", text: initials(name) }),
+        h(
+          "span",
+          { class: "who" },
+          h("strong", { "data-auth-name": "", text: name }),
+          h("span", { "data-auth-role": "", text: ROLE_LABELS[role] || role })
+        ),
+        out
+      );
+    } else if (path !== "/login") {
+      user = h("div", { class: "nav-user" }, h("a", { class: "btn-nav solid", href: "/login", text: "Sign in" }));
+    } else {
+      user = h("div", { class: "nav-user" });
+    }
+
+    header.className = "topbar";
+    header.replaceChildren(
+      h("div", { class: "topbar-inner" }, brand, toggle, h("div", { class: "nav-panel", id: "navPanel" }, nav, user))
+    );
+  }
+
+  function buildFooter(footer) {
+    footer.className = "foot";
+    footer.replaceChildren(
+      h(
+        "div",
+        { class: "foot-inner" },
+        h("p", {
+          text: "Student prototype. Demo data only, with fake residents. AI runs locally with Ollama. Photos are not saved. Not a medical device.",
+        }),
+        h(
+          "div",
+          { class: "foot-links" },
+          h("a", { href: "/static/privacy.html", text: "Privacy" }),
+          h("a", { href: "/static/terms.html", text: "Terms" })
+        )
+      )
+    );
+  }
 
   document.addEventListener("DOMContentLoaded", function () {
-    const isPublicPage = path === "/welcome" || path === "/login";
-
-    // Topbar injection
-    let header = document.querySelector("header.topbar, header");
+    let header = document.querySelector("header");
     if (!header) {
       header = document.createElement("header");
       document.body.prepend(header);
     }
-    header.className = "topbar";
-    header.innerHTML = `
-      <div class="topbar-inner">
-        <a class="brand" href="/welcome">
-          <span>AgeCare</span>
-          <span class="brand-badge">Clinical</span>
-        </a>
-        ${buildNavLinks()}
-        <div class="topbar-user">
-          ${
-            token && !isPublicPage
-              ? `<span class="user-tag">
-                   <strong data-auth-name>${fullName || username}</strong>
-                   <span class="role-badge" data-auth-role>${ROLE_LABELS[role] || role}</span>
-                 </span>
-                 <button type="button" class="btn btn-secondary btn-sm" onclick="logout()">Sign out</button>`
-              : `<a href="/login" class="btn btn-primary btn-sm">Sign in</a>`
-          }
-        </div>
-      </div>
-    `;
+    buildTopbar(header);
 
-    // Footer injection
-    let footer = document.querySelector("footer.foot, footer");
+    let footer = document.querySelector("footer");
     if (!footer) {
       footer = document.createElement("footer");
       document.body.appendChild(footer);
     }
-    footer.className = "foot";
-    footer.innerHTML = FOOTER_HTML;
+    buildFooter(footer);
 
-    // Replace data-auth placeholders
-    document.querySelectorAll("[data-auth-name]").forEach(function (el) {
-      el.textContent = fullName || username || "Signed-in User";
+    // Pages can show today's date and the signed-in name in their heading.
+    document.querySelectorAll("[data-today]").forEach(function (el) {
+      el.textContent = todayText();
     });
-    document.querySelectorAll("[data-auth-role]").forEach(function (el) {
-      el.textContent = ROLE_LABELS[role] || role;
+    document.querySelectorAll("[data-auth-name]").forEach(function (el) {
+      el.textContent = fullName || username || "Signed in";
     });
   });
 })();
