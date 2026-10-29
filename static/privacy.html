@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy Policy · AgeCare</title>
+  <link rel="icon" type="image/png" href="/static/img/favicon.png">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <header class="topbar"></header>
+
+  <main class="page-container page-narrow">
+    <div class="card">
+      <div class="card-header">
+        <h1 class="page-title">Privacy Statement</h1>
+        <p class="sub-text">Student prototype privacy policy and data handling information</p>
+      </div>
+
+      <div class="prose">
+        <div class="alert-box alert-info">
+          <strong>Student Prototype Only:</strong> This application is an educational prototype developed for tertiary study (Studio 5). It is not a certified medical device and is not used in live clinical care.
+        </div>
+
+        <h2>1. Fictional Data Only</h2>
+        <p>All resident profiles, medical conditions, carer observations, vital signs, and doctor contacts in this system are entirely fictional test records. No real patient data is collected, processed, or stored.</p>
+
+        <h2>2. Local AI Processing (Ollama)</h2>
+        <p>All artificial intelligence features, including draft guidance generation, clinical question answering, and daily family update drafting, execute on facility hardware through a locally hosted small language model (Ollama). Resident notes and clinical queries are never transmitted to third-party AI cloud providers.</p>
+
+        <h2>3. Zero Photo and Video Retention</h2>
+        <p>Photographs submitted for health report OCR or face cue checking, as well as video frames processed by the room monitor, are analysed in volatile device memory only. No camera frames, photos, or raw videos are ever saved to disk or external servers.</p>
+
+        <h2>4. Human in the Loop</h2>
+        <p>In accordance with healthcare safety standards, AI outputs are treated strictly as drafts. Carers and families only see information that a Registered Nurse has explicitly reviewed and approved.</p>
+
+        <h2>5. Access and Role Restrictions</h2>
+        <p>Access is restricted by authenticated user roles (Carer, Nurse, Manager, and Family). Whanau accounts have access only to approved updates for their linked family member.</p>
+      </div>
+
+      <div class="card-actions" style="margin-top: 24px;">
+        <a href="/welcome" class="btn btn-secondary">Back to Overview</a>
+        <a href="/login" class="btn btn-primary">Sign in</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="foot"></footer>
+  <script src="/static/auth.js"></script>
+</body>
+</html>

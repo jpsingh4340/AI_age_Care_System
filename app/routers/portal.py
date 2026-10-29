@@ -110,7 +110,7 @@ def today_records(resident_id: int) -> dict:
 @router.get("/", include_in_schema=False)
 def root():
     """Everyone starts at the sign-in page, which sends them to their own role page."""
-    return RedirectResponse("/login")
+    return FileResponse(STATIC_DIR / "index.html")
 
 
 @router.get("/manager", include_in_schema=False)

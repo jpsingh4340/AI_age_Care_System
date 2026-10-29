@@ -1,15 +1,15 @@
-// Client-side authentication, strict 4-role guard, and universal ClearScan layout header/footer
+// Client-side authentication, role navigation, and layout helpers
 (function () {
   const HOME_BY_ROLE = {
-    carer: "/carer",
     nurse: "/nurse",
+    carer: "/carer",
     manager: "/manager",
     family: "/family",
   };
 
   const ALLOWED_ROLES_BY_PATH = {
-    "/carer": ["carer", "nurse"],
     "/nurse": ["nurse"],
+    "/carer": ["carer", "nurse"],
     "/guidance": ["nurse"],
     "/ocr": ["nurse"],
     "/vision": ["nurse"],
@@ -19,35 +19,10 @@
   };
 
   const ROLE_LABELS = {
-    carer: "Carer",
-    nurse: "Nurse",
-    manager: "Manager",
-    family: "Family",
-  };
-
-  // Apply persisted theme (dark default like ClearScan) and font size
-  const savedTheme = localStorage.getItem("agecare_theme") || "dark";
-  const savedFont = localStorage.getItem("agecare_font") || "md";
-  document.documentElement.setAttribute("data-theme", savedTheme);
-  document.documentElement.setAttribute("data-font", savedFont);
-
-  window.toggleTheme = function () {
-    const cur = document.documentElement.getAttribute("data-theme") || "dark";
-    const next = cur === "dark" ? "light" : "dark";
-    document.documentElement.setAttribute("data-theme", next);
-    localStorage.setItem("agecare_theme", next);
-    const btn = document.getElementById("csThemeBtn");
-    if (btn) btn.textContent = next === "dark" ? "🌙" : "☀️";
-  };
-
-  window.cycleFontSize = function () {
-    const order = ["md", "lg", "xl"];
-    const cur = document.documentElement.getAttribute("data-font") || "md";
-    const next = order[(order.indexOf(cur) + 1) % order.length];
-    document.documentElement.setAttribute("data-font", next);
-    localStorage.setItem("agecare_font", next);
-    const btn = document.getElementById("csFontBtn");
-    if (btn) btn.textContent = "Aa " + (next === "md" ? "▾" : next.toUpperCase());
+    nurse: "Registered Nurse",
+    carer: "Care Assistant",
+    manager: "Manager / Admin",
+    family: "Whānau / Family",
   };
 
   const token = localStorage.getItem("agecare_token") || "";
@@ -60,7 +35,7 @@
     window.location.replace(url);
   }
 
-  // Enforce role access on protected routes
+  // Enforce role guard on role-restricted pages
   for (const [routePrefix, allowedRoles] of Object.entries(ALLOWED_ROLES_BY_PATH)) {
     if (path === routePrefix || path.startsWith(routePrefix + "/")) {
       if (!token || !role) {
@@ -75,7 +50,7 @@
     }
   }
 
-  // Global authenticated fetch helper
+  // Global authenticated fetch helper (preserves Authorization, X-Session-Token, and X-Role headers)
   window.authFetch = async function (url, options) {
     options = options || {};
     options.headers = options.headers || {};
@@ -91,7 +66,7 @@
     return fetch(url, options);
   };
 
-  // Global toast notification helper
+  // Toast notification helper
   window.showToast = function (text, isError) {
     let host = document.getElementById("toastHost");
     if (!host) {
@@ -110,7 +85,23 @@
     }, 3500);
   };
 
-  // Global logout helper
+  // Safe element builder helper
+  window.h = function (tag, props, ...kids) {
+    const node = document.createElement(tag);
+    for (const [key, value] of Object.entries(props || {})) {
+      if (value === false || value == null) continue;
+      if (key === "class") node.className = value;
+      else if (key === "text") node.textContent = value;
+      else node.setAttribute(key, value);
+    }
+    for (const kid of kids.flat()) {
+      if (kid == null || kid === false) continue;
+      node.append(kid.nodeType ? kid : document.createTextNode(kid));
+    }
+    return node;
+  };
+
+  // Logout helper
   window.logout = async function () {
     const curToken = localStorage.getItem("agecare_token") || token;
     if (curToken) {
@@ -134,8 +125,7 @@
   };
 
   function buildNavLinks() {
-    // On welcome or login page, do not show role portal links
-    if (path === "/welcome" || path === "/" || path === "/login") {
+    if (path === "/welcome" || path === "/login") {
       return "";
     }
     if (!token || !role) {
@@ -145,78 +135,53 @@
     if (role === "nurse") {
       links.push(
         { href: "/nurse", label: "Nurse Dashboard" },
-        { href: "/guidance", label: "Guidance AI" },
-        { href: "/ocr", label: "Report OCR" },
-        { href: "/vision", label: "Room Check" },
+        { href: "/guidance", label: "Guidance" },
+        { href: "/ocr", label: "Health Report OCR" },
+        { href: "/vision", label: "Face & Room Check" },
         { href: "/ask", label: "Ask AI" }
       );
     } else if (role === "carer") {
       links.push(
-        { href: "/carer", label: "Carer Portal" },
+        { href: "/carer", label: "Carer Sheet" },
         { href: "/ask", label: "Ask AI" }
       );
+    } else if (role === "manager") {
+      links.push(
+        { href: "/manager", label: "Manager & Accounts" }
+      );
+    } else if (role === "family") {
+      links.push(
+        { href: "/family", label: "Family Portal" }
+      );
     }
+
     if (!links.length) return "";
-    return (
-      '<nav class="role-nav" aria-label="Workspace navigation">' +
-      links
-        .map(function (l) {
-          const current = path === l.href ? ' aria-current="page"' : "";
-          return '<a href="' + l.href + '"' + current + ">" + l.label + "</a>";
-        })
-        .join("") +
-      "</nav>"
-    );
+    const items = links.map(function (l) {
+      const current = path === l.href ? ' aria-current="page"' : "";
+      return '<a class="nav-link" href="' + l.href + '"' + current + ">" + l.label + "</a>";
+    }).join("");
+
+    return '<nav class="topbar-nav" aria-label="Main Navigation">' + items + '</nav>';
   }
 
-  const STUDENT_FOOTER_HTML = `
-    <div class="foot-grid">
-      <div class="foot-col">
-        <span class="foot-brand">AgeCare</span>
-        <p class="foot-desc">Connected residential aged-care platform empowering carers, registered nurses, facility managers, and whānau.</p>
+  const FOOTER_HTML = `
+    <div class="foot-inner">
+      <div>
+        <strong>Age-Care Intelligence System</strong> · Student Prototype (Studio 5). Fictional resident data only. Local AI via Ollama. Photos are not saved. Not a medical device.
       </div>
-      <div class="foot-col">
-        <h4>Phone Support</h4>
-        <ul class="foot-list">
-          <li><span class="foot-ico">📞</span> <span>0800 243 227 (Toll-Free NZ)</span></li>
-          <li><span class="foot-ico">☎️</span> <span>+64 (09) 379 4820 (Reception)</span></li>
-          <li><span class="foot-ico">🩺</span> <span>+64 21 840 912 (24/7 Duty Nurse)</span></li>
-        </ul>
-      </div>
-      <div class="foot-col">
-        <h4>Email Directory</h4>
-        <ul class="foot-list">
-          <li><span class="foot-ico">✉️</span> <span>support@agecare.co.nz</span></li>
-          <li><span class="foot-ico">🏥</span> <span>nursing@agecare.co.nz</span></li>
-          <li><span class="foot-ico">👨‍👩‍👧</span> <span>whanau@agecare.co.nz</span></li>
-        </ul>
-      </div>
-      <div class="foot-col">
-        <h4>Location &amp; Hours</h4>
-        <ul class="foot-list">
-          <li><span class="foot-ico">📍</span> <span>42 Kōwhai Avenue, Mt Eden, Auckland 1024</span></li>
-          <li><span class="foot-ico">🕒</span> <span>Visiting: Daily 9:00 AM – 8:00 PM</span></li>
-          <li><span class="foot-ico">🛡️</span> <span>Clinical Station: Open 24 Hours</span></li>
-        </ul>
-      </div>
-    </div>
-    <div class="foot-bottom">
-      <span>© 2026 AgeCare Health NZ. All rights reserved.</span>
       <div class="foot-links">
-        <span>Privacy Policy</span>
-        <span>Terms of Service</span>
-        <span>NZ Health &amp; Disability Standards</span>
+        <a href="/welcome">Overview</a>
+        <a href="/static/privacy.html">Privacy</a>
+        <a href="/static/terms.html">Terms</a>
       </div>
     </div>
   `;
 
-  // Upgrade every page's topbar and footer to the unified ClearScan layout
   document.addEventListener("DOMContentLoaded", function () {
-    const curTheme = document.documentElement.getAttribute("data-theme") || "dark";
-    const curFont = document.documentElement.getAttribute("data-font") || "md";
-    const isWelcomeOrLogin = path === "/welcome" || path === "/" || path === "/login";
+    const isPublicPage = path === "/welcome" || path === "/login";
 
-    let header = document.querySelector("header.topbar, header.top, header");
+    // Topbar injection
+    let header = document.querySelector("header.topbar, header");
     if (!header) {
       header = document.createElement("header");
       document.body.prepend(header);
@@ -225,35 +190,36 @@
     header.innerHTML = `
       <div class="topbar-inner">
         <a class="brand" href="/welcome">
-          <span class="brand-title">AgeCare</span>
+          <span>AgeCare</span>
+          <span class="brand-badge">Clinical</span>
         </a>
         ${buildNavLinks()}
-        <div class="user-chip">
-          <button type="button" class="ctrl-btn" id="csFontBtn" onclick="cycleFontSize()" title="Text size">Aa ${curFont === "md" ? "▾" : curFont.toUpperCase()}</button>
-          <button type="button" class="ctrl-btn" id="csThemeBtn" onclick="toggleTheme()" title="Toggle dark/light theme">${curTheme === "dark" ? "🌙" : "☀️"}</button>
+        <div class="topbar-user">
           ${
-            token && !isWelcomeOrLogin
-              ? `<span class="user-pill"><strong data-auth-name>${fullName || username}</strong> · ${ROLE_LABELS[role] || role}</span>
-                 <button type="button" class="ctrl-btn" onclick="logout()">Sign Out</button>`
-              : `<a class="ctrl-btn" href="/login" style="background:var(--accent); border-color:var(--accent); color:#ffffff; font-weight:700">Log In / Sign Up</a>`
+            token && !isPublicPage
+              ? `<span class="user-tag">
+                   <strong data-auth-name>${fullName || username}</strong>
+                   <span class="role-badge" data-auth-role>${ROLE_LABELS[role] || role}</span>
+                 </span>
+                 <button type="button" class="btn btn-secondary btn-sm" onclick="logout()">Sign out</button>`
+              : `<a href="/login" class="btn btn-primary btn-sm">Sign in</a>`
           }
         </div>
       </div>
     `;
 
-    // Ensure every page has the student-made contact navbar/footer at the bottom
-    const mainEl = document.querySelector("main.page, main") || document.body;
+    // Footer injection
     let footer = document.querySelector("footer.foot, footer");
     if (!footer) {
       footer = document.createElement("footer");
-      mainEl.appendChild(footer);
+      document.body.appendChild(footer);
     }
     footer.className = "foot";
-    footer.innerHTML = STUDENT_FOOTER_HTML;
+    footer.innerHTML = FOOTER_HTML;
 
-    // Populate any other [data-auth-name] / [data-auth-role] placeholders
+    // Replace data-auth placeholders
     document.querySelectorAll("[data-auth-name]").forEach(function (el) {
-      el.textContent = fullName || username || "Signed-in user";
+      el.textContent = fullName || username || "Signed-in User";
     });
     document.querySelectorAll("[data-auth-role]").forEach(function (el) {
       el.textContent = ROLE_LABELS[role] || role;

@@ -3,116 +3,221 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AgeCare · Understand Resident Care Instantly</title>
+  <title>AI Age-Care Intelligence System</title>
   <link rel="icon" type="image/png" href="/static/img/favicon.png">
   <link rel="stylesheet" href="/static/app.css">
+  <style>
+    .landing-hero {
+      padding: 32px 0 24px;
+      max-width: 760px;
+    }
+    .landing-hero h1 {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 10px;
+      line-height: 1.3;
+    }
+    .landing-summary {
+      font-size: 16px;
+      color: var(--ink-secondary);
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+    .preview-frame {
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius-card);
+      background-color: var(--card);
+      overflow: hidden;
+      margin: 24px 0 32px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    .preview-header {
+      background-color: var(--bg-subtle);
+      border-bottom: 1px solid var(--line);
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-secondary);
+    }
+    .preview-body {
+      padding: 16px;
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 16px;
+      background-color: var(--bg);
+    }
+    @media (max-width: 700px) {
+      .preview-body {
+        grid-template-columns: 1fr;
+      }
+    }
+    .preview-card {
+      background-color: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-card);
+      padding: 12px 14px;
+      font-size: 13px;
+    }
+    .preview-card h3 {
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+    .role-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin: 20px 0 32px;
+    }
+    @media (max-width: 760px) {
+      .role-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .role-card {
+      background-color: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-card);
+      padding: 18px 16px;
+    }
+    .role-card h3 {
+      font-size: 16px;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    .role-card p {
+      font-size: 13.5px;
+      color: var(--ink-secondary);
+      line-height: 1.45;
+    }
+    .safety-card {
+      background-color: var(--card);
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--accent);
+      border-radius: var(--radius-card);
+      padding: 18px 20px;
+      margin-bottom: 32px;
+    }
+    .safety-list {
+      margin: 10px 0 0;
+      padding-left: 20px;
+      color: var(--ink-secondary);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+  </style>
 </head>
-<body class="has-bg-video">
-  <div class="bg-video-wrap" aria-hidden="true">
-    <video class="bg-video" autoplay muted loop playsinline preload="auto">
-      <source src="/static/age-care-anatomy.mp4" type="video/mp4">
-    </video>
-    <div class="bg-video-overlay"></div>
-  </div>
+<body>
   <header class="topbar"></header>
 
-  <!-- ClearScan-style Hero -->
-  <section class="cs-hero">
-    <div class="cs-hero-watermark" aria-hidden="true">Understand Resident Care</div>
-    <h1>Care Insights Instantly</h1>
-    <p class="cs-sub">
-      Transform shift notes, vital signs, and medical records into clear, nurse-reviewed insights across all four aged-care roles.
-    </p>
-    <div class="cs-privacy-note">Your resident information is processed locally and privately via Ollama.</div>
-    <div class="cs-trust-row">
-      <span><b>✓</b> Source-Backed AI</span>
-      <span><b>✓</b> Local &amp; Private</span>
-      <span><b>✓</b> Nurse-Approved</span>
-      <span><b>✓</b> 4 Role Credentials</span>
-    </div>
-  </section>
-
-  <!-- Common Horizontal Feature Strip -->
-  <div class="cs-strip">
-    <div class="cs-strip-inner">
-      <span class="cs-strip-item">💊 Person-centred care plans.</span>
-      <span class="cs-strip-item">📋 Save time writing shift handovers.</span>
-      <span class="cs-strip-item">✅ Nurse-verified clinical guidance.</span>
-      <span class="cs-strip-item">🩺 Understand vital sign trends.</span>
-      <span class="cs-strip-item">⚡ Warm plain-language family updates.</span>
-    </div>
-  </div>
-
-  <main class="page">
-    <!-- ClearScan-style Split Showcase -->
-    <section class="cs-showcase">
+  <main class="page-container">
+    <section class="landing-hero">
+      <h1>AI Age-Care Intelligence System</h1>
+      <p class="landing-summary">
+        A clinical handover and observation system designed to support rest home carers, registered nurses, and resident families through safe, source-grounded local AI assistance.
+      </p>
       <div>
-        <div class="eyebrow">Understand Every Role in the Facility</div>
-        <h2>Unlock Clearer Insights Across All Four Roles</h2>
-        <p class="small" style="margin-top: 12px; max-width: 460px">
-          Every person in the rest home signs in with their own credentials and sees a workspace tailored to their responsibility—connected through a single SQLite &amp; local-SLM backend.
-        </p>
+        <a href="/login" class="btn btn-primary" style="padding: 10px 22px; font-size: 15px;">Sign in to your account</a>
       </div>
+    </section>
 
-      <div class="cs-feature-list">
-        <div class="cs-feature-item">
-          <span class="cs-check-circle">✓</span>
-          <div>
-            <h3>1. Carer Shift Portal</h3>
-            <p class="small">Record daily care tasks, spot vitals, and shift concern notes that immediately sync to the Registered Nurse.</p>
+    <!-- Real schematic view of the nurse dashboard -->
+    <div class="preview-frame" aria-label="Nurse dashboard preview">
+      <div class="preview-header">
+        <span>Nurse Clinical Overview · Margaret T. (Room 101)</span>
+        <span class="badge badge-red">Red Priority · High Attention</span>
+      </div>
+      <div class="preview-body">
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div class="preview-card" style="border-left: 4px solid var(--red);">
+            <div class="between" style="margin-bottom: 4px;">
+              <strong>Care Priority: Red</strong>
+              <span class="text-sm text-muted">Rules + Carer Notes</span>
+            </div>
+            <p style="font-weight: 600; color: var(--ink); margin-bottom: 6px;">Contact the on-call doctor for clinical assessment.</p>
+            <ul style="margin: 0; padding-left: 18px; color: var(--ink-secondary); font-size: 12.5px;">
+              <li>SpO2 reading of 91% is below the clinical threshold (94%).</li>
+              <li>Carer shift note: "Very short of breath and coughing during lunch."</li>
+            </ul>
+          </div>
+          <div class="preview-card">
+            <strong>Today's Care Tasks</strong>
+            <table class="tbl" style="margin-top: 6px; font-size: 12.5px;">
+              <thead>
+                <tr><th>Time</th><th>Task</th><th>Status</th><th>Recorded by</th></tr>
+              </thead>
+              <tbody>
+                <tr><td class="text-mono">08:15</td><td>Breakfast eaten</td><td><span class="badge badge-green">Given</span></td><td>Priya</td></tr>
+                <tr><td class="text-mono">11:30</td><td>Walk with frame</td><td><span class="badge badge-amber">Refused</span></td><td>Priya</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
-        <div class="cs-feature-item">
-          <span class="cs-check-circle">✓</span>
-          <div>
-            <h3>2. Nurse Clinical Review</h3>
-            <p class="small">Triage care priorities (Green/Amber/Red), approve source-linked AI guidance, read health reports via OCR, and approve family updates.</p>
+
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div class="preview-card">
+            <strong>Latest Vital Signs</strong>
+            <table class="tbl" style="margin-top: 6px; font-size: 12.5px;">
+              <tbody>
+                <tr><td>Pulse</td><td class="text-mono num-tabular">104 bpm</td></tr>
+                <tr><td>Blood Pressure</td><td class="text-mono num-tabular">138/88 mmHg</td></tr>
+                <tr><td>Temperature</td><td class="text-mono num-tabular">37.6 °C</td></tr>
+                <tr><td>SpO2 Oxygen</td><td class="text-mono num-tabular" style="color: var(--red); font-weight: 700;">91 %</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="preview-card">
+            <strong>Items Waiting for Nurse</strong>
+            <p class="text-sm" style="color: var(--red); margin-top: 4px;">1 carer concern flagged</p>
+            <p class="text-sm text-muted" style="margin-top: 2px;">1 AI guidance draft ready for sign-off</p>
           </div>
         </div>
-        <div class="cs-feature-item">
-          <span class="cs-check-circle">✓</span>
-          <div>
-            <h3>3. Manager &amp; Compliance</h3>
-            <p class="small">Monitor live facility KPIs, manage staff and family user accounts, and inspect the full clinical audit trail.</p>
-          </div>
+      </div>
+    </div>
+
+    <!-- Who it is for -->
+    <section>
+      <h2>Who It Is For</h2>
+      <div class="role-grid">
+        <div class="role-card">
+          <h3>For Carers</h3>
+          <p>
+            Quick, touch-friendly shift sheets to log daily tasks, spot vitals, and shift concerns in seconds. Clear access to nurse-approved guidance with zero clinical clutter.
+          </p>
         </div>
-        <div class="cs-feature-item">
-          <span class="cs-check-circle">✓</span>
-          <div>
-            <h3>4. Family Portal</h3>
-            <p class="small">Read warm, nurse-approved daily updates for their linked loved one and message the care team directly.</p>
-          </div>
+        <div class="role-card">
+          <h3>For Registered Nurses</h3>
+          <p>
+            Clear triage answering "Who needs me first?", source-backed guidance drafts, health report optical character reading, and final review authority over all care decisions.
+          </p>
+        </div>
+        <div class="role-card">
+          <h3>For Whānau &amp; Families</h3>
+          <p>
+            A calm, reassuring portal providing warm daily updates approved by the nurse, with a direct way to message the care team. No frightening jargon or raw clinical scores.
+          </p>
         </div>
       </div>
     </section>
 
-    <!-- Four Role Overview Cards (no direct links) -->
-    <div class="kpis">
-      <div class="card">
-        <span class="section-label">Role 01 · Frontline</span>
-        <h2>Carer Portal</h2>
-        <p class="small">Log tasks, spot vitals, and observations during your shift.</p>
-      </div>
-      <div class="card">
-        <span class="section-label">Role 02 · Clinical RN</span>
-        <h2>Nurse Portal</h2>
-        <p class="small">Review care priorities, approve AI drafts, and send family updates.</p>
-      </div>
-      <div class="card">
-        <span class="section-label">Role 03 · Governance</span>
-        <h2>Manager Portal</h2>
-        <p class="small">Facility KPIs, role account credentials, and compliance audit log.</p>
-      </div>
-      <div class="card">
-        <span class="section-label">Role 04 · Whānau</span>
-        <h2>Family Portal</h2>
-        <p class="small">Nurse-approved daily updates and direct messages to the care team.</p>
-      </div>
-    </div>
-
-    <footer class="foot"></footer>
+    <!-- Safety rules -->
+    <section class="safety-card">
+      <h2 style="font-size: 17px; margin-bottom: 6px;">Safety and Clinical Control Rules</h2>
+      <p class="text-sm text-muted">This prototype operates under strict healthcare guardrails:</p>
+      <ul class="safety-list">
+        <li><strong>Nurse in the loop:</strong> The AI never diagnoses or prescribes medicine. The Registered Nurse makes the final decision on all care priorities and guidance.</li>
+        <li><strong>Source-grounded:</strong> Every guidance line must cite an approved clinical reference note with exact quote matching.</li>
+        <li><strong>Local and private:</strong> The small language model (Ollama) runs entirely on facility hardware. Resident information is never sent to cloud AI providers.</li>
+        <li><strong>Zero photo retention:</strong> Images and camera frames are analysed in volatile memory and immediately discarded. Photos are not saved.</li>
+        <li><strong>Fictional demonstration data:</strong> All residents, health conditions, and staff names are synthetic demonstration records.</li>
+      </ul>
+    </section>
   </main>
 
+  <footer class="foot"></footer>
   <script src="/static/auth.js"></script>
 </body>
 </html>
