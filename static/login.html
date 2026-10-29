@@ -614,20 +614,18 @@
 
       try {
         // 1. Create account in Firebase Auth if configured and Email/Password provider is enabled
-        if (fbAuth) {
+        if (fbAuth && email.includes("@")) {
           try {
             const cred = await createUserWithEmailAndPassword(fbAuth, email, password);
             if (fullName) {
               try { await updateProfile(cred.user, { displayName: fullName }); } catch (e) {}
             }
           } catch (fbErr) {
-            if (fbErr && fbErr.code === "auth/email-already-in-use") {
-              throw new Error("This email is already registered in Firebase. Please switch to Log in.");
-            }
             if (fbErr && fbErr.code === "auth/weak-password") {
               throw new Error("Password should be at least 6 characters.");
             }
-            console.warn("Firebase Email/Password registration note:", fbErr.code || fbErr.message);
+            // If email already exists in Firebase (e.g. from Google popup), still allow registering in AgeCare DB
+            console.warn("Firebase registration note:", fbErr.code || fbErr.message);
           }
         }
 
@@ -645,8 +643,16 @@
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || "Could not create account.");
-        showAlert("Account created for " + data.full_name + ". Opening your portal…", "ok");
-        setTimeout(() => saveSessionAndGo(data), 250);
+
+        // Clear any active session and redirect to the Log In view
+        localStorage.removeItem("agecare_session");
+        localStorage.removeItem("agecare_token");
+        document.getElementById("registerForm").reset();
+        window.switchTab("login");
+        document.getElementById("loginEmail").value = email;
+        document.getElementById("loginPassword").value = "";
+        document.getElementById("loginPassword").focus();
+        showAlert("Account created for " + data.full_name + " (" + data.role + "). Please log in now.", "ok");
       } catch (err) {
         showAlert(err.message, "err");
       } finally {
