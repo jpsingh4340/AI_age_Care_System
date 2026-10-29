@@ -7,6 +7,7 @@ For one resident:
 4. The most serious level wins, and every reason keeps its source.
 5. A nurse accepts or changes it, and that is saved in the audit log.
 """
+import re
 import time
 
 from . import db, decision_ai, ollama_client, records
@@ -132,4 +133,16 @@ def latest_review(resident_id: int) -> dict | None:
             "('priority_accepted', 'priority_changed') ORDER BY id DESC LIMIT 1",
             (resident_id,),
         ).fetchone()
-    return dict(row) if row else None
+    if row is None:
+        return None
+    review = dict(row)
+    # Read the levels back from the saved text, so the page can show the nurse's choice.
+    changed = re.search(r"from (Green|Amber|Red) to (Green|Amber|Red)\.", review["detail"] or "")
+    accepted = re.search(r"priority (Green|Amber|Red)\.", review["detail"] or "")
+    if review["action"] == "priority_changed" and changed:
+        review["suggested"], review["final"] = changed.group(1), changed.group(2)
+    elif accepted:
+        review["suggested"] = review["final"] = accepted.group(1)
+    else:
+        review["suggested"] = review["final"] = None
+    return review
