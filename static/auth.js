@@ -119,7 +119,7 @@
       else if (key === "text") node.textContent = value;
       else node.setAttribute(key, value);
     }
-    for (const kid of kids.flat()) {
+    for (const kid of kids.flat(Infinity)) {
       if (kid == null || kid === false) continue;
       node.append(kid.nodeType ? kid : document.createTextNode(kid));
     }

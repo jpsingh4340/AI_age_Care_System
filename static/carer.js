@@ -179,6 +179,7 @@ async function loadToday() {
 
     var tdBy = tr.insertCell();
     tdBy.className = "sub-text";
+    tdBy.style.whiteSpace = "nowrap";
     tdBy.textContent = r.by;
   });
 }

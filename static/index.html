@@ -79,7 +79,7 @@
         else if (key === "text") node.textContent = value;
         else node.setAttribute(key, value);
       }
-      for (const kid of kids.flat()) {
+      for (const kid of kids.flat(Infinity)) {
         if (kid == null || kid === false) continue;
         node.append(kid.nodeType ? kid : document.createTextNode(kid));
       }
@@ -88,7 +88,7 @@
 
     function fill(id, ...kids) {
       const el = $(id);
-      if (el) el.replaceChildren(...kids.flat().filter(Boolean));
+      if (el) el.replaceChildren(...kids.flat(Infinity).filter(Boolean));
     }
 
     function head(title, sub, right) {
@@ -131,15 +131,17 @@
         for (const [k, r] of state.records) if (String(k) === String(id)) return r;
         return null;
       };
+      // The records endpoint may already include today's carer entries, so skip ones we have.
       for (const t of today.data.tasks || []) {
         const rec = find(t.resident_id);
-        if (rec && rec.care_record) {
-          rec.care_record.push({ time: (t.created_at || "").slice(11, 16), task: t.task, status: t.status, by: t.carer });
+        const time = (t.created_at || "").slice(11, 16);
+        if (rec && rec.care_record && !rec.care_record.some((x) => x.time === time && x.task === t.task && x.by === t.carer)) {
+          rec.care_record.push({ time: time, task: t.task, status: t.status, by: t.carer });
         }
       }
       for (const c of today.data.concerns || []) {
         const rec = find(c.resident_id);
-        if (rec && rec.concerns) {
+        if (rec && rec.concerns && !rec.concerns.some((x) => String(x.text || "").startsWith(c.note))) {
           rec.concerns.push({ time: (c.created_at || "").slice(11, 16), type: c.type, text: c.note + " (" + c.carer + ")" });
         }
       }

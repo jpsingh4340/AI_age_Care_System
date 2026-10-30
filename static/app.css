@@ -330,7 +330,7 @@ a:hover { color: var(--accent-hover); }
   align-items: start;
 }
 @media (max-width: 900px) {
-  .grid-layout, .grid-equal { grid-template-columns: 1fr; }
+  .grid-layout, .grid-equal { grid-template-columns: minmax(0, 1fr); }
 }
 
 .stack { display: flex; flex-direction: column; gap: var(--s4); }
@@ -457,7 +457,7 @@ input[type="file"].field { padding: 8px; }
 .choice:hover { background: var(--bg-subtle); }
 .choice:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
 .choice input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); }
-.choice.bare { border: 0; padding: 0; background: none; }
+.choice.bare, .choice.bare:has(input:checked) { border: 0; padding: 0; background: none; color: var(--ink); }
 
 .form-actions {
   display: flex;
@@ -528,7 +528,7 @@ input[type="file"].field { padding: 8px; }
 }
 
 /* ---------- Tables ---------- */
-.table-wrap { width: 100%; overflow-x: auto; }
+.table-wrap { position: relative; width: 100%; overflow-x: auto; }
 .tbl { width: 100%; border-collapse: collapse; font-size: 14px; text-align: left; }
 .tbl th {
   font-size: 12px;
