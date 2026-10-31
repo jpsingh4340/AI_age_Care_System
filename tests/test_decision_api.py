@@ -71,8 +71,12 @@ def test_if_the_ai_fails_the_rules_still_work(monkeypatch):
     assert data["level"] == data["rules"]["level"]
 
 
-def test_note_from_the_carer_page_is_read():
-    r = client.post("/api/carer/concerns", json={
+def test_note_from_the_carer_page_is_read(tmp_path, monkeypatch):
+    from app import auth
+    monkeypatch.setattr(auth, "DB_PATH", tmp_path / "auth.db")
+    auth.init_auth_db()
+    token = client.post("/api/auth/login", json={"username": "carer1", "password": "password123"}).json()["token"]
+    r = client.post("/api/carer/concerns", headers={"Authorization": f"Bearer {token}"}, json={
         "resident_id": "4", "type": "Not eating", "note": "Ahmed refused dinner tonight.", "carer": "Priya"})
     assert r.status_code == 201
     data = client.get("/api/residents/4/decision").json()

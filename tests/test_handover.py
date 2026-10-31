@@ -69,7 +69,7 @@ def test_bad_schedule_time_rejected():
 def test_handover_from_carer_to_nurse_to_family():
     nurse, carer1, family = login("nurse1"), login("carer1"), login("family1")
     client.post("/api/carer/notes", json={"resident_id": 1, "text": "Coughing at lunch"}, headers=carer1)
-    client.post("/api/carer/tasks", json={"resident_id": "1", "task": "Lunch eaten", "status": "refused", "carer": "Priya"})
+    client.post("/api/carer/tasks", json={"resident_id": "1", "task": "Lunch eaten", "status": "refused", "carer": "Priya"}, headers=carer1)
     item = client.post("/api/schedule", json={"resident_id": 1, "task": "Shower", "time": "08:00"}, headers=nurse).json()
 
     draft = client.post("/api/handovers/draft", json={"resident_id": 1}, headers=carer1).json()

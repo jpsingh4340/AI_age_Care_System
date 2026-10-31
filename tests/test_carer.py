@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from app import db
+from app import auth, db
 from app.main import app
 from app.routers import carer
 
@@ -14,6 +14,12 @@ def temp_db(tmp_path, monkeypatch):
     test_db = tmp_path / "test.db"
     monkeypatch.setattr(carer, "DB_PATH", test_db)
     monkeypatch.setattr(db, "DB_PATH", test_db)
+    monkeypatch.setattr(auth, "DB_PATH", test_db)
+    auth.init_auth_db()
+    token = client.post("/api/auth/login", json={"username": "carer1", "password": "password123"}).json()["token"]
+    client.headers.update({"Authorization": f"Bearer {token}"})
+    yield
+    client.headers.pop("Authorization", None)
 
 
 def test_save_task_shows_today():
@@ -69,3 +75,11 @@ def test_carer_task_reflected_in_resident_records():
     client.post("/api/carer/tasks", json={"resident_id": "1", "task": "Assisted with walker", "status": "given", "carer": "Priya"})
     records = client.get("/api/residents/1/records").json()
     assert any(t["task"] == "Assisted with walker" and t["by"] == "Priya" for t in records["care_record"])
+
+def test_shift_records_need_a_signed_in_carer_or_nurse():
+    anon = TestClient(app)
+    body = {"resident_id": "1", "task": "Offer a drink", "status": "given", "carer": "Priya"}
+    assert anon.post("/api/carer/tasks", json=body).status_code == 401
+    assert anon.get("/api/carer/today").status_code == 401
+    family = anon.post("/api/auth/login", json={"username": "family1", "password": "password123"}).json()["token"]
+    assert anon.post("/api/carer/tasks", json=body, headers={"Authorization": f"Bearer {family}"}).status_code == 403

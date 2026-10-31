@@ -5,11 +5,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Header, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
-from app import config, db
+from app import auth, config, db
 
 router = APIRouter()
 
@@ -36,6 +36,16 @@ def get_db():
         id INTEGER PRIMARY KEY, resident_id TEXT, type TEXT, note TEXT,
         carer TEXT, created_at TEXT)""")
     return con
+
+
+def signed_in_staff(authorization: str, x_session_token: str) -> dict:
+    """Only a signed-in carer or nurse may read or write shift records."""
+    sess = auth.session_from_headers(authorization, x_session_token)
+    if not sess:
+        raise HTTPException(401, "Please sign in.")
+    if sess["role"] not in ("carer", "nurse"):
+        raise HTTPException(403, "Only carers and nurses can do this.")
+    return sess
 
 
 def save(sql, args):
@@ -84,14 +94,16 @@ def options():
 
 
 @router.post("/api/carer/tasks", status_code=201)
-def add_task(body: TaskIn):
+def add_task(body: TaskIn, authorization: str = Header(default=""), x_session_token: str = Header(default="")):
+    signed_in_staff(authorization, x_session_token)
     save("INSERT INTO carer_tasks (resident_id, task, status, carer, created_at) VALUES (?, ?, ?, ?, ?)",
          (body.resident_id, body.task, body.status, body.carer, now()))
     return {"ok": True}
 
 
 @router.post("/api/carer/vitals", status_code=201)
-def add_vitals(body: VitalsIn):
+def add_vitals(body: VitalsIn, authorization: str = Header(default=""), x_session_token: str = Header(default="")):
+    signed_in_staff(authorization, x_session_token)
     values = [body.pulse, body.systolic, body.diastolic, body.temperature, body.spo2]
     if all(v is None for v in values):
         raise HTTPException(400, "Enter at least one number")
@@ -107,7 +119,8 @@ def add_vitals(body: VitalsIn):
 
 
 @router.post("/api/carer/concerns", status_code=201)
-def add_concern(body: ConcernIn):
+def add_concern(body: ConcernIn, authorization: str = Header(default=""), x_session_token: str = Header(default="")):
+    signed_in_staff(authorization, x_session_token)
     if body.type not in CONCERN_TYPES:
         raise HTTPException(400, "Pick a concern type from the list")
     save("INSERT INTO carer_concerns (resident_id, type, note, carer, created_at) VALUES (?, ?, ?, ?, ?)",
@@ -116,7 +129,12 @@ def add_concern(body: ConcernIn):
 
 
 @router.get("/api/carer/today")
-def today(resident_id: str | None = None):
+def today(
+    resident_id: str | None = None,
+    authorization: str = Header(default=""),
+    x_session_token: str = Header(default=""),
+):
+    signed_in_staff(authorization, x_session_token)
     # everything recorded today, for one resident or for all of them
     day = datetime.now().date().isoformat() + "%"
     out = {}
