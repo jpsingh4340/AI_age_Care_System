@@ -71,6 +71,11 @@ function carerName(msgId) {
   return name;
 }
 
+function nowHHMM() {
+  var d = new Date();
+  return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+}
+
 function timeOnly(iso) {
   return (iso || "").slice(11, 16);
 }
@@ -242,10 +247,27 @@ async function loadSchedule() {
     sw.type = "checkbox";
     sw.setAttribute("role", "switch");
     sw.checked = Boolean(item.done_at);
+    var locked = !item.can_tick && !item.done_at;
+    sw.disabled = locked;
     var text = el("span");
-    text.appendChild(el("span", "task", (item.time ? item.time + "  " : "") + item.task));
-    var meta = item.done_at ? "Done by " + item.done_by + " at " + timeOnly(item.done_at) : item.note || "Not done yet";
+    var title = el("span", "task", (item.time ? item.time + "  " : "") + item.task);
+    var overdue = !item.done_at && item.time && item.time < nowHHMM();
+    if (overdue) {
+      title.appendChild(document.createTextNode(" "));
+      title.appendChild(el("span", "badge badge-amber", "Overdue"));
+    }
+    if (item.medicine) {
+      title.appendChild(document.createTextNode(" "));
+      title.appendChild(el("span", "badge badge-neutral", "Medicine"));
+    }
+    text.appendChild(title);
+    var meta = item.done_at
+      ? "Done by " + item.done_by + " at " + timeOnly(item.done_at)
+      : locked
+        ? "Only a nurse or a carer signed off for medicines can tick this. Tell the nurse."
+        : item.note || "Not done yet";
     text.appendChild(el("span", "meta", meta));
+    if (locked) row.style.cursor = "default";
     sw.addEventListener("change", async function () {
       sw.disabled = true;
       try {
@@ -255,7 +277,10 @@ async function loadSchedule() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ done: sw.checked }),
         });
-        if (!res.ok) throw new Error("Could not save. Please try again.");
+        if (!res.ok) {
+          var body = await res.json().catch(function () { return {}; });
+          throw new Error(typeof body.detail === "string" ? body.detail : "Could not save. Please try again.");
+        }
         if (window.showToast) window.showToast(item.task + (sw.checked ? " done" : " marked not done"));
       } catch (e) {
         sw.checked = !sw.checked;

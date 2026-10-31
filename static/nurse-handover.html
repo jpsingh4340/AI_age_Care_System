@@ -29,10 +29,10 @@
       <div class="table-wrap" style="padding: 0 20px 8px;">
         <table class="tbl">
           <thead>
-            <tr><th>Resident</th><th>Carer</th><th>Sent</th><th>Status</th><th><span class="sr-only">Action</span></th></tr>
+            <tr><th>Resident</th><th>Carer</th><th>Shift</th><th>Sent</th><th>Status</th><th><span class="sr-only">Action</span></th></tr>
           </thead>
           <tbody id="hoRows">
-            <tr><td colspan="5"><div class="skeleton w80"></div><div class="skeleton w60"></div></td></tr>
+            <tr><td colspan="6"><div class="skeleton w80"></div><div class="skeleton w60"></div></td></tr>
           </tbody>
         </table>
       </div>
@@ -102,6 +102,7 @@
   <footer class="foot"></footer>
 
   <script src="/static/auth.js"></script>
+  <script src="/static/isbar.js"></script>
   <script>
     const $ = (id) => document.getElementById(id);
     const STATUS = {
@@ -181,7 +182,7 @@
       $("waitingCount").textContent = waiting + " waiting";
       if (!state.handovers.length) {
         const td = body.insertRow().insertCell();
-        td.colSpan = 5;
+        td.colSpan = 6;
         td.className = "empty";
         td.textContent = "No handovers yet today. They appear here when a carer sends one.";
         return;
@@ -194,6 +195,9 @@
         const name = tr.insertCell();
         name.append(el("strong", "", h.resident), el("div", "sub-text", p ? room(p) : ""));
         tr.insertCell().textContent = h.carer;
+        const sh = tr.insertCell();
+        sh.className = "sub-text";
+        sh.textContent = (h.shift_label || "").split(", ").slice(0, 2).join(", ");
         const sent = tr.insertCell();
         sent.className = "text-mono";
         sent.textContent = when(h.sent_at);
@@ -259,7 +263,7 @@
         body.append(el("p", "empty", "No handover from a carer for this resident yet today."));
         return;
       }
-      $("revSub").textContent = "From " + h.carer + ", sent " + when(h.sent_at) + " · drafted by " + (h.drafted_by === "AI" ? "the AI" : "the rules");
+      $("revSub").textContent = (h.shift_label ? h.shift_label + ". " : "") + "From " + h.carer + ", sent " + when(h.sent_at) + " · drafted by " + (h.drafted_by === "AI" ? "the AI" : "the rules");
       $("revStatus").className = "badge " + STATUS[h.status][1];
       $("revStatus").textContent = STATUS[h.status][0];
 
@@ -267,17 +271,17 @@
         const info = h.status === "approved"
           ? el("p", "alert-box alert-success", "Approved by " + h.reviewed_by + " at " + time(h.reviewed_at) + ".")
           : el("p", "alert-box alert-danger", "Sent back by " + h.reviewed_by + ": " + h.review_note);
-        const text = el("p", "", h.text);
-        text.style.cssText = "margin-top: 16px; white-space: pre-line;";
-        body.append(info, text);
+        const view = window.isbarView(h.text);
+        view.style.marginTop = "16px";
+        body.append(info, view);
         return;
       }
 
-      const label = el("label", "", "AI summary from the carer");
+      const label = el("label", "", "AI summary from the carer (ISBAR)");
       label.htmlFor = "revText";
       const box = el("textarea", "field");
       box.id = "revText";
-      box.rows = 8;
+      box.rows = 12;
       box.value = state.edits[h.id] != null ? state.edits[h.id] : h.text;
       box.addEventListener("input", () => { state.edits[h.id] = box.value; });
 
@@ -306,6 +310,7 @@
         try {
           await post("/api/handovers/" + h.id + "/review", { decision: decision, text: box.value.trim(), note: note.value.trim() });
           delete state.edits[h.id];
+          if (window.updateBadges) window.updateBadges();
           if (window.showToast) window.showToast(decision === "approve" ? "Handover approved" : "Sent back to " + h.carer);
           await refresh();
         } catch (e) {
@@ -418,7 +423,9 @@
       if (!thread.length) box.append(el("p", "empty", "No messages yet. You can write to the family first."));
       for (const m of thread) {
         const mine = m.sender_role === "nurse";
-        const bubble = el("div", "msg" + (mine ? " mine" : ""), m.text);
+        const bubble = el("div", "msg" + (mine ? " mine" : "") + (m.urgent ? " urgent" : ""));
+        if (m.urgent) bubble.append(el("span", "flag", "May be urgent: check now"));
+        bubble.append(document.createTextNode(m.text));
         bubble.append(el("span", "meta", m.from_name + " · " + when(m.created_at)));
         box.append(bubble);
       }
@@ -427,6 +434,7 @@
         try { await post("/api/chat/" + rid + "/read"); } catch (e) {}
         state.unread[rid] = 0;
         renderPills();
+        if (window.updateBadges) window.updateBadges();
       }
     }
 
