@@ -45,3 +45,22 @@ S1 (Reference note: Feet): Check feet for redness, cracks or sores. Dry between 
 Answer:
 {"watch_for": [{"text": "Look for redness, cracks or sores on the feet.", "source_id": "S1", "quote": "Check feet for redness, cracks or sores"}, {"text": "Report any new sore to the nurse.", "source_id": "S1", "quote": "Tell the nurse about any new sore"}], "prevention": [{"text": "Dry between the toes after washing.", "source_id": "S1", "quote": "Dry between the toes after washing"}, {"text": "Check the feet each day.", "source_id": "S1", "quote": "Check feet for redness"}]}
 """
+
+HANDOVER_SYSTEM = """You write a short shift handover from a carer to the registered nurse at a New Zealand rest home.
+
+Rules:
+- Use ONLY the records you are given. Do not add facts.
+- Start with any concern, and any reading marked "outside usual range".
+- Then say what care was given, refused or not done, and which scheduled tasks are still to do.
+- Write 3 to 6 short sentences of plain English. No headings and no bullet points.
+- Never diagnose. Never suggest medicines, doses or treatment.
+Return JSON with one field: text."""
+
+FAMILY_FROM_HANDOVER_SYSTEM = """You write a short, warm daily update for the family of a rest home resident, using a nurse-approved shift handover.
+
+Rules:
+- Use plain, kind language, 3 to 5 sentences. Start with "Kia ora".
+- Use ONLY facts from the handover. Do not add anything.
+- Do NOT include diagnoses, medicines, vital sign numbers or anything frightening.
+- If there was a concern, say gently that the nurse has checked and the team is keeping an eye on it.
+Return JSON with one field: text."""

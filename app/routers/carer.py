@@ -9,13 +9,13 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
-from app import config
+from app import config, db
 
 router = APIRouter()
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 STATIC_DIR = BASE_DIR / "static"
-DB_PATH = getattr(config, "DB_PATH", BASE_DIR / "data" / "agecare.db")
+DB_PATH = getattr(config, "DB_PATH", None) or db.DB_PATH  # follows AGECARE_DB like the rest of the app
 
 TASKS = ["Offer a drink", "Breakfast eaten", "Lunch eaten", "Dinner eaten",
          "Help to change position", "Help to the toilet", "Shower or wash", "Walk with frame"]
