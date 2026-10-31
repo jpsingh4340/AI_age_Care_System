@@ -11,6 +11,10 @@
     @media (max-width: 700px) { .edit-grid { grid-template-columns: minmax(0, 1fr); } }
     .quick { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
     .quick .pill { min-height: 36px; padding: 0 12px; font-size: 13px; }
+    .day-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .day-chips .choice { min-height: 40px; padding: 0 10px; font-size: 13px; }
+    fieldset { border: 0; padding: 0; margin: 0 0 16px; min-width: 0; }
+    legend { font-size: 13px; font-weight: 600; margin-bottom: 6px; padding: 0; }
   </style>
 </head>
 <body>
@@ -42,7 +46,7 @@
         <div class="table-wrap">
           <table class="tbl">
             <thead>
-              <tr><th style="width: 72px;">Time</th><th>Task</th><th>Today</th><th><span class="sr-only">Actions</span></th></tr>
+              <tr><th style="width: 72px;">Time</th><th>Task</th><th>Days</th><th>Today</th><th><span class="sr-only">Actions</span></th></tr>
             </thead>
             <tbody id="rows"></tbody>
           </table>
@@ -65,6 +69,14 @@
             <label for="newNote">Note for carers <span class="hint">optional</span></label>
             <input id="newNote" class="field" type="text" maxlength="200" placeholder="Use the shower chair">
           </div>
+          <fieldset>
+            <legend>Days <span class="hint">leave all off for every day</span></legend>
+            <div class="day-chips" id="newDays"></div>
+          </fieldset>
+          <label class="choice bare" style="margin-bottom: 16px; font-weight: 500;">
+            <input type="checkbox" id="newMedicine">
+            <span>Medicine round <span class="hint">only a nurse or signed-off carer can tick it</span></span>
+          </label>
           <div class="form-actions" style="margin-top: 0;">
             <p class="text-sm" id="addMsg" role="status"></p>
             <button type="submit" class="btn btn-primary">Add task</button>
@@ -81,6 +93,30 @@
   <script>
     const $ = (id) => document.getElementById(id);
     const QUICK = ["Shower", "Breakfast", "Lunch", "Dinner", "Offer a drink", "Morning walk", "Exercises", "Change position", "Medicine round"];
+    const DAYS = [["mon", "Mon"], ["tue", "Tue"], ["wed", "Wed"], ["thu", "Thu"], ["fri", "Fri"], ["sat", "Sat"], ["sun", "Sun"]];
+    const MEDICINE = /\b(medicine|medicines|medication|meds|tablets?|pills?|insulin|inhaler|eye drops)\b/i;
+
+    function dayChips(selected) {
+      const wrap = document.createElement("div");
+      wrap.className = "day-chips";
+      for (const [code, name] of DAYS) {
+        const label = document.createElement("label");
+        label.className = "choice";
+        const box = document.createElement("input");
+        box.type = "checkbox";
+        box.value = code;
+        box.checked = (selected || []).includes(code);
+        label.append(box, document.createTextNode(name));
+        wrap.append(label);
+      }
+      return wrap;
+    }
+    const chosenDays = (wrap) => [...wrap.querySelectorAll("input:checked")].map((b) => b.value);
+    const daysText = (days) => (!days || !days.length ? "Every day" : DAYS.filter(([c]) => days.includes(c)).map(([, n]) => n).join(", "));
+    function nowHHMM() {
+      const d = new Date();
+      return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+    }
     const state = { people: [], selected: null, items: [], editing: null };
 
     function el(tag, className, text) {
@@ -118,18 +154,19 @@
     async function loadItems() {
       const p = state.people.find((x) => Number(x.resident_id) === Number(state.selected));
       $("listTitle").textContent = "Daily tasks" + (p ? " for " + p.name : "");
-      state.items = await api("/api/schedule?resident_id=" + state.selected);
+      state.items = await api("/api/schedule?resident_id=" + state.selected + "&scope=all");
       renderRows();
     }
 
     function renderRows() {
       const body = $("rows");
       body.replaceChildren();
-      const done = state.items.filter((i) => i.done_at).length;
-      $("doneCount").textContent = state.items.length ? done + " of " + state.items.length + " done today" : "";
+      const todays = state.items.filter((i) => i.planned_today);
+      const done = todays.filter((i) => i.done_at).length;
+      $("doneCount").textContent = todays.length ? done + " of " + todays.length + " done today" : "";
       if (!state.items.length) {
         const td = body.insertRow().insertCell();
-        td.colSpan = 4;
+        td.colSpan = 5;
         td.className = "empty";
         td.textContent = "No daily tasks yet. Add the first one with the form.";
         return;
@@ -138,7 +175,7 @@
         const tr = body.insertRow();
         if (state.editing === item.id) {
           const td = tr.insertCell();
-          td.colSpan = 4;
+          td.colSpan = 5;
           td.append(editForm(item));
           continue;
         }
@@ -147,11 +184,18 @@
         t.textContent = item.time || "Any time";
         const task = tr.insertCell();
         task.append(el("strong", "", item.task));
+        if (item.medicine) task.append(document.createTextNode(" "), el("span", "badge badge-neutral", "Medicine"));
         if (item.note) task.append(el("div", "sub-text", item.note));
+        const days = tr.insertCell();
+        days.className = "sub-text";
+        days.textContent = daysText(item.days);
         const today = tr.insertCell();
-        today.append(item.done_at
-          ? el("span", "badge badge-green", "Done " + time(item.done_at))
-          : el("span", "badge badge-neutral", "Not yet"));
+        const overdue = item.planned_today && !item.done_at && item.time && item.time < nowHHMM();
+        today.append(!item.planned_today
+          ? el("span", "text-muted", "Not today")
+          : item.done_at
+            ? el("span", "badge badge-green", "Done " + time(item.done_at))
+            : el("span", "badge " + (overdue ? "badge-amber" : "badge-neutral"), overdue ? "Overdue" : "Not yet"));
         if (item.done_by) today.append(el("div", "sub-text", item.done_by));
         const act = tr.insertCell();
         act.className = "actions";
@@ -180,13 +224,22 @@
       const task = el("input", "field"); task.type = "text"; task.maxLength = 60; task.value = item.task; task.setAttribute("aria-label", "Task");
       const note = el("input", "field"); note.type = "text"; note.maxLength = 200; note.value = item.note; note.placeholder = "Note for carers"; note.setAttribute("aria-label", "Note for carers");
       grid.append(t, task, note);
+      const days = dayChips(item.days);
+      days.style.marginTop = "8px";
+      days.setAttribute("aria-label", "Days");
+      const medLabel = el("label", "choice bare");
+      medLabel.style.cssText = "margin-top: 8px; font-weight: 500;";
+      const med = el("input");
+      med.type = "checkbox";
+      med.checked = item.medicine;
+      medLabel.append(med, el("span", "", "Medicine round"));
       const msg = el("p", "text-sm");
       const save = el("button", "btn btn-primary btn-sm", "Save");
       const cancel = el("button", "btn btn-secondary btn-sm", "Cancel");
       save.type = cancel.type = "button";
       save.addEventListener("click", async () => {
         try {
-          await send("PUT", "/api/schedule/" + item.id, { task: task.value.trim(), time: t.value, note: note.value.trim() });
+          await send("PUT", "/api/schedule/" + item.id, { task: task.value.trim(), time: t.value, note: note.value.trim(), days: chosenDays(days), medicine: med.checked });
           state.editing = null;
           if (window.showToast) window.showToast("Saved");
           loadItems();
@@ -198,7 +251,7 @@
       const right = el("div", "inline");
       right.append(cancel, save);
       actions.append(msg, right);
-      wrap.append(grid, actions);
+      wrap.append(grid, days, medLabel, actions);
       setTimeout(() => task.focus(), 0);
       return wrap;
     }
@@ -206,9 +259,12 @@
     QUICK.forEach((name) => {
       const b = el("button", "pill", name);
       b.type = "button";
-      b.addEventListener("click", () => { $("newTask").value = name; $("newTime").focus(); });
+      b.addEventListener("click", () => { $("newTask").value = name; $("newMedicine").checked = MEDICINE.test(name); $("newTime").focus(); });
       $("quick").append(b);
     });
+
+    $("newDays").replaceWith(Object.assign(dayChips([]), { id: "newDays" }));
+    $("newTask").addEventListener("input", () => { $("newMedicine").checked = MEDICINE.test($("newTask").value); });
 
     $("addForm").addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -219,12 +275,16 @@
           task: $("newTask").value.trim(),
           time: $("newTime").value,
           note: $("newNote").value.trim(),
+          days: chosenDays($("newDays")),
+          medicine: $("newMedicine").checked,
         });
         msg.className = "text-sm alert-success";
         msg.textContent = "Added " + $("newTask").value.trim() + ".";
         $("newTask").value = "";
         $("newTime").value = "";
         $("newNote").value = "";
+        $("newMedicine").checked = false;
+        $("newDays").querySelectorAll("input").forEach((b) => { b.checked = false; });
         loadItems();
       } catch (err) {
         msg.className = "text-sm alert-danger";
@@ -242,7 +302,7 @@
       } catch (e) {
         $("rows").replaceChildren();
         const td = $("rows").insertRow().insertCell();
-        td.colSpan = 4;
+        td.colSpan = 5;
         td.append(el("p", "alert-box alert-danger", e.message));
       }
     })();

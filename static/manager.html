@@ -29,10 +29,10 @@
           <div class="table-wrap">
             <table class="tbl">
               <thead>
-                <tr><th>Name</th><th>Username</th><th>Role</th><th>Resident</th><th><span class="sr-only">Actions</span></th></tr>
+                <tr><th>Name</th><th>Username</th><th>Role</th><th>Resident</th><th>Medicines</th><th><span class="sr-only">Actions</span></th></tr>
               </thead>
               <tbody id="userRows">
-                <tr><td colspan="5"><div class="skeleton w80"></div><div class="skeleton w60"></div></td></tr>
+                <tr><td colspan="6"><div class="skeleton w80"></div><div class="skeleton w60"></div></td></tr>
               </tbody>
             </table>
           </div>
@@ -158,6 +158,34 @@
           const tdRes = tr.insertCell();
           tdRes.className = "sub-text";
           tdRes.textContent = u.resident_id ? residentsMap[u.resident_id] || "Resident " + u.resident_id : "";
+          const tdMed = tr.insertCell();
+          if (u.role === "carer") {
+            const lab = el("label", "inline");
+            lab.style.cssText = "margin: 0; font-weight: 500; cursor: pointer; flex-wrap: nowrap;";
+            const sw = el("input", "switch");
+            sw.type = "checkbox";
+            sw.setAttribute("role", "switch");
+            sw.checked = Boolean(u.med_competent);
+            sw.setAttribute("aria-label", "Signed off to give medicines: " + u.full_name);
+            const word = el("span", "sub-text", sw.checked ? "Signed off" : "No");
+            sw.addEventListener("change", async () => {
+              sw.disabled = true;
+              const res = await window.authFetch("/api/manager/users/" + encodeURIComponent(u.username) + "/medicines", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ competent: sw.checked }),
+              });
+              if (!res.ok) sw.checked = !sw.checked;
+              word.textContent = sw.checked ? "Signed off" : "No";
+              if (window.showToast) window.showToast(res.ok ? (sw.checked ? u.full_name + " can now tick medicine rounds" : u.full_name + " can no longer tick medicine rounds") : "Could not save", !res.ok);
+              sw.disabled = false;
+            });
+            lab.append(sw, word);
+            tdMed.append(lab);
+          } else {
+            tdMed.className = "text-muted";
+            tdMed.textContent = u.role === "nurse" ? "Always" : "";
+          }
           const act = tr.insertCell();
           act.style.textAlign = "right";
           if (u.username.toLowerCase() !== myUser) {
