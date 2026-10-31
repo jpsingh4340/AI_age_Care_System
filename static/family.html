@@ -47,21 +47,19 @@
       <section class="card" aria-labelledby="msgTitle">
         <div class="card-header">
           <div>
-            <h2 class="card-title" id="msgTitle">Message the care team</h2>
+            <h2 class="card-title" id="msgTitle">Messages with the nurses</h2>
             <p class="sub-text">For questions, news or visits. Not for emergencies.</p>
           </div>
         </div>
-        <div class="form-group">
+        <div class="chat" id="chat" aria-live="polite"><div class="skeleton w60"></div></div>
+        <div class="form-group" style="margin-bottom: 0;">
           <label for="famMsg">Your message</label>
-          <textarea id="famMsg" class="field" rows="3" placeholder="For example: I will visit on Saturday morning with the grandchildren."></textarea>
+          <textarea id="famMsg" class="field" rows="3" maxlength="1000" placeholder="For example: I will visit on Saturday morning with the grandchildren."></textarea>
         </div>
         <div class="form-actions">
           <p class="text-sm" id="famStatus" role="status"></p>
           <button type="button" id="sendBtn" class="btn btn-primary" onclick="sendMessage()">Send message</button>
         </div>
-
-        <p class="section-label" style="margin-top: 24px;">Your messages</p>
-        <div id="sentList" class="audit-list"></div>
       </section>
     </div>
   </main>
@@ -105,22 +103,29 @@
         updateBody.append(el("p", "update-text", latest.text), meta);
       }
 
-      const sentList = $("sentList");
-      sentList.replaceChildren();
-      if (!data.messages || !data.messages.length) {
-        sentList.appendChild(el("p", "empty", "You have not sent any messages yet."));
-        return;
+      residentId = r.resident_id;
+      loadChat(true);
+    }
+
+    let residentId = null;
+    async function loadChat(scroll) {
+      if (residentId == null) return;
+      const res = await window.authFetch("/api/chat/" + residentId);
+      if (!res.ok) return;
+      const thread = await res.json();
+      const box = $("chat");
+      box.replaceChildren();
+      if (!thread.length) {
+        box.appendChild(el("p", "empty", "No messages yet. The nurses read and answer messages during the day."));
       }
-      data.messages.forEach((m) => {
-        const item = el("div", "list-item");
-        item.style.flexDirection = "column";
-        item.style.gap = "2px";
-        const top = el("div", "between");
-        top.style.width = "100%";
-        top.append(el("span", "text-sm", m.text), el("span", "mono-time", (m.created_at || "").slice(11, 16)));
-        item.append(top, el("span", "sub-text", m.read_by ? "Read by " + m.read_by : "Sent to the nurse on duty"));
-        sentList.appendChild(item);
+      thread.forEach((m) => {
+        const mine = m.sender_role !== "nurse";
+        const bubble = el("div", "msg" + (mine ? " mine" : ""), m.text);
+        const who = mine ? "You" : m.from_name;
+        bubble.append(el("span", "meta", who + " · " + (m.created_at || "").slice(11, 16) + (mine && m.read_by ? " · read" : "")));
+        box.appendChild(bubble);
       });
+      if (scroll) box.scrollTop = box.scrollHeight;
     }
 
     async function sendMessage() {
@@ -142,7 +147,7 @@
           $("famMsg").value = "";
           $("famStatus").textContent = "Message sent to the care team.";
           $("famStatus").className = "text-sm alert-success";
-          loadFamily();
+          loadChat(true);
         } else {
           $("famStatus").textContent = "Could not send the message. Please try again.";
           $("famStatus").className = "text-sm alert-danger";
@@ -156,6 +161,9 @@
     }
 
     loadFamily();
+    setInterval(() => {
+      if (document.visibilityState === "visible" && document.activeElement !== $("famMsg")) loadChat(false);
+    }, 20000);
   </script>
 </body>
 </html>
