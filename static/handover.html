@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Handover · AgeCare</title>
+  <link rel="icon" type="image/png" href="/static/img/favicon.png">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <header class="topbar"></header>
+
+  <main class="page-container">
+    <div class="page-head">
+      <div>
+        <p class="eyebrow" data-today>Today</p>
+        <h1>Handover</h1>
+        <p class="lede">The AI drafts a handover from what you recorded this shift. Check it, change anything that is wrong, then send it to the nurse.</p>
+      </div>
+    </div>
+
+    <p class="notice"><strong>Demo data only.</strong> These are fake residents. The AI only uses your records, and the nurse checks every handover before it is approved.</p>
+
+    <ol class="steps" aria-label="Steps">
+      <li class="step active" id="st1"><span class="num">1</span>Pick a resident</li>
+      <li class="step" id="st2"><span class="num">2</span>Check the AI draft</li>
+      <li class="step" id="st3"><span class="num">3</span>Send to the nurse</li>
+    </ol>
+
+    <section class="card card-flush" style="margin-bottom: 24px;" aria-labelledby="gridTitle">
+      <div class="card-header">
+        <h2 class="card-title" id="gridTitle">Your residents</h2>
+        <span class="sub-text">Status of today's handovers</span>
+      </div>
+      <div class="table-wrap" style="padding: 0 20px 8px;">
+        <table class="tbl">
+          <thead>
+            <tr><th>Resident</th><th>Recorded today</th><th>Handover</th><th><span class="sr-only">Action</span></th></tr>
+          </thead>
+          <tbody id="gridRows">
+            <tr><td colspan="4"><div class="skeleton w80"></div><div class="skeleton w60"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="grid-layout" id="editorWrap" hidden>
+      <section class="card" aria-labelledby="edTitle">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title lg" id="edTitle">Handover</h2>
+            <p class="sub-text" id="edSub"></p>
+          </div>
+          <span class="badge" id="edStatus"></span>
+        </div>
+
+        <div id="edBody"></div>
+      </section>
+
+      <aside class="card" aria-labelledby="srcTitle">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title" id="srcTitle">Your records this shift</h2>
+            <p class="sub-text">What the draft is based on</p>
+          </div>
+        </div>
+        <ul class="src-list" id="sources"></ul>
+        <div id="notDone"></div>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="foot"></footer>
+
+  <script src="/static/auth.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const STATUS = {
+      none: ["Not started", "badge-neutral"],
+      draft: ["Draft, not sent", "badge-neutral"],
+      waiting: ["Waiting for nurse", "status-waiting"],
+      approved: ["Approved", "status-approved"],
+      returned: ["Sent back", "status-returned"],
+    };
+    const state = { people: [], counts: {}, handovers: [], selected: null, drafting: false, edits: {} };
+    const me = (localStorage.getItem("agecare_username") || "").toLowerCase();
+
+    function el(tag, className, text) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
+    const time = (iso) => (iso || "").slice(11, 16);
+    const room = (p) => "Room " + (100 + Number(p.resident_id));
+
+    async function api(path, options) {
+      const res = await window.authFetch(path, options || {});
+      let data = null;
+      try { data = await res.json(); } catch (e) {}
+      if (!res.ok) throw new Error(data && typeof data.detail === "string" ? data.detail : "Something went wrong. Please try again.");
+      return data;
+    }
+
+    function step(n) {
+      ["st1", "st2", "st3"].forEach((id, i) => $(id).classList.toggle("active", i < n));
+    }
+
+    // The newest handover for a resident today (the carer's own draft, or one that was sent)
+    function latestFor(rid) {
+      return state.handovers.find((h) => Number(h.resident_id) === Number(rid)) || null;
+    }
+
+    async function loadAll() {
+      const [people, today, notes, handovers] = await Promise.all([
+        api("/api/residents"),
+        api("/api/carer/today"),
+        api("/api/carer/notes"),
+        api("/api/handovers"),
+      ]);
+      state.people = people;
+      state.handovers = handovers;
+      state.counts = {};
+      const add = (rid) => { state.counts[rid] = (state.counts[rid] || 0) + 1; };
+      ["tasks", "vitals", "concerns"].forEach((k) => (today[k] || []).forEach((r) => add(Number(r.resident_id))));
+      notes.forEach((n) => add(Number(n.resident_id)));
+      renderGrid();
+      if (state.selected != null) renderEditor();
+    }
+
+    function renderGrid() {
+      const body = $("gridRows");
+      body.replaceChildren();
+      for (const p of state.people) {
+        const h = latestFor(p.resident_id);
+        const st = h ? h.status : "none";
+        const tr = body.insertRow();
+        if (Number(state.selected) === Number(p.resident_id)) tr.className = "is-selected";
+
+        const name = tr.insertCell();
+        name.append(el("strong", "", p.name), el("div", "sub-text", room(p)));
+
+        const count = tr.insertCell();
+        const n = state.counts[p.resident_id] || 0;
+        count.textContent = n ? n + (n === 1 ? " record" : " records") : "Nothing yet";
+        if (!n) count.className = "text-muted";
+
+        const status = tr.insertCell();
+        status.append(el("span", "badge " + STATUS[st][1], STATUS[st][0]));
+        if (h && h.sent_at && st !== "draft") status.append(el("div", "sub-text", "Sent " + time(h.sent_at)));
+
+        const act = tr.insertCell();
+        act.className = "actions";
+        const label = st === "none" ? "Draft handover" : st === "draft" || st === "returned" ? "Continue" : "View";
+        const btn = el("button", "btn btn-sm " + (st === "none" || st === "draft" || st === "returned" ? "btn-primary" : "btn-secondary"), label);
+        btn.type = "button";
+        btn.addEventListener("click", () => select(p.resident_id, st === "none"));
+        act.append(btn);
+      }
+    }
+
+    function select(rid, startDraft) {
+      state.selected = rid;
+      history.replaceState(null, "", "?resident=" + rid);
+      renderGrid();
+      renderEditor();
+      $("editorWrap").scrollIntoView({ block: "start" });
+      if (startDraft) draft();
+    }
+
+    function renderSources(h) {
+      const list = $("sources");
+      list.replaceChildren();
+      const nd = $("notDone");
+      nd.replaceChildren();
+      if (!h) {
+        list.append(el("li", "empty", "Draft a handover to see the records it uses."));
+        return;
+      }
+      const entries = (h.sources && h.sources.entries) || [];
+      if (!entries.length) list.append(el("li", "empty", "Nothing was recorded this shift. Add notes on My shift first."));
+      for (const e of entries) {
+        const li = el("li");
+        const what = el("span", "", e.text);
+        what.append(el("span", "by", e.by));
+        li.append(el("span", "mono-time", time(e.at)), el("span", "kind k-" + e.kind.replace(/\s/g, ""), e.kind), what);
+        list.append(li);
+      }
+      const notDone = (h.sources && h.sources.not_done) || [];
+      if (notDone.length) {
+        nd.append(el("p", "section-label", "Care plan not done yet"));
+        const ul = el("ul", "bullets");
+        notDone.forEach((t) => ul.append(el("li", "", t)));
+        nd.append(ul);
+      }
+    }
+
+    function renderEditor() {
+      const person = state.people.find((p) => Number(p.resident_id) === Number(state.selected));
+      if (!person) return;
+      $("editorWrap").hidden = false;
+      const h = latestFor(person.resident_id);
+      const st = h ? h.status : "none";
+      $("edTitle").textContent = "Handover for " + person.name;
+      $("edSub").textContent = room(person) + (h ? " · drafted by " + (h.drafted_by === "AI" ? "the AI" : "the rules (AI was not available)") + " at " + time(h.created_at) : "");
+      $("edStatus").className = "badge " + STATUS[st][1];
+      $("edStatus").textContent = STATUS[st][0];
+      renderSources(h);
+
+      const body = $("edBody");
+      body.replaceChildren();
+
+      if (state.drafting) {
+        step(2);
+        body.append(el("p", "sub-text", "Reading carer notes…"), el("div", "skeleton w80"), el("div", "skeleton w80"), el("div", "skeleton w60"));
+        return;
+      }
+
+      if (st === "none") {
+        step(1);
+        body.append(el("p", "empty", "No handover yet for this resident today."));
+        body.append(draftButton("Draft handover with AI", "btn-primary"));
+        return;
+      }
+
+      if (st === "waiting") {
+        step(3);
+        body.append(el("p", "alert-box alert-warn", "Sent at " + time(h.sent_at) + ". Waiting for the nurse to approve it."));
+        const p = el("p", "", h.text);
+        p.style.cssText = "margin-top: 16px; white-space: pre-line;";
+        body.append(p);
+        return;
+      }
+
+      if (st === "approved") {
+        step(3);
+        body.append(el("p", "alert-box alert-success", "Approved by " + h.reviewed_by + " at " + time(h.reviewed_at) + "."));
+        const p = el("p", "", h.text);
+        p.style.cssText = "margin: 16px 0; white-space: pre-line;";
+        body.append(p, el("p", "sub-text", "Anything you record from now goes into the next handover."));
+        const again = draftButton("Start the next handover", "btn-secondary");
+        again.style.marginTop = "12px";
+        body.append(again);
+        return;
+      }
+
+      // draft or returned: the carer can edit and send
+      step(2);
+      if (st === "returned") {
+        const back = el("div", "alert-box alert-danger");
+        back.append(el("strong", "", "Sent back by " + h.reviewed_by + ": "), document.createTextNode(h.review_note));
+        back.style.marginBottom = "16px";
+        body.append(back);
+      }
+      if (h.carer_user && h.carer_user.toLowerCase() !== me) {
+        body.append(el("p", "alert-box", "This handover was drafted by " + h.carer + ". Only they can send it."));
+        return;
+      }
+      const label = el("label", "", "Handover text");
+      label.htmlFor = "hoText";
+      const box = el("textarea", "field");
+      box.id = "hoText";
+      box.rows = 9;
+      box.value = state.edits[h.id] != null ? state.edits[h.id] : h.text;
+      box.addEventListener("input", () => { state.edits[h.id] = box.value; });
+      const msg = el("p", "text-sm");
+      msg.setAttribute("role", "status");
+      const send = el("button", "btn btn-primary", st === "returned" ? "Send again" : "Send to nurse");
+      send.type = "button";
+      send.addEventListener("click", async () => {
+        if (box.value.trim().length < 10) { msg.className = "text-sm alert-danger"; msg.textContent = "The handover is too short."; return; }
+        send.disabled = true;
+        try {
+          await api("/api/handovers/" + h.id + "/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: box.value.trim() }),
+          });
+          delete state.edits[h.id];
+          if (window.showToast) window.showToast("Handover sent to the nurse");
+          await loadAll();
+        } catch (e) {
+          msg.className = "text-sm alert-danger";
+          msg.textContent = e.message;
+          send.disabled = false;
+        }
+      });
+      const actions = el("div", "form-actions");
+      const right = el("div", "inline");
+      right.append(draftButton("Draft again", "btn-secondary"), send);
+      actions.append(msg, right);
+      body.append(label, box, el("p", "hint", "Fix anything the AI got wrong. Records added after this draft are not included until you draft again."), actions);
+    }
+
+    function draftButton(text, cls) {
+      const b = el("button", "btn " + cls, text);
+      b.type = "button";
+      b.addEventListener("click", draft);
+      return b;
+    }
+
+    async function draft() {
+      if (state.drafting) return;
+      state.drafting = true;
+      renderEditor();
+      try {
+        await api("/api/handovers/draft", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ resident_id: Number(state.selected) }),
+        });
+      } catch (e) {
+        if (window.showToast) window.showToast(e.message, true);
+      }
+      state.drafting = false;
+      await loadAll();
+    }
+
+    const wanted = new URLSearchParams(location.search).get("resident");
+    if (wanted) state.selected = Number(wanted);
+    loadAll().catch((e) => {
+      $("gridRows").replaceChildren();
+      const td = $("gridRows").insertRow().insertCell();
+      td.colSpan = 4;
+      td.append(el("p", "alert-box alert-danger", e.message));
+    });
+    // pick up the nurse's decision without a reload
+    setInterval(() => { if (!state.drafting && document.visibilityState === "visible" && !(document.activeElement && document.activeElement.id === "hoText")) loadAll().catch(() => {}); }, 20000);
+  </script>
+</body>
+</html>
