@@ -187,6 +187,8 @@
       state.handovers = handovers.ok && Array.isArray(handovers.data) ? handovers.data : [];
       state.famMessages = famM.ok ? famM.data : [];
       state.visionAlerts = visionA.ok && Array.isArray(visionA.data) ? visionA.data : [];
+      const urgent = await api("/api/chat/urgent");
+      state.urgent = urgent.ok && Array.isArray(urgent.data) ? urgent.data : [];
 
       // Open the most urgent resident first
       const sorted = sortedPeople();
@@ -312,6 +314,11 @@
 
     function renderNeeds() {
       const items = [];
+      for (const m of state.urgent || []) {
+        const p = state.people.find((x) => String(x.resident_id) === String(m.resident_id));
+        items.push(needItem("Urgent family message" + (p ? " · " + p.name : ""), (m.created_at || "").slice(11, 16),
+          "“" + m.text + "”", true, "/nurse/handover?resident=" + m.resident_id));
+      }
       for (const ho of state.handovers || []) {
         items.push(needItem(ho.resident + " · handover", (ho.sent_at || "").slice(11, 16),
           "From " + ho.carer + ". Check and approve.", false, "/nurse/handover?resident=" + ho.resident_id));

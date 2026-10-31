@@ -48,7 +48,7 @@
         <div class="card-header">
           <div>
             <h2 class="card-title" id="msgTitle">Messages with the nurses</h2>
-            <p class="sub-text">For questions, news or visits. Not for emergencies.</p>
+            <p class="sub-text">For questions, news or visits. The nurses usually reply between 8 am and 8 pm. For anything urgent, phone reception and ask for the nurse on duty.</p>
           </div>
         </div>
         <div class="chat" id="chat" aria-live="polite"><div class="skeleton w60"></div></div>
@@ -121,7 +121,7 @@
       thread.forEach((m) => {
         const mine = m.sender_role !== "nurse";
         const bubble = el("div", "msg" + (mine ? " mine" : ""), m.text);
-        const who = mine ? "You" : m.from_name;
+        const who = mine ? "You" + (m.urgent ? " · marked as possibly urgent" : "") : m.from_name;
         bubble.append(el("span", "meta", who + " · " + (m.created_at || "").slice(11, 16) + (mine && m.read_by ? " · read" : "")));
         box.appendChild(bubble);
       });
@@ -138,15 +138,24 @@
       }
       $("sendBtn").disabled = true;
       try {
-        const res = await window.authFetch("/api/family/messages", {
+        const res = await window.authFetch("/api/chat/" + residentId, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text: text }),
         });
         if (res.ok) {
+          const sent = await res.json();
           $("famMsg").value = "";
-          $("famStatus").textContent = "Message sent to the care team.";
-          $("famStatus").className = "text-sm alert-success";
+          if (sent.urgent) {
+            $("famStatus").textContent = "Sent. If this is urgent, please phone reception now and ask for the nurse on duty. Messages are not watched all the time.";
+            $("famStatus").className = "text-sm alert-warn";
+          } else if (sent.out_of_hours) {
+            $("famStatus").textContent = "Sent. The nurses will read it after 8 am.";
+            $("famStatus").className = "text-sm alert-success";
+          } else {
+            $("famStatus").textContent = "Message sent to the nurses.";
+            $("famStatus").className = "text-sm alert-success";
+          }
           loadChat(true);
         } else {
           $("famStatus").textContent = "Could not send the message. Please try again.";
