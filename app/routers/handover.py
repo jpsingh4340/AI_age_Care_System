@@ -558,10 +558,13 @@ def get_schedule(
     x_session_token: str = Header(default=""),
 ):
     """Today's care plan with who ticked each item off. scope=all also lists items for other days."""
-    signed_in(("carer", "nurse"), authorization, x_session_token)
+    sess = signed_in(("carer", "nurse"), authorization, x_session_token)
     con = get_db()
     rows = schedule_rows(con, resident_id, every=scope == "all")
     con.close()
+    meds_ok = auth.can_give_medicines(sess["username"], sess["role"])
+    for item in rows:
+        item["can_tick"] = meds_ok or not item["medicine"]
     return rows
 
 

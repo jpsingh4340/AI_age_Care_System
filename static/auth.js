@@ -198,6 +198,7 @@
         return h("a", {
           class: "nav-link",
           href: l.href,
+          "data-nav": l.href,
           "aria-current": path === l.href.toLowerCase() || (l.href === "/nurse" && path === "/") ? "page" : false,
           text: l.label,
         });
@@ -233,6 +234,46 @@
     );
   }
 
+  // Small counts on the navigation bar: work waiting for this person.
+  async function updateBadges() {
+    if (isPublicPage || !token || (role !== "nurse" && role !== "carer")) return;
+    let counts;
+    try {
+      const res = await window.authFetch("/api/workflow/counts");
+      if (!res.ok) return;
+      counts = await res.json();
+    } catch (e) {
+      return;
+    }
+    const target = role === "nurse" ? "/nurse/handover" : "/handover";
+    const link = document.querySelector('[data-nav="' + target + '"]');
+    if (!link) return;
+    let n, words, urgent = false;
+    if (role === "nurse") {
+      n = (counts.waiting_handovers || 0) + (counts.unread_messages || 0);
+      urgent = (counts.urgent_messages || 0) > 0;
+      words = (counts.waiting_handovers || 0) + " handovers waiting, " + (counts.unread_messages || 0) + " unread family messages" +
+        (urgent ? ", " + counts.urgent_messages + " urgent" : "");
+    } else {
+      n = counts.returned_handovers || 0;
+      words = n + " handovers sent back to you";
+    }
+    let badge = link.querySelector(".nav-badge");
+    if (!n) {
+      if (badge) badge.remove();
+      return;
+    }
+    if (!badge) {
+      badge = h("span", { class: "nav-badge" });
+      link.append(badge);
+    }
+    badge.textContent = String(n);
+    badge.className = "nav-badge" + (urgent ? " urgent" : "");
+    badge.setAttribute("aria-label", words);
+    badge.title = words;
+  }
+  window.updateBadges = updateBadges;
+
   function buildFooter(footer) {
     footer.className = "foot";
     footer.replaceChildren(
@@ -259,6 +300,8 @@
       document.body.prepend(header);
     }
     buildTopbar(header);
+    updateBadges();
+    setInterval(updateBadges, 30000);
 
     let footer = document.querySelector("footer");
     if (!footer) {

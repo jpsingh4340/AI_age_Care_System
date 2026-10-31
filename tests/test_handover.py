@@ -238,6 +238,7 @@ def test_medicine_round_needs_a_competent_carer():
     nurse, carer1, manager = login("nurse1"), login("carer1"), login("manager1")
     item = client.post("/api/schedule", json={"resident_id": 1, "task": "Medicine round"}, headers=nurse).json()
     assert item["medicine"] is True  # worked out from the task name
+    assert client.get("/api/schedule?resident_id=1", headers=carer1).json()[0]["can_tick"] is False
     assert client.post(f"/api/schedule/{item['id']}/done", json={"done": True}, headers=carer1).status_code == 403
     assert client.post(f"/api/schedule/{item['id']}/done", json={"done": True}, headers=nurse).status_code == 200
     client.post(f"/api/schedule/{item['id']}/done", json={"done": False}, headers=nurse)
