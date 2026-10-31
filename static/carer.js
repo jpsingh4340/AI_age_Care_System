@@ -1,5 +1,5 @@
 // Carer shift sheet: pick a resident, save care records, read approved guidance.
-var state = { role: "carer", people: [], selected: null };
+var state = { role: "carer", people: [], selected: null, schedule: [] };
 
 var STATUS_TEXT = { given: "Done", refused: "Refused", not_done: "Not done" };
 
@@ -128,19 +128,29 @@ function changeResident() {
   $("todayName").textContent = person.name;
   $("recordName").textContent = person.name;
   $("residentConditions").textContent = (person.conditions || []).join(", ");
-  ["taskMsg", "vitalsMsg", "concernMsg"].forEach(function (m) {
+  ["noteMsg", "taskMsg", "vitalsMsg", "concernMsg"].forEach(function (m) {
     $(m).textContent = "";
     $(m).className = "text-sm";
   });
   renderPills();
-  loadToday();
   loadGuide();
+  loadSchedule().then(loadToday);
 }
 
 async function loadToday() {
-  var data = await getJSON("/api/carer/today?resident_id=" + encodeURIComponent(state.selected));
+  var results = await Promise.all([
+    getJSON("/api/carer/today?resident_id=" + encodeURIComponent(state.selected)),
+    getJSON("/api/carer/notes?resident_id=" + encodeURIComponent(state.selected)),
+  ]);
+  var data = results[0];
   if (!data) return;
   var rows = [];
+  (results[1] || []).forEach(function (n) {
+    rows.push({ time: n.created_at, what: "Note: " + n.text, status: "note", by: n.carer });
+  });
+  (state.schedule || []).forEach(function (s) {
+    if (s.done_at) rows.push({ time: s.done_at, what: "Care plan: " + s.task + " done", status: "plan", by: s.done_by });
+  });
   (data.tasks || []).forEach(function (t) {
     rows.push({ time: t.created_at, what: t.task + ": " + (STATUS_TEXT[t.status] || t.status), status: t.status, by: t.carer });
   });
@@ -175,6 +185,7 @@ async function loadToday() {
     var tdWhat = tr.insertCell();
     tdWhat.textContent = r.what;
     if (r.status === "concern") tdWhat.style.color = "var(--red)";
+    else if (r.status === "plan") tdWhat.style.color = "var(--green)";
     else if (r.status === "refused" || r.status === "not_done") tdWhat.style.color = "var(--amber)";
 
     var tdBy = tr.insertCell();
@@ -208,6 +219,72 @@ function addList(box, heading, lines, first) {
   });
   box.appendChild(ul);
 }
+
+// ---------- Today's care plan (set by the nurse) ----------
+async function loadSchedule() {
+  var box = $("schedule");
+  var items = await getJSON("/api/schedule?resident_id=" + encodeURIComponent(state.selected));
+  state.schedule = items || [];
+  box.replaceChildren();
+  if (!items) {
+    box.appendChild(el("p", "empty", "Could not load the care plan."));
+    return;
+  }
+  var done = items.filter(function (i) { return i.done_at; }).length;
+  $("planCount").textContent = items.length ? done + " of " + items.length + " done" : "";
+  if (!items.length) {
+    box.appendChild(el("p", "empty", "No care plan set for this resident yet. The nurse adds daily tasks on the Schedule page."));
+    return;
+  }
+  items.forEach(function (item) {
+    var row = el("label", "check-row");
+    var sw = el("input", "switch");
+    sw.type = "checkbox";
+    sw.setAttribute("role", "switch");
+    sw.checked = Boolean(item.done_at);
+    var text = el("span");
+    text.appendChild(el("span", "task", (item.time ? item.time + "  " : "") + item.task));
+    var meta = item.done_at ? "Done by " + item.done_by + " at " + timeOnly(item.done_at) : item.note || "Not done yet";
+    text.appendChild(el("span", "meta", meta));
+    sw.addEventListener("change", async function () {
+      sw.disabled = true;
+      try {
+        var fn = window.authFetch || fetch;
+        var res = await fn("/api/schedule/" + item.id + "/done", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ done: sw.checked }),
+        });
+        if (!res.ok) throw new Error("Could not save. Please try again.");
+        if (window.showToast) window.showToast(item.task + (sw.checked ? " done" : " marked not done"));
+      } catch (e) {
+        sw.checked = !sw.checked;
+        if (window.showToast) window.showToast(e.message, true);
+      }
+      await loadSchedule();
+      loadToday();
+    });
+    row.append(sw, text);
+    box.appendChild(row);
+  });
+}
+
+$("saveNote").addEventListener("click", async function () {
+  var text = $("noteText").value.trim();
+  if (text.length < 2) {
+    showMsg("noteMsg", "Write a short note first.", "err");
+    $("noteText").focus();
+    return;
+  }
+  try {
+    await postJSON("/api/carer/notes", { resident_id: Number(state.selected), text: text });
+    showMsg("noteMsg", "Note saved.", "ok");
+    $("noteText").value = "";
+    loadToday();
+  } catch (e) {
+    showMsg("noteMsg", e.message, "err");
+  }
+});
 
 $("saveTask").addEventListener("click", async function () {
   var name = carerName("taskMsg");

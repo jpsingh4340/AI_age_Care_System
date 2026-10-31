@@ -15,7 +15,7 @@
       <div>
         <p class="eyebrow" data-today>Today</p>
         <h1>Your shift</h1>
-        <p class="lede">Pick a resident, then record what you did, their vital signs, or a concern for the nurse.</p>
+        <p class="lede">Pick a resident, write quick notes as you go, and tick off the care plan. At the end of the shift, send your handover to the nurse.</p>
       </div>
       <div class="page-head-actions">
         <div style="min-width: 220px;">
@@ -43,12 +43,25 @@
         <h2 class="card-title lg" id="recordTitle" style="margin-bottom: 12px;">Record for <span id="recordName">this resident</span></h2>
 
         <div class="tabs" role="tablist" aria-label="What to record">
-          <button type="button" class="tab" role="tab" id="tab-task" aria-controls="panel-task" aria-selected="true">Care task</button>
+          <button type="button" class="tab" role="tab" id="tab-note" aria-controls="panel-note" aria-selected="true">Quick note</button>
+          <button type="button" class="tab" role="tab" id="tab-task" aria-controls="panel-task" aria-selected="false">Care task</button>
           <button type="button" class="tab" role="tab" id="tab-vitals" aria-controls="panel-vitals" aria-selected="false">Vital signs</button>
           <button type="button" class="tab" role="tab" id="tab-concern" aria-controls="panel-concern" aria-selected="false">Concern</button>
         </div>
 
-        <div id="panel-task" role="tabpanel" aria-labelledby="tab-task">
+        <div id="panel-note" role="tabpanel" aria-labelledby="tab-note">
+          <div class="form-group">
+            <label for="noteText">What happened?</label>
+            <textarea id="noteText" class="field" rows="4" maxlength="600" placeholder="Short notes are fine. For example: ate half of lunch, quiet in the afternoon, daughter visited at 2."></textarea>
+          </div>
+          <div class="form-actions">
+            <p class="text-sm" id="noteMsg" role="status"></p>
+            <button type="button" id="saveNote" class="btn btn-primary">Save note</button>
+          </div>
+          <p class="sub-text" style="margin-top: 12px;">Your notes stay on this shift's record. When you finish, the AI uses them to draft your <a href="/handover">handover</a>.</p>
+        </div>
+
+        <div id="panel-task" role="tabpanel" aria-labelledby="tab-task" hidden>
           <div class="form-group">
             <label for="task">Task</label>
             <select id="task" class="field"></select>
@@ -114,6 +127,17 @@
       </section>
 
       <aside class="stack">
+        <section class="card" aria-labelledby="planTitle">
+          <div class="card-header" style="margin-bottom: 4px;">
+            <div>
+              <h2 class="card-title" id="planTitle">Today's care plan</h2>
+              <p class="sub-text">Set by the nurse. Switch on when done.</p>
+            </div>
+            <span class="badge badge-neutral" id="planCount"></span>
+          </div>
+          <div id="schedule"><div class="skeleton w80"></div><div class="skeleton w60"></div></div>
+        </section>
+
         <section class="card">
           <div class="card-header">
             <h2 class="card-title">Guidance from the nurse</h2>
@@ -124,7 +148,8 @@
 
         <section class="card">
           <div class="card-header">
-            <h2 class="card-title">Recorded today · <span id="todayName">resident</span></h2>
+            <h2 class="card-title">This shift so far · <span id="todayName">resident</span></h2>
+            <a class="btn btn-secondary btn-sm" href="/handover">Go to handover</a>
           </div>
           <div class="table-wrap">
             <table class="tbl">

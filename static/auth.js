@@ -10,6 +10,7 @@
   const ALLOWED_ROLES_BY_PATH = {
     "/nurse": ["nurse"],
     "/carer": ["carer", "nurse"],
+    "/handover": ["carer", "nurse"],
     "/guidance": ["nurse"],
     "/ocr": ["nurse"],
     "/vision": ["nurse"],
@@ -29,14 +30,16 @@
   const NAV_BY_ROLE = {
     nurse: [
       { href: "/nurse", label: "Dashboard" },
+      { href: "/nurse/handover", label: "Handovers" },
+      { href: "/nurse/schedule", label: "Schedule" },
       { href: "/guidance", label: "Guidance" },
-      { href: "/ocr", label: "Health reports" },
-      { href: "/vision", label: "Camera checks" },
+      { href: "/ocr", label: "Reports" },
+      { href: "/vision", label: "Camera" },
       { href: "/ask", label: "Ask AI" },
-      { href: "/carer", label: "Carer sheet" },
     ],
     carer: [
       { href: "/carer", label: "My shift" },
+      { href: "/handover", label: "Handover" },
       { href: "/ask", label: "Ask AI" },
     ],
     manager: [{ href: "/manager", label: "User accounts" }],
