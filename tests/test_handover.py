@@ -157,3 +157,20 @@ def test_nurse_and_family_chat_about_one_resident():
 
     assert client.post("/api/chat/1/read", headers=nurse).json()["marked"] == 2
     assert all(m["read_by"] for m in client.get("/api/chat/1", headers=nurse).json())
+
+
+def test_family_draft_with_clinical_readings_falls_back_to_rules(monkeypatch):
+    nurse, carer1 = login("nurse1"), login("carer1")
+    client.post("/api/carer/notes", json={"resident_id": 1, "text": "Coughing at lunch"}, headers=carer1)
+    draft = client.post("/api/handovers/draft", json={"resident_id": 1}, headers=carer1).json()
+    client.post(f"/api/handovers/{draft['id']}/send", json={"text": draft["text"]}, headers=carer1)
+    client.post(f"/api/handovers/{draft['id']}/review", json={"decision": "approve", "text": draft["text"]}, headers=nurse)
+
+    monkeypatch.setattr(handover, "ask_model", lambda s, u: "Kia ora. Margaret has a low SpO2 today.")
+    fam = client.post(f"/api/handovers/{draft['id']}/family-draft", headers=nurse).json()
+    assert fam["drafted_by"] == "Rules"
+    assert "SpO2" not in fam["text"]
+
+    monkeypatch.setattr(handover, "ask_model", lambda s, u: "Kia ora. Margaret had a quiet day and enjoyed her shower.")
+    fam = client.post(f"/api/handovers/{draft['id']}/family-draft", headers=nurse).json()
+    assert fam["drafted_by"] == "AI"

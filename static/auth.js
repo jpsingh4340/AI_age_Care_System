@@ -108,6 +108,7 @@
     item.className = "toast" + (isError ? " err" : "");
     item.textContent = text;
     host.appendChild(item);
+    while (host.children.length > 3) host.firstChild.remove(); // keep the corner tidy
     setTimeout(function () {
       item.remove();
     }, 3500);

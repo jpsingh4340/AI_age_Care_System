@@ -9,6 +9,7 @@
 #
 # Every endpoint checks the signed-in user's session and role on the server.
 import json
+import re
 import sqlite3
 from datetime import datetime
 from pathlib import Path
@@ -27,6 +28,13 @@ router = APIRouter(tags=["Handover"])
 
 STATIC_DIR = Path(__file__).resolve().parents[2] / "static"
 STATUS_TEXT = {"given": "done", "refused": "refused", "not_done": "not done"}
+
+# Families should not see clinical readings or scores, only plain words.
+CLINICAL_FOR_FAMILY = re.compile(
+    r"\b(spo2|sp02|oxygen|saturation|pulse|heart rate|blood pressure|bp|temperature|temp|nzews|ews|"
+    r"mmhg|bpm|vital signs?|score)\b|\d+\s?(%|°)",
+    re.IGNORECASE,
+)
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS carer_notes (
@@ -254,7 +262,7 @@ def draft_family_from_handover(person: dict, handover_text: str) -> tuple[str, s
     first = person["name"].split(" ")[0]
     try:
         text = ask_model(FAMILY_FROM_HANDOVER_SYSTEM, f"Resident: {person['name']}\nHandover:\n{handover_text}")
-        if len(text) > 20 and not guidance.contains_blocked(text):
+        if len(text) > 20 and not guidance.contains_blocked(text) and not CLINICAL_FOR_FAMILY.search(text):
             return text, "AI"
     except Exception:
         pass
