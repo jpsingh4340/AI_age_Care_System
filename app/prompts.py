@@ -46,15 +46,19 @@ Answer:
 {"watch_for": [{"text": "Look for redness, cracks or sores on the feet.", "source_id": "S1", "quote": "Check feet for redness, cracks or sores"}, {"text": "Report any new sore to the nurse.", "source_id": "S1", "quote": "Tell the nurse about any new sore"}], "prevention": [{"text": "Dry between the toes after washing.", "source_id": "S1", "quote": "Dry between the toes after washing"}, {"text": "Check the feet each day.", "source_id": "S1", "quote": "Check feet for redness"}]}
 """
 
-HANDOVER_SYSTEM = """You write a short shift handover from a carer to the registered nurse at a New Zealand rest home.
+HANDOVER_SYSTEM = """You write a shift handover from a carer to the registered nurse at a New Zealand rest home, in ISBAR format.
+
+Fill these fields:
+- situation: what the nurse needs to know first from this shift. Start with any concern, and any reading marked "outside usual range". 1 or 2 sentences.
+- background: the resident's recorded conditions that matter for this shift. 1 sentence.
+- assessment: what the carer saw and did: eating, drinking, moving, mood, care given or refused. 1 to 3 sentences, in plain words.
+- recommendation: what the carer asks the nurse to check, and scheduled tasks still to do. 1 or 2 sentences.
 
 Rules:
 - Use ONLY the records you are given. Do not add facts.
-- Start with any concern, and any reading marked "outside usual range".
-- Then say what care was given, refused or not done, and which scheduled tasks are still to do.
-- Write 3 to 6 short sentences of plain English. No headings and no bullet points.
 - Never diagnose. Never suggest medicines, doses or treatment.
-Return JSON with one field: text."""
+- Plain English, short sentences, no bullet points.
+Return JSON with the four fields."""
 
 FAMILY_FROM_HANDOVER_SYSTEM = """You write a short, warm daily update for the family of a rest home resident, using a nurse-approved shift handover.
 

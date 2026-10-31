@@ -13,6 +13,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, Header, HTTPException
 from fastapi.responses import FileResponse, RedirectResponse
+from pydantic import BaseModel
 
 from app import auth, db, guidance, ollama_client
 from app.config import CHAT_MODEL
@@ -391,3 +392,22 @@ def manager_delete_user(
     audit(sess["full_name"], "manager", "user_removed", None, username)
     return {"ok": True}
 
+
+
+class MedicineSignOff(BaseModel):
+    competent: bool
+
+
+@router.put("/api/manager/users/{username}/medicines")
+def manager_medicine_sign_off(
+    username: str,
+    body: MedicineSignOff,
+    authorization: str = Header(default=""),
+    x_session_token: str = Header(default=""),
+):
+    """Sign a carer off as medication competent (or take it back). Nurses can always give medicines."""
+    sess = require(("manager",), authorization, x_session_token)
+    if not auth.set_med_competent(username, body.competent):
+        raise HTTPException(404, "No carer account with that username.")
+    audit(sess["full_name"], "manager", "medicine_sign_off" if body.competent else "medicine_sign_off_removed", None, username)
+    return {"ok": True, "username": username.strip().lower(), "med_competent": body.competent}
