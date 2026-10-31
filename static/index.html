@@ -42,8 +42,6 @@
 
       <aside class="stack">
         <section class="card" id="needs"><div class="skeleton w60"></div><div class="skeleton w80"></div></section>
-        <section class="card" id="familyUpdates"></section>
-        <section class="card" id="familyMessages"></section>
         <section class="card" id="activity"></section>
       </aside>
     </div>
@@ -64,11 +62,9 @@
       selected: null,
       decisions: new Map(),
       thinking: new Set(),
-      famUpdates: [],
+      handovers: [],
       famMessages: [],
       visionAlerts: [],
-      famEdits: new Map(),
-      draftingFam: false,
     };
 
     function h(tag, props, ...kids) {
@@ -178,17 +174,17 @@
         })
       );
 
-      const [pending, audit, famU, famM, visionA] = await Promise.all([
+      const [pending, audit, handovers, famM, visionA] = await Promise.all([
         api("/api/guidance/pending"),
         api("/api/audit?limit=10"),
-        api("/api/family-updates"),
+        api("/api/handovers?status=waiting"),
         api("/api/messages"),
         api("/api/vision/alerts?open_only=true"),
       ]);
 
       state.pending = pending;
       state.audit = audit;
-      state.famUpdates = famU.ok ? famU.data : [];
+      state.handovers = handovers.ok && Array.isArray(handovers.data) ? handovers.data : [];
       state.famMessages = famM.ok ? famM.data : [];
       state.visionAlerts = visionA.ok && Array.isArray(visionA.data) ? visionA.data : [];
 
@@ -303,10 +299,11 @@
       );
     }
 
-    function needItem(title, time, text, urgent) {
+    function needItem(title, time, text, urgent, href) {
+      const label = href ? h("a", { href: href, text: title }) : title;
       return h("li", { class: "list-item", style: "flex-direction: column; gap: 2px;" },
         h("div", { class: "between", style: "width: 100%;" },
-          h("strong", { style: urgent ? "color: var(--red);" : null, text: title }),
+          h("strong", { style: urgent ? "color: var(--red);" : null }, label),
           time ? h("span", { class: "mono-time", text: time }) : null
         ),
         h("span", { class: "sub-text", text: text })
@@ -315,6 +312,19 @@
 
     function renderNeeds() {
       const items = [];
+      for (const ho of state.handovers || []) {
+        items.push(needItem(ho.resident + " · handover", (ho.sent_at || "").slice(11, 16),
+          "From " + ho.carer + ". Check and approve.", false, "/nurse/handover?resident=" + ho.resident_id));
+      }
+      const unread = {};
+      for (const m of state.famMessages || []) {
+        if (!m.read_by && (m.sender_role || "family") === "family") unread[m.resident_id] = (unread[m.resident_id] || 0) + 1;
+      }
+      for (const [rid, n] of Object.entries(unread)) {
+        const p = state.people.find((x) => String(x.resident_id) === String(rid));
+        items.push(needItem((p ? p.name : "Resident") + " · family", null,
+          n + (n === 1 ? " new message" : " new messages") + " from the family", false, "/nurse/handover?resident=" + rid));
+      }
       for (const a of state.visionAlerts || []) {
         const p = state.people.find((x) => x.resident_id === a.resident_id);
         items.push(needItem("Camera alert: " + (a.alert_type === "high_cue" ? "face check" : String(a.alert_type).replace(/_/g, " ")),
@@ -328,128 +338,13 @@
       }
       if (state.pending && state.pending.ok && Array.isArray(state.pending.data)) {
         for (const d of state.pending.data) {
-          items.push(needItem(d.resident + " · guidance draft", null, d.lines + " lines to check and approve on the Guidance page", false));
+          items.push(needItem(d.resident + " · guidance draft", null, d.lines + " lines to check and approve", false, "/guidance"));
         }
       }
       fill(
         "needs",
         head("Waiting for you", null, h("span", { class: "badge " + (items.length ? "badge-red" : "badge-neutral"), text: String(items.length) })),
-        items.length ? h("ul", { class: "audit-list" }, items) : h("p", { class: "empty", text: "Nothing waiting. No concerns, drafts or camera alerts." })
-      );
-    }
-
-    function renderFamilyUpdates(person) {
-      const latest = state.famUpdates.find((u) => Number(u.resident_id) === Number(person.resident_id));
-      const draftBtn = h("button", {
-        type: "button",
-        class: "btn btn-secondary btn-sm",
-        disabled: state.draftingFam ? "disabled" : false,
-        text: state.draftingFam ? "Drafting…" : latest && latest.status === "draft" ? "Draft again" : "Draft with AI",
-      });
-
-      draftBtn.addEventListener("click", async () => {
-        state.draftingFam = true;
-        renderFamilyUpdates(person);
-        const res = await api("/api/family-updates/draft", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ resident_id: person.resident_id }),
-        });
-        state.draftingFam = false;
-        if (res.ok) {
-          state.famEdits.delete(res.data.id);
-          const list = await api("/api/family-updates");
-          if (list.ok) state.famUpdates = list.data;
-          state.audit = await api("/api/audit?limit=10");
-          if (window.showToast) window.showToast("Family update drafted for " + person.name);
-        }
-        renderFamilyUpdates(person);
-        renderActivity();
-      });
-
-      const top = head("Family update", "For " + person.name + "'s family", draftBtn);
-
-      if (!latest) {
-        fill("familyUpdates", top, h("p", { class: "empty", text: "No update today. Draft one, check it, then send it to the family." }));
-        return;
-      }
-
-      const isPending = latest.status === "draft";
-      const val = isPending && state.famEdits.has(latest.id) ? state.famEdits.get(latest.id) : latest.text;
-      const box = h("textarea", {
-        class: "field",
-        rows: "4",
-        "aria-label": "Family update text",
-        readonly: !isPending ? "readonly" : false,
-      });
-      box.value = val;
-      box.addEventListener("input", (e) => state.famEdits.set(latest.id, e.target.value));
-
-      const approveBtn = isPending ? h("button", { type: "button", class: "btn btn-primary btn-sm", text: "Approve and send" }) : null;
-      if (approveBtn) {
-        approveBtn.addEventListener("click", async () => {
-          const textToSend = (state.famEdits.has(latest.id) ? state.famEdits.get(latest.id) : latest.text).trim();
-          const res = await api("/api/family-updates/" + latest.id + "/send", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text: textToSend }),
-          });
-          if (res.ok) {
-            const list = await api("/api/family-updates");
-            if (list.ok) state.famUpdates = list.data;
-            state.audit = await api("/api/audit?limit=10");
-            if (window.showToast) window.showToast("Update sent to the family");
-            renderFamilyUpdates(person);
-            renderActivity();
-          }
-        });
-      }
-
-      fill(
-        "familyUpdates",
-        top,
-        h("div", { class: "between", style: "margin-bottom: 8px;" },
-          h("span", { class: "sub-text", text: isPending ? "Drafted by " + latest.drafted_by + ". Edit if needed." : "Approved by " + (latest.approved_by || "nurse") }),
-          h("span", { class: "badge " + (isPending ? "badge-amber" : "badge-green"), text: isPending ? "Needs review" : "Sent " + (latest.sent_at || "").slice(11, 16) })
-        ),
-        box,
-        approveBtn ? h("div", { class: "form-actions", style: "justify-content: flex-end; margin-top: 12px;" }, approveBtn) : null
-      );
-    }
-
-    function renderFamilyMessages() {
-      const unread = state.famMessages.filter((m) => !m.read_by).length;
-      const top = head("Messages from families", null, h("span", { class: "badge " + (unread ? "badge-amber" : "badge-neutral"), text: unread + " new" }));
-
-      if (!state.famMessages.length) {
-        fill("familyMessages", top, h("p", { class: "empty", text: "No messages from families." }));
-        return;
-      }
-
-      fill(
-        "familyMessages",
-        top,
-        h("ul", { class: "audit-list" },
-          state.famMessages.slice(0, 5).map((m) => {
-            const markBtn = !m.read_by ? h("button", { type: "button", class: "btn btn-quiet btn-sm", style: "align-self: flex-start;", text: "Mark as read" }) : null;
-            if (markBtn) {
-              markBtn.addEventListener("click", async () => {
-                await api("/api/messages/" + m.id + "/read", { method: "POST" });
-                const famM = await api("/api/messages");
-                if (famM.ok) state.famMessages = famM.data;
-                renderFamilyMessages();
-              });
-            }
-            return h("li", { class: "list-item", style: "flex-direction: column; gap: 4px;" },
-              h("div", { class: "between", style: "width: 100%;" },
-                h("strong", { text: m.from_name }),
-                h("span", { class: "mono-time", text: (m.created_at || "").slice(11, 16) })
-              ),
-              h("div", { class: "text-sm", text: m.text }),
-              markBtn
-            );
-          })
-        )
+        items.length ? h("ul", { class: "audit-list" }, items) : h("p", { class: "empty", text: "Nothing waiting. No handovers, messages, concerns, drafts or camera alerts." })
       );
     }
 
@@ -603,8 +498,6 @@
       renderGuide(person);
       renderContacts(rec);
       renderNeeds();
-      renderFamilyUpdates(person);
-      renderFamilyMessages();
       renderActivity();
     }
 
