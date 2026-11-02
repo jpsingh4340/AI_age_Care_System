@@ -1170,3 +1170,17 @@ input[type="file"].field { padding: 8px; }
 /* Medicine round tag: restricted to nurses and signed-off carers */
 .badge-med { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent); }
 .med-notice { margin-top: 8px; }
+
+/* Medicines in a round */
+.med-box { border: 1px solid var(--accent-line); background: var(--accent-soft); border-radius: var(--r-card); padding: 12px; margin: 0 0 16px; }
+.med-box h4 { margin: 0 0 4px; font-size: 14px; }
+.med-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px 8px; align-items: end; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--accent-line); }
+.med-row:first-child { border-top: 0; padding-top: 0; }
+.med-row > button { grid-column: 1 / -1; justify-self: end; }
+.med-row .field { min-height: 40px; padding: 8px 10px; font-size: 14px; background: var(--card); }
+.med-row label { font-size: 12px; margin-bottom: 2px; }
+.med-list { list-style: none; margin: 6px 0 0; padding: 0; }
+.med-list li { font-size: 14px; padding: 4px 0; }
+.med-list li strong { font-weight: 600; }
+.med-list .how { color: var(--ink-2); }
+.med-checked { font-size: 12px; color: var(--muted); margin-top: 2px; }

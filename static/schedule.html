@@ -78,12 +78,13 @@
             <input type="checkbox" id="newMedicine">
             <span>Medicine round <span class="hint" id="medHint">only a nurse or signed-off carer can tick it</span></span>
           </label>
+          <div id="newMeds"></div>
           <div class="form-actions" style="margin-top: 0;">
             <p class="text-sm" id="addMsg" role="status"></p>
             <button type="submit" class="btn btn-primary">Add task</button>
           </div>
         </form>
-        <p class="sub-text" style="margin-top: 16px;">Medicines: only staff signed off as medication competent should give them. The medicine chart stays the record; this list is a reminder.</p>
+        <p class="sub-text" style="margin-top: 16px;">Medicines: copy them from the resident's medicine chart, which stays the legal record. The AI never suggests medicines, and families never see this list. Only staff signed off as medication competent can tick a round; injections are for nurses only.</p>
       </aside>
     </div>
   </main>
@@ -124,6 +125,82 @@
       if (box.id === "newMedicine") $("medNotice").classList.toggle("hidden", !box.checked);
     }
 
+    const ROUTES = ["By mouth", "Under the tongue", "Inhaled", "Eye drops", "Ear drops", "On the skin", "Patch", "Injection (nurse only)", "Other"];
+
+    // The list of medicines in a round. The nurse types them from the medicine chart.
+    function medEditor(meds, residentName) {
+      const box = el("div", "med-box");
+      box.append(el("h4", "", "Medicines in this round"));
+      box.append(el("p", "sub-text", "Copy each medicine from the medicine chart. Leave empty if you only want a reminder."));
+      const rows = el("div");
+      box.append(rows);
+
+      function addRow(m) {
+        m = m || {};
+        const row = el("div", "med-row");
+        const field = (label, input) => { const w = el("div"); const l = el("label", "", label); w.append(l, input); return w; };
+        const name = el("input", "field"); name.maxLength = 60; name.value = m.name || ""; name.placeholder = "Paracetamol";
+        const dose = el("input", "field"); dose.maxLength = 40; dose.value = m.dose || ""; dose.placeholder = "1 g";
+        const route = el("select", "field");
+        ROUTES.forEach((r) => route.add(new Option(r, r, false, r === (m.route || "By mouth"))));
+        const how = el("input", "field"); how.maxLength = 120; how.value = m.instructions || ""; how.placeholder = "With food";
+        const remove = el("button", "btn btn-quiet btn-sm", "Remove");
+        remove.type = "button";
+        remove.addEventListener("click", () => row.remove());
+        row.append(field("Medicine", name), field("Dose", dose), field("How", route), field("Instructions", how), remove);
+        row.read = () => ({ name: name.value.trim(), dose: dose.value.trim(), route: route.value, instructions: how.value.trim() });
+        rows.append(row);
+        return row;
+      }
+
+      (meds || []).forEach(addRow);
+      const more = el("button", "btn btn-secondary btn-sm", "Add a medicine");
+      more.type = "button";
+      more.style.marginTop = "10px";
+      more.addEventListener("click", () => addRow().querySelector("input").focus());
+      box.append(more);
+
+      const confirm = el("label", "choice bare");
+      confirm.style.cssText = "margin-top: 12px; font-weight: 500; align-items: flex-start;";
+      const tick = el("input");
+      tick.type = "checkbox";
+      confirm.append(tick, el("span", "", "I have checked these against " + (residentName || "the resident") + "'s medicine chart"));
+      box.append(confirm);
+
+      return {
+        node: box,
+        get() {
+          const meds = [...rows.children].map((r) => r.read()).filter((m) => m.name || m.dose);
+          return { meds: meds, chart_checked: tick.checked };
+        },
+        clear() { rows.replaceChildren(); tick.checked = false; },
+      };
+    }
+
+    function medList(item) {
+      const wrap = el("div");
+      if (!item.meds || !item.meds.length) {
+        wrap.append(el("div", "sub-text", "No medicines listed yet. Edit to add them from the chart."));
+        return wrap;
+      }
+      const ul = el("ul", "med-list");
+      for (const m of item.meds) {
+        const li = el("li");
+        li.append(el("strong", "", m.name), document.createTextNode(" " + m.dose + " "), el("span", "how", "· " + m.route + (m.instructions ? " · " + m.instructions : "")));
+        ul.append(li);
+      }
+      wrap.append(ul);
+      if (item.meds_checked_by) {
+        wrap.append(el("div", "med-checked", "Checked against the chart by " + item.meds_checked_by + ", " + (item.meds_checked_at || "").slice(0, 10)));
+      }
+      return wrap;
+    }
+
+    function currentName() {
+      const p = state.people.find((x) => Number(x.resident_id) === Number(state.selected));
+      return p ? p.name : "";
+    }
+
     function nowHHMM() {
       const d = new Date();
       return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
@@ -144,6 +221,10 @@
       try { data = await res.json(); } catch (e) {}
       if (!res.ok) {
         const d = data && data.detail;
+        if (Array.isArray(d) && d.length) {
+          const where = (x) => (x.loc || []).filter((v) => typeof v === "string" && v !== "body").join(" ");
+          throw new Error("Please check: " + d.map((x) => where(x) || "the form").join(", ") + ".");
+        }
         throw new Error(typeof d === "string" ? d : "Please check the task name and time.");
       }
       return data;
@@ -197,7 +278,11 @@
         task.append(el("strong", "", item.task));
         if (item.medicine) task.append(document.createTextNode(" "), el("span", "badge badge-med", "Medicine"));
         if (item.note) task.append(el("div", "sub-text", item.note));
-        if (item.medicine) task.append(el("div", "sub-text", "Nurse or signed-off carer only"));
+        if (item.medicine) {
+          const injection = (item.meds || []).some((m) => m.route.startsWith("Injection"));
+          task.append(el("div", "sub-text", injection ? "Includes an injection: nurse only" : "Nurse or signed-off carer only"));
+          task.append(medList(item));
+        }
         const days = tr.insertCell();
         days.className = "sub-text";
         days.textContent = daysText(item.days);
@@ -249,14 +334,19 @@
       medText.append(medHint);
       medLabel.append(med, medText);
       syncMedicine(med, item.task, medHint);
-      task.addEventListener("input", () => syncMedicine(med, task.value, medHint));
+      const editor = medEditor(item.meds, currentName());
+      const showEditor = () => { editor.node.hidden = !med.checked; };
+      task.addEventListener("input", () => { syncMedicine(med, task.value, medHint); showEditor(); });
+      med.addEventListener("change", showEditor);
+      showEditor();
       const msg = el("p", "text-sm");
       const save = el("button", "btn btn-primary btn-sm", "Save");
       const cancel = el("button", "btn btn-secondary btn-sm", "Cancel");
       save.type = cancel.type = "button";
       save.addEventListener("click", async () => {
         try {
-          await send("PUT", "/api/schedule/" + item.id, { task: task.value.trim(), time: t.value, note: note.value.trim(), days: chosenDays(days), medicine: med.checked });
+          const m = med.checked ? editor.get() : { meds: [], chart_checked: false };
+          await send("PUT", "/api/schedule/" + item.id, { task: task.value.trim(), time: t.value, note: note.value.trim(), days: chosenDays(days), medicine: med.checked, meds: m.meds, chart_checked: m.chart_checked });
           state.editing = null;
           if (window.showToast) window.showToast("Saved");
           loadItems();
@@ -268,7 +358,8 @@
       const right = el("div", "inline");
       right.append(cancel, save);
       actions.append(msg, right);
-      wrap.append(grid, days, medLabel, actions);
+      editor.node.style.marginTop = "10px";
+      wrap.append(grid, days, medLabel, editor.node, actions);
       setTimeout(() => task.focus(), 0);
       return wrap;
     }
@@ -283,7 +374,19 @@
     $("newDays").replaceWith(Object.assign(dayChips([]), { id: "newDays" }));
     $("newTask").addEventListener("input", () => syncMedicine($("newMedicine"), $("newTask").value, $("medHint")));
 
-    $("newMedicine").addEventListener("change", () => $("medNotice").classList.toggle("hidden", !$("newMedicine").checked));
+    let newEditor = medEditor([], "");
+    $("newMeds").replaceWith(Object.assign(newEditor.node, { id: "newMeds" }));
+    function showNewEditor() {
+      const box = $("newMeds");
+      box.hidden = !$("newMedicine").checked;
+      const label = box.querySelector(".choice.bare span");
+      if (label) label.textContent = "I have checked these against " + (currentName() || "the resident") + "'s medicine chart";
+    }
+    showNewEditor();
+    $("newTask").addEventListener("input", showNewEditor);
+    $("quick").addEventListener("click", showNewEditor);
+    $("residentPills").addEventListener("click", showNewEditor);
+    $("newMedicine").addEventListener("change", () => { $("medNotice").classList.toggle("hidden", !$("newMedicine").checked); showNewEditor(); });
 
     $("addForm").addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -296,6 +399,7 @@
           note: $("newNote").value.trim(),
           days: chosenDays($("newDays")),
           medicine: $("newMedicine").checked,
+          ...($("newMedicine").checked ? newEditor.get() : { meds: [], chart_checked: false }),
         });
         msg.className = "text-sm alert-success";
         msg.textContent = "Added " + $("newTask").value.trim() + ".";
@@ -304,6 +408,8 @@
         $("newNote").value = "";
         $("newMedicine").checked = false;
         syncMedicine($("newMedicine"), "", $("medHint"));
+        newEditor.clear();
+        showNewEditor();
         $("newDays").querySelectorAll("input").forEach((b) => { b.checked = false; });
         loadItems();
       } catch (err) {

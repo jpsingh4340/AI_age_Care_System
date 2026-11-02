@@ -264,6 +264,40 @@ def test_medicine_words_always_make_a_medicine_round():
     assert plain["medicine"] is False
 
 
+def test_nurse_lists_the_medicines_in_a_round():
+    nurse, carer1 = login("nurse1"), login("carer1")
+    meds = [{"name": "Paracetamol", "dose": "1 g", "route": "By mouth", "instructions": "With food"},
+            {"name": "Eye lubricant", "dose": "1 drop each eye", "route": "Eye drops"}]
+    body = {"resident_id": 1, "task": "Morning medicine round", "time": "08:00", "meds": meds}
+    unchecked = client.post("/api/schedule", json=body, headers=nurse)
+    assert unchecked.status_code == 422  # must confirm the medicine chart was checked
+    item = client.post("/api/schedule", json={**body, "chart_checked": True}, headers=nurse).json()
+    assert [m["name"] for m in item["meds"]] == ["Paracetamol", "Eye lubricant"]
+    assert item["meds_checked_by"] == "Nurse Sarah Johnson (RN)"
+    seen = client.get("/api/schedule?resident_id=1", headers=carer1).json()[0]
+    assert seen["meds"][0]["instructions"] == "With food"
+
+    # medicines are dropped from a task that is not a medicine round
+    plain = client.post("/api/schedule", json={"resident_id": 1, "task": "Shower", "meds": meds, "chart_checked": True}, headers=nurse).json()
+    assert plain["meds"] == []
+
+    # editing keeps the confirmation rule
+    edit = {"task": "Morning medicine round", "time": "08:30", "meds": meds[:1]}
+    assert client.put(f"/api/schedule/{item['id']}", json=edit, headers=nurse).status_code == 422
+    changed = client.put(f"/api/schedule/{item['id']}", json={**edit, "chart_checked": True}, headers=nurse).json()
+    assert len(changed["meds"]) == 1 and changed["time"] == "08:30"
+
+
+def test_injection_rounds_are_for_nurses_only():
+    nurse, carer1, manager = login("nurse1"), login("carer1"), login("manager1")
+    client.put("/api/manager/users/carer1/medicines", json={"competent": True}, headers=manager)
+    meds = [{"name": "Insulin", "dose": "as charted", "route": "Injection (nurse only)"}]
+    item = client.post("/api/schedule", json={"resident_id": 1, "task": "Insulin", "meds": meds, "chart_checked": True}, headers=nurse).json()
+    assert client.get("/api/schedule?resident_id=1", headers=carer1).json()[0]["can_tick"] is False
+    assert client.post(f"/api/schedule/{item['id']}/done", json={"done": True}, headers=carer1).status_code == 403
+    assert client.post(f"/api/schedule/{item['id']}/done", json={"done": True}, headers=nurse).status_code == 200
+
+
 def test_older_medicine_tasks_are_locked_too():
     nurse, carer1 = login("nurse1"), login("carer1")
     item = client.post("/api/schedule", json={"resident_id": 1, "task": "Shower"}, headers=nurse).json()

@@ -104,6 +104,9 @@ MIGRATIONS = {
     "care_schedule": [
         ("days", "TEXT NOT NULL DEFAULT ''"),        # '' = every day, else e.g. 'mon,wed,fri'
         ("medicine", "INTEGER NOT NULL DEFAULT 0"),  # a medicine round: only medication-competent staff tick it
+        ("meds", "TEXT NOT NULL DEFAULT '[]'"),      # JSON: the medicines in the round, typed by the nurse from the chart
+        ("meds_checked_by", "TEXT NOT NULL DEFAULT ''"),
+        ("meds_checked_at", "TEXT NOT NULL DEFAULT ''"),
     ],
     "handovers": [("shift_key", "TEXT NOT NULL DEFAULT ''"), ("shift_label", "TEXT NOT NULL DEFAULT ''")],
     "family_messages": [("sender_role", "TEXT NOT NULL DEFAULT 'family'")],
@@ -196,6 +199,7 @@ def schedule_rows(con: sqlite3.Connection, resident_id: int, day: date | None = 
         item = dict(r)
         item["medicine"] = medicine_item(item)
         item["days"] = [d for d in item["days"].split(",") if d]
+        item["meds"] = json.loads(item.get("meds") or "[]") if item["medicine"] else []
         item["planned_today"] = applies_on(dict(r), day)
         if every or item["planned_today"]:
             out.append(item)
@@ -525,12 +529,26 @@ def delete_note(note_id: int, authorization: str = Header(default=""), x_session
 Day = Literal["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
 
 
+Route = Literal["By mouth", "Under the tongue", "Inhaled", "Eye drops", "Ear drops", "On the skin", "Patch",
+                "Injection (nurse only)", "Other"]
+
+
+class MedLine(BaseModel):
+    """One medicine in a round, copied by the nurse from the resident's medicine chart. Never written by the AI."""
+    name: str = Field(min_length=2, max_length=60)
+    dose: str = Field(min_length=1, max_length=40)
+    route: Route = "By mouth"
+    instructions: str = Field(default="", max_length=120)
+
+
 class ScheduleEdit(BaseModel):
     task: str = Field(min_length=2, max_length=60)
     time: str = Field(default="", pattern=r"^(\d{2}:\d{2})?$")
     note: str = Field(default="", max_length=200)
     days: list[Day] = []           # empty, or all seven, means every day
     medicine: bool = False         # a medicine round; names with medicine words always are
+    meds: list[MedLine] = Field(default=[], max_length=12)
+    chart_checked: bool = False    # the nurse confirms the medicines match the medicine chart
 
 
 class ScheduleIn(ScheduleEdit):
@@ -552,6 +570,24 @@ def is_medicine(body: ScheduleEdit) -> bool:
     return body.medicine or bool(MEDICINE_WORDS.search(body.task))
 
 
+def meds_value(body: ScheduleEdit, sess: dict) -> tuple[str, str, str]:
+    """(meds JSON, checked by, checked at). Medicines are only kept on a medicine round,
+    and the nurse must confirm they were checked against the medicine chart."""
+    if not is_medicine(body) or not body.meds:
+        return "[]", "", ""
+    if not body.chart_checked:
+        raise HTTPException(422, "Tick the box to confirm you checked these medicines against the medicine chart.")
+    meds = [{**m.model_dump(), "name": m.name.strip(), "dose": m.dose.strip(), "instructions": m.instructions.strip()}
+            for m in body.meds]
+    return json.dumps(meds), sess["full_name"], now()
+
+
+def nurse_only_round(row) -> bool:
+    """Injections are given by a nurse, even if a carer is signed off for other medicines."""
+    meds = json.loads(row["meds"] or "[]") if "meds" in row.keys() else []
+    return any(m.get("route", "").startswith("Injection") for m in meds)
+
+
 def medicine_item(row) -> bool:
     """Also applies to tasks saved before this rule existed."""
     return bool(row["medicine"]) or bool(MEDICINE_WORDS.search(row["task"]))
@@ -571,7 +607,8 @@ def get_schedule(
     con.close()
     meds_ok = auth.can_give_medicines(sess["username"], sess["role"])
     for item in rows:
-        item["can_tick"] = meds_ok or not item["medicine"]
+        injection = any(m.get("route", "").startswith("Injection") for m in item["meds"])
+        item["can_tick"] = not item["medicine"] or (meds_ok and (sess["role"] == "nurse" or not injection))
     return rows
 
 
@@ -580,16 +617,18 @@ def add_schedule(body: ScheduleIn, authorization: str = Header(default=""), x_se
     sess = signed_in(("nurse",), authorization, x_session_token)
     portal.resident_or_404(body.resident_id)
     con = get_db()
+    meds, checked_by, checked_at = meds_value(body, sess)
     with con:
         cur = con.execute(
-            "INSERT INTO care_schedule (resident_id, task, time, note, days, medicine, created_by, created_at) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO care_schedule (resident_id, task, time, note, days, medicine, meds, meds_checked_by, meds_checked_at, "
+            "created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (body.resident_id, body.task.strip(), body.time, body.note.strip(), days_value(body.days),
-             int(is_medicine(body)), sess["full_name"], now()),
+             int(is_medicine(body)), meds, checked_by, checked_at, sess["full_name"], now()),
         )
     item = next(i for i in schedule_rows(con, body.resident_id, every=True) if i["id"] == cur.lastrowid)
     con.close()
-    portal.audit(sess["full_name"], "nurse", "schedule_task_added", body.resident_id, f"{body.time} {body.task}".strip())
+    detail = f"{body.time} {body.task}".strip() + (f", {len(item['meds'])} medicines checked against chart" if item["meds"] else "")
+    portal.audit(sess["full_name"], "nurse", "schedule_task_added", body.resident_id, detail)
     return item
 
 
@@ -606,14 +645,18 @@ def edit_schedule(
     if not row:
         con.close()
         raise HTTPException(404, "Task not found.")
+    meds, checked_by, checked_at = meds_value(body, sess)
     with con:
         con.execute(
-            "UPDATE care_schedule SET task = ?, time = ?, note = ?, days = ?, medicine = ?, updated_at = ? WHERE id = ?",
-            (body.task.strip(), body.time, body.note.strip(), days_value(body.days), int(is_medicine(body)), now(), item_id),
+            "UPDATE care_schedule SET task = ?, time = ?, note = ?, days = ?, medicine = ?, meds = ?, meds_checked_by = ?, "
+            "meds_checked_at = ?, updated_at = ? WHERE id = ?",
+            (body.task.strip(), body.time, body.note.strip(), days_value(body.days), int(is_medicine(body)),
+             meds, checked_by, checked_at, now(), item_id),
         )
     item = next(i for i in schedule_rows(con, row["resident_id"], every=True) if i["id"] == item_id)
     con.close()
-    portal.audit(sess["full_name"], "nurse", "schedule_task_changed", row["resident_id"], f"{body.time} {body.task}".strip())
+    detail = f"{body.time} {body.task}".strip() + (f", {len(item['meds'])} medicines checked against chart" if item["meds"] else "")
+    portal.audit(sess["full_name"], "nurse", "schedule_task_changed", row["resident_id"], detail)
     return item
 
 
@@ -646,6 +689,9 @@ def tick_schedule(
     if not row:
         con.close()
         raise HTTPException(404, "Task not found.")
+    if nurse_only_round(row) and sess["role"] != "nurse":
+        con.close()
+        raise HTTPException(403, "This round includes an injection, so only a nurse can tick it.")
     if medicine_item(row) and not auth.can_give_medicines(sess["username"], sess["role"]):
         con.close()
         raise HTTPException(

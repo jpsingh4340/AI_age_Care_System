@@ -264,9 +264,23 @@ async function loadSchedule() {
     var meta = item.done_at
       ? "Done by " + item.done_by + " at " + timeOnly(item.done_at)
       : locked
-        ? "Only a nurse or a carer signed off for medicines can tick this. Tell the nurse."
+        ? (item.meds || []).some(function (m) { return m.route.indexOf("Injection") === 0; })
+          ? "Includes an injection, so only a nurse can tick this. Tell the nurse."
+          : "Only a nurse or a carer signed off for medicines can tick this. Tell the nurse."
         : item.note || "Not done yet";
     text.appendChild(el("span", "meta", meta));
+    if (item.meds && item.meds.length) {
+      var ul = el("ul", "med-list");
+      item.meds.forEach(function (m) {
+        var li = el("li");
+        li.appendChild(el("strong", "", m.name));
+        li.appendChild(document.createTextNode(" " + m.dose + " "));
+        li.appendChild(el("span", "how", "· " + m.route + (m.instructions ? " · " + m.instructions : "")));
+        ul.appendChild(li);
+      });
+      text.appendChild(ul);
+      if (item.meds_checked_by) text.appendChild(el("span", "meta", "Checked against the chart by " + item.meds_checked_by));
+    }
     if (locked) row.style.cursor = "default";
     sw.addEventListener("change", async function () {
       sw.disabled = true;
