@@ -1166,3 +1166,7 @@ input[type="file"].field { padding: 8px; }
 .shift-choice { display: flex; flex-wrap: wrap; gap: var(--s2); }
 .shift-choice .choice { align-items: flex-start; flex-direction: column; justify-content: center; gap: 0; padding: 8px 14px; }
 .shift-choice .choice .sub-text { font-weight: 400; }
+
+/* Medicine round tag: restricted to nurses and signed-off carers */
+.badge-med { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent); }
+.med-notice { margin-top: 8px; }

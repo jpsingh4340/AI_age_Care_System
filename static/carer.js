@@ -258,7 +258,7 @@ async function loadSchedule() {
     }
     if (item.medicine) {
       title.appendChild(document.createTextNode(" "));
-      title.appendChild(el("span", "badge badge-neutral", "Medicine"));
+      title.appendChild(el("span", "badge badge-med", "Medicine"));
     }
     text.appendChild(title);
     var meta = item.done_at

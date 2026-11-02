@@ -58,7 +58,8 @@
         <form id="addForm">
           <div class="form-group">
             <label for="newTask">Task</label>
-            <input id="newTask" class="field" type="text" maxlength="60" required placeholder="Shower">
+            <input id="newTask" class="field" type="text" maxlength="60" required placeholder="Shower" aria-describedby="medNotice">
+            <p class="alert-box alert-info med-notice hidden" id="medNotice" role="status"><strong>Medicine round.</strong> Only a nurse or a carer signed off for medicines can tick this.</p>
             <div class="quick" id="quick" aria-label="Common tasks"></div>
           </div>
           <div class="form-group">
@@ -120,6 +121,7 @@
       else if (box.disabled) box.checked = false;
       box.disabled = forced;
       if (hint) hint.textContent = forced ? "set because the name mentions medicine" : "only a nurse or signed-off carer can tick it";
+      if (box.id === "newMedicine") $("medNotice").classList.toggle("hidden", !box.checked);
     }
 
     function nowHHMM() {
@@ -193,8 +195,9 @@
         t.textContent = item.time || "Any time";
         const task = tr.insertCell();
         task.append(el("strong", "", item.task));
-        if (item.medicine) task.append(document.createTextNode(" "), el("span", "badge badge-neutral", "Medicine"));
+        if (item.medicine) task.append(document.createTextNode(" "), el("span", "badge badge-med", "Medicine"));
         if (item.note) task.append(el("div", "sub-text", item.note));
+        if (item.medicine) task.append(el("div", "sub-text", "Nurse or signed-off carer only"));
         const days = tr.insertCell();
         days.className = "sub-text";
         days.textContent = daysText(item.days);
@@ -279,6 +282,8 @@
 
     $("newDays").replaceWith(Object.assign(dayChips([]), { id: "newDays" }));
     $("newTask").addEventListener("input", () => syncMedicine($("newMedicine"), $("newTask").value, $("medHint")));
+
+    $("newMedicine").addEventListener("change", () => $("medNotice").classList.toggle("hidden", !$("newMedicine").checked));
 
     $("addForm").addEventListener("submit", async (e) => {
       e.preventDefault();
