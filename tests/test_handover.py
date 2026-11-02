@@ -251,10 +251,29 @@ def test_medicine_round_needs_a_competent_carer():
     assert next(u for u in users if u["username"] == "carer1")["med_competent"] is True
 
 
-def test_nurse_can_mark_a_task_as_not_medicine():
-    nurse = login("nurse1")
-    item = client.post("/api/schedule", json={"resident_id": 1, "task": "Remind about tablets", "medicine": False}, headers=nurse).json()
-    assert item["medicine"] is False
+def test_medicine_words_always_make_a_medicine_round():
+    nurse, carer1 = login("nurse1"), login("carer1")
+    # unticking the box by mistake must not unlock it for carers
+    item = client.post("/api/schedule", json={"resident_id": 1, "task": "Evening tablets", "medicine": False}, headers=nurse).json()
+    assert item["medicine"] is True
+    assert client.post(f"/api/schedule/{item['id']}/done", json={"done": True}, headers=carer1).status_code == 403
+    # any other task can be marked as a medicine round by the nurse
+    vit = client.post("/api/schedule", json={"resident_id": 1, "task": "Vitamin D", "medicine": True}, headers=nurse).json()
+    assert vit["medicine"] is True
+    plain = client.post("/api/schedule", json={"resident_id": 1, "task": "Shower"}, headers=nurse).json()
+    assert plain["medicine"] is False
+
+
+def test_older_medicine_tasks_are_locked_too():
+    nurse, carer1 = login("nurse1"), login("carer1")
+    item = client.post("/api/schedule", json={"resident_id": 1, "task": "Shower"}, headers=nurse).json()
+    con = handover.get_db()
+    with con:
+        con.execute("UPDATE care_schedule SET task = 'Medicine round', medicine = 0 WHERE id = ?", (item["id"],))
+    con.close()
+    listed = client.get("/api/schedule?resident_id=1", headers=carer1).json()[0]
+    assert listed["medicine"] is True and listed["can_tick"] is False
+    assert client.post(f"/api/schedule/{item['id']}/done", json={"done": True}, headers=carer1).status_code == 403
 
 
 # ---------- badges and urgent messages ----------

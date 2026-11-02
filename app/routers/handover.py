@@ -194,7 +194,7 @@ def schedule_rows(con: sqlite3.Connection, resident_id: int, day: date | None = 
     out = []
     for r in rows:
         item = dict(r)
-        item["medicine"] = bool(item["medicine"])
+        item["medicine"] = medicine_item(item)
         item["days"] = [d for d in item["days"].split(",") if d]
         item["planned_today"] = applies_on(dict(r), day)
         if every or item["planned_today"]:
@@ -530,7 +530,7 @@ class ScheduleEdit(BaseModel):
     time: str = Field(default="", pattern=r"^(\d{2}:\d{2})?$")
     note: str = Field(default="", max_length=200)
     days: list[Day] = []           # empty, or all seven, means every day
-    medicine: bool | None = None   # None: decide from the task name
+    medicine: bool = False         # a medicine round; names with medicine words always are
 
 
 class ScheduleIn(ScheduleEdit):
@@ -547,7 +547,14 @@ def days_value(days: list[str]) -> str:
 
 
 def is_medicine(body: ScheduleEdit) -> bool:
-    return body.medicine if body.medicine is not None else bool(MEDICINE_WORDS.search(body.task))
+    """The nurse can mark any task as a medicine round. A name that mentions medicines always is one,
+    so it cannot be left unlocked by an accidental click."""
+    return body.medicine or bool(MEDICINE_WORDS.search(body.task))
+
+
+def medicine_item(row) -> bool:
+    """Also applies to tasks saved before this rule existed."""
+    return bool(row["medicine"]) or bool(MEDICINE_WORDS.search(row["task"]))
 
 
 @router.get("/api/schedule")
@@ -639,7 +646,7 @@ def tick_schedule(
     if not row:
         con.close()
         raise HTTPException(404, "Task not found.")
-    if row["medicine"] and not auth.can_give_medicines(sess["username"], sess["role"]):
+    if medicine_item(row) and not auth.can_give_medicines(sess["username"], sess["role"]):
         con.close()
         raise HTTPException(
             403, "Only a nurse, or a carer signed off as medication competent, can tick a medicine round. Tell the nurse."
@@ -654,7 +661,7 @@ def tick_schedule(
             con.execute("DELETE FROM schedule_done WHERE schedule_id = ? AND day = ?", (item_id, today()))
     item = next((s for s in schedule_rows(con, row["resident_id"], every=True) if s["id"] == item_id), None)
     con.close()
-    if row["medicine"]:
+    if medicine_item(row):
         portal.audit(sess["full_name"], sess["role"], "medicine_round_ticked" if body.done else "medicine_round_unticked",
                      row["resident_id"], row["task"])
     return item

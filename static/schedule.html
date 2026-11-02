@@ -75,7 +75,7 @@
           </fieldset>
           <label class="choice bare" style="margin-bottom: 16px; font-weight: 500;">
             <input type="checkbox" id="newMedicine">
-            <span>Medicine round <span class="hint">only a nurse or signed-off carer can tick it</span></span>
+            <span>Medicine round <span class="hint" id="medHint">only a nurse or signed-off carer can tick it</span></span>
           </label>
           <div class="form-actions" style="margin-top: 0;">
             <p class="text-sm" id="addMsg" role="status"></p>
@@ -92,7 +92,7 @@
   <script src="/static/auth.js"></script>
   <script>
     const $ = (id) => document.getElementById(id);
-    const QUICK = ["Shower", "Breakfast", "Lunch", "Dinner", "Offer a drink", "Morning walk", "Exercises", "Change position", "Medicine round"];
+    const QUICK = ["Shower", "Hair wash", "Breakfast", "Lunch", "Dinner", "Offer a drink", "Morning walk", "Exercises", "Change position", "Medicine round"];
     const DAYS = [["mon", "Mon"], ["tue", "Tue"], ["wed", "Wed"], ["thu", "Thu"], ["fri", "Fri"], ["sat", "Sat"], ["sun", "Sun"]];
     const MEDICINE = /\b(medicine|medicines|medication|meds|tablets?|pills?|insulin|inhaler|eye drops)\b/i;
 
@@ -113,6 +113,15 @@
     }
     const chosenDays = (wrap) => [...wrap.querySelectorAll("input:checked")].map((b) => b.value);
     const daysText = (days) => (!days || !days.length ? "Every day" : DAYS.filter(([c]) => days.includes(c)).map(([, n]) => n).join(", "));
+    // Names that mention medicines are always medicine rounds: tick and lock the box.
+    function syncMedicine(box, name, hint) {
+      const forced = MEDICINE.test(name);
+      if (forced) box.checked = true;
+      else if (box.disabled) box.checked = false;
+      box.disabled = forced;
+      if (hint) hint.textContent = forced ? "set because the name mentions medicine" : "only a nurse or signed-off carer can tick it";
+    }
+
     function nowHHMM() {
       const d = new Date();
       return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
@@ -232,7 +241,12 @@
       const med = el("input");
       med.type = "checkbox";
       med.checked = item.medicine;
-      medLabel.append(med, el("span", "", "Medicine round"));
+      const medHint = el("span", "hint");
+      const medText = el("span", "", "Medicine round ");
+      medText.append(medHint);
+      medLabel.append(med, medText);
+      syncMedicine(med, item.task, medHint);
+      task.addEventListener("input", () => syncMedicine(med, task.value, medHint));
       const msg = el("p", "text-sm");
       const save = el("button", "btn btn-primary btn-sm", "Save");
       const cancel = el("button", "btn btn-secondary btn-sm", "Cancel");
@@ -259,12 +273,12 @@
     QUICK.forEach((name) => {
       const b = el("button", "pill", name);
       b.type = "button";
-      b.addEventListener("click", () => { $("newTask").value = name; $("newMedicine").checked = MEDICINE.test(name); $("newTime").focus(); });
+      b.addEventListener("click", () => { $("newTask").value = name; syncMedicine($("newMedicine"), name, $("medHint")); $("newTime").focus(); });
       $("quick").append(b);
     });
 
     $("newDays").replaceWith(Object.assign(dayChips([]), { id: "newDays" }));
-    $("newTask").addEventListener("input", () => { $("newMedicine").checked = MEDICINE.test($("newTask").value); });
+    $("newTask").addEventListener("input", () => syncMedicine($("newMedicine"), $("newTask").value, $("medHint")));
 
     $("addForm").addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -284,6 +298,7 @@
         $("newTime").value = "";
         $("newNote").value = "";
         $("newMedicine").checked = false;
+        syncMedicine($("newMedicine"), "", $("medHint"));
         $("newDays").querySelectorAll("input").forEach((b) => { b.checked = false; });
         loadItems();
       } catch (err) {
