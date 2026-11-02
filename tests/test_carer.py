@@ -82,4 +82,6 @@ def test_shift_records_need_a_signed_in_carer_or_nurse():
     assert anon.post("/api/carer/tasks", json=body).status_code == 401
     assert anon.get("/api/carer/today").status_code == 401
     family = anon.post("/api/auth/login", json={"username": "family1", "password": "password123"}).json()["token"]
-    assert anon.post("/api/carer/tasks", json=body, headers={"Authorization": f"Bearer {family}"}).status_code == 403
+    refused = anon.post("/api/carer/tasks", json=body, headers={"Authorization": f"Bearer {family}"})
+    assert refused.status_code == 403
+    assert "signed in as Claire Taylor" in refused.json()["detail"] and "carer or nurse" in refused.json()["detail"]

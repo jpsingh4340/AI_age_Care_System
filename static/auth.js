@@ -63,6 +63,36 @@
     window.location.replace(url);
   }
 
+  // Tabs in the same browser share one sign-in. If someone signs in as another person in
+  // another tab, reload here so this tab follows that account instead of failing quietly.
+  window.addEventListener("storage", function (e) {
+    if (e.key === "agecare_token" && e.newValue !== token) window.location.reload();
+  });
+
+  // Check the saved role against the real session on the server.
+  if (token && !isPublicPage) {
+    fetch("/api/auth/me", { headers: { Authorization: "Bearer " + token, "X-Session-Token": token } })
+      .then(function (res) {
+        if (res.status === 401) {
+          ["agecare_session", "agecare_token", "agecare_role", "agecare_name", "agecare_username", "agecare_resident_id"]
+            .forEach(function (k) { localStorage.removeItem(k); });
+          redirect("/login?next=" + encodeURIComponent(path));
+          return null;
+        }
+        return res.ok ? res.json() : null;
+      })
+      .then(function (me) {
+        if (!me) return;
+        if (me.role !== role || me.username !== username) {
+          localStorage.setItem("agecare_role", me.role);
+          localStorage.setItem("agecare_name", me.full_name);
+          localStorage.setItem("agecare_username", me.username);
+          window.location.reload();
+        }
+      })
+      .catch(function () {});
+  }
+
   // Send people to sign in, or to their own home page, when they open a page for another role.
   for (const [routePrefix, allowedRoles] of Object.entries(ALLOWED_ROLES_BY_PATH)) {
     const matches = routePrefix === "/" ? path === "/" : path === routePrefix || path.startsWith(routePrefix + "/");

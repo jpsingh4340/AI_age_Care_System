@@ -44,7 +44,8 @@ def signed_in_staff(authorization: str, x_session_token: str) -> dict:
     if not sess:
         raise HTTPException(401, "Please sign in.")
     if sess["role"] not in ("carer", "nurse"):
-        raise HTTPException(403, "Only carers and nurses can do this.")
+        from app.routers.portal import wrong_role  # here to avoid a circular import
+        raise wrong_role(sess, ("carer", "nurse"))
     return sess
 
 
