@@ -12,6 +12,7 @@ class OcrError(Exception):
     """OCR is not ready or could not read the image. The message is safe to show."""
 
 
+# Keep one RapidOCR instance in memory so we only load it once
 _engine = None
 
 
@@ -30,19 +31,22 @@ def _get_engine():
 
 def group_into_lines(items: list[dict]) -> list[OcrLineOut]:
     """OCR gives separate boxes ("Pulse:" and "76 bpm"). Join boxes on the same row into one line."""
+    # Sort all detected text boxes from top to bottom of the page
     items = sorted(items, key=lambda i: (i["top"] + i["bottom"]) / 2)
     rows: list[list[dict]] = []
     for item in items:
-        mid = (item["top"] + item["bottom"]) / 2
+        mid = (item["top"] + i_bot) / 2 if (i_bot := item["bottom"]) else (item["top"] + item["bottom"]) / 2
         height = max(item["bottom"] - item["top"], 1)
         if rows:
             last = rows[-1]
             last_mid = sum((i["top"] + i["bottom"]) / 2 for i in last) / len(last)
+            # If this box is at almost the same height as the previous box, put it on the same row
             if abs(mid - last_mid) <= max(10, 0.6 * height):
                 last.append(item)
                 continue
         rows.append([item])
 
+    # Sort each row from left to right and join the words into one line
     lines = []
     for row in rows:
         row.sort(key=lambda i: i["x"])
@@ -54,6 +58,7 @@ def group_into_lines(items: list[dict]) -> list[OcrLineOut]:
 
 
 def read_lines(image_bytes: bytes) -> list[OcrLineOut]:
+    # Run RapidOCR on the uploaded image bytes and get bounding boxes + confidence scores
     result, _ = _get_engine()(image_bytes)
     items = []
     for box, text, score in result or []:
@@ -89,11 +94,13 @@ RANGES = {
     "glucose": (2, 35),
 }
 
+# Below 70% confidence we warn the nurse to double-check the photo
 LOW_CONFIDENCE = 0.7
 
 
 def _check(key: str, value: str) -> str:
     """Return a reason to double-check this value, or an empty string."""
+    # Check if blood pressure, date, or vital sign is outside the normal range
     if key == "blood_pressure":
         top, bottom = [int(part) for part in value.replace(" ", "").split("/")]
         if not (70 <= top <= 230 and 30 <= bottom <= 140 and top > bottom):
@@ -110,6 +117,7 @@ def _check(key: str, value: str) -> str:
 
 
 def extract_readings(lines: list[OcrLineOut]) -> list[Reading]:
+    # Match each health field label in the OCR lines using regex and pull out the number after it
     readings: list[Reading] = []
     for key, label, unit, label_pattern, value_pattern in FIELDS:
         for line in lines:
@@ -138,8 +146,6 @@ def extract_readings(lines: list[OcrLineOut]) -> list[Reading]:
             break  # first matching line is enough
     return readings
 
-
-    
 
 # ---------- checking values that a nurse saves ----------
 FIELD_INFO = {key: (label, unit) for key, label, unit, _, _ in FIELDS}
