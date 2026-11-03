@@ -13,6 +13,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, Header, HTTPException
 from fastapi.responses import FileResponse, RedirectResponse
+from pydantic import BaseModel
 
 from app import auth, db, guidance, ollama_client
 from app.config import CHAT_MODEL
@@ -64,13 +65,25 @@ def now() -> str:
     return datetime.now().isoformat(timespec="seconds")
 
 
+ROLE_WORDS = {"carer": "Carer", "nurse": "Nurse", "manager": "Manager", "family": "Family"}
+
+
+def wrong_role(sess: dict, roles: tuple[str, ...]) -> HTTPException:
+    """403 that says who is signed in and which account is needed, so a mix-up is easy to spot."""
+    needed = " or ".join(ROLE_WORDS.get(r, r).lower() for r in roles)
+    name = sess.get("full_name") or sess.get("username")
+    label = ROLE_WORDS.get(sess["role"], sess["role"])
+    who = name if label.lower() in name.lower() else f"{name} ({label})"
+    return HTTPException(403, f"You are signed in as {who}. This needs a {needed} account. Sign out and sign in again.")
+
+
 def require(roles: tuple[str, ...], authorization: str, x_session_token: str) -> dict:
     """Return the signed-in user, or stop with 401 (not signed in) / 403 (wrong role)."""
     sess = auth.session_from_headers(authorization, x_session_token)
     if not sess:
         raise HTTPException(401, "Please sign in.")
     if sess["role"] not in roles:
-        raise HTTPException(403, "Your account does not have access to this.")
+        raise wrong_role(sess, roles)
     return sess
 
 
@@ -110,7 +123,7 @@ def today_records(resident_id: int) -> dict:
 @router.get("/", include_in_schema=False)
 def root():
     """Everyone starts at the sign-in page, which sends them to their own role page."""
-    return RedirectResponse("/login")
+    return FileResponse(STATIC_DIR / "index.html")
 
 
 @router.get("/manager", include_in_schema=False)
@@ -391,3 +404,22 @@ def manager_delete_user(
     audit(sess["full_name"], "manager", "user_removed", None, username)
     return {"ok": True}
 
+
+
+class MedicineSignOff(BaseModel):
+    competent: bool
+
+
+@router.put("/api/manager/users/{username}/medicines")
+def manager_medicine_sign_off(
+    username: str,
+    body: MedicineSignOff,
+    authorization: str = Header(default=""),
+    x_session_token: str = Header(default=""),
+):
+    """Sign a carer off as medication competent (or take it back). Nurses can always give medicines."""
+    sess = require(("manager",), authorization, x_session_token)
+    if not auth.set_med_competent(username, body.competent):
+        raise HTTPException(404, "No carer account with that username.")
+    audit(sess["full_name"], "manager", "medicine_sign_off" if body.competent else "medicine_sign_off_removed", None, username)
+    return {"ok": True, "username": username.strip().lower(), "med_competent": body.competent}

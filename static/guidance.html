@@ -3,109 +3,115 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Care Guidance AI · AgeCare</title>
+  <title>Care guidance · AgeCare</title>
   <link rel="icon" type="image/png" href="/static/img/favicon.png">
   <link rel="stylesheet" href="/static/app.css">
-  <style>
-    ul.lines { list-style: none; margin: 0; padding: 0; }
-    ul.lines li { padding: 12px 0; border-top: 1px solid var(--line); }
-    ul.lines li:first-child { border-top: 0; }
-    .src { display: inline-block; background: var(--accent-soft); color: var(--accent-ink); border-radius: 6px; padding: 2px 10px; font-size: 12.5px; font-weight: 600; margin-top: 6px; }
-    details { margin-top: 6px; font-size: 13.5px; color: var(--muted); }
-    summary { cursor: pointer; }
-    q { display: block; margin-top: 4px; font-style: italic; color: var(--ink); }
-    .empty { color: var(--muted); font-style: italic; }
-    .reason { color: var(--red); font-size: 13px; margin-top: 4px; }
-  </style>
 </head>
 <body>
   <header class="topbar"></header>
 
-  <!-- Common ClearScan Hero -->
-  <section class="cs-hero">
-    <div class="cs-hero-watermark" aria-hidden="true">Source Backed Guidance</div>
-    <div class="cs-hero-eyebrow">Nurse Clinical Tool · RAG + Safety Filter</div>
-    <h1>Care Guidance Instantly</h1>
-    <p class="cs-sub">
-      Generate source-linked symptoms to watch for and practical prevention steps from approved references—automatically filtered for clinical safety.
-    </p>
-    <div class="cs-cta-row">
-      <button id="go" type="button" class="cs-glow-btn">
-        <span>✓</span> Draft Resident Guidance
-      </button>
-    </div>
-    <div class="cs-privacy-note">Every line must cite an approved reference source; unsupported or medical-dose lines are stripped automatically.</div>
-    <div class="cs-trust-row">
-      <span><b>✓</b> Exact Quote Citations</span>
-      <span><b>✓</b> Zero Dose / Diagnosis</span>
-      <span><b>✓</b> Local SLM (Ollama)</span>
-      <span><b>✓</b> Nurse Review Required</span>
-    </div>
-  </section>
-
-  <!-- Common Horizontal Feature Strip -->
-  <div class="cs-strip">
-    <div class="cs-strip-inner">
-      <span class="cs-strip-item">💊 Matches resident conditions to approved sources.</span>
-      <span class="cs-strip-item">📋 Inspect exact quotes from clinical references.</span>
-      <span class="cs-strip-item">✅ Automatic safety filter removes unsafe lines.</span>
-      <span class="cs-strip-item">🩺 Nurse approves before carers see guidance.</span>
-    </div>
-  </div>
-
-  <main class="page">
-    <section class="card">
-      <div class="between">
-        <h2>1. Choose a Resident</h2>
-        <span class="badge warn">Demo data only · Fictional residents</span>
+  <main class="page-container page-narrow">
+    <div class="page-head">
+      <div>
+        <p class="eyebrow">Nurse</p>
+        <h1>Care guidance</h1>
+        <p class="lede">The AI drafts signs to watch for and prevention steps from approved reference notes. Carers only see it after you approve it.</p>
       </div>
-      <div class="inline" style="gap: 14px; align-items: flex-end">
-        <label class="lbl" for="resident" style="min-width: 260px">
-          Resident
-          <select id="resident" class="field"><option>Loading...</option></select>
-        </label>
-        <div class="pills" id="conditions"></div>
+    </div>
+
+    <p class="notice"><strong>Demo data only.</strong> These are fake residents. The AI never diagnoses or prescribes; the nurse makes the final decision.</p>
+
+    <ol class="steps" aria-label="Steps">
+      <li class="step active" id="st1"><span class="num">1</span>Choose resident</li>
+      <li class="step" id="st2"><span class="num">2</span>Draft</li>
+      <li class="step" id="st3"><span class="num">3</span>Check and approve</li>
+    </ol>
+
+    <section class="card" id="pendingCard" hidden style="margin-bottom: 16px;">
+      <div class="card-header">
+        <h2 class="card-title">Drafts waiting for approval</h2>
+        <span class="badge badge-amber" id="pendingCount"></span>
       </div>
-      <div class="notice info hidden" id="status"></div>
+      <ul class="audit-list" id="pendingList"></ul>
     </section>
 
-    <div id="result" class="stack" hidden>
-      <div class="notice warn">
-        <strong>AI DRAFT:</strong> A Registered Nurse must approve this before carers see it on their shift sheet.
+    <section class="card">
+      <div class="form-group">
+        <label for="resident">Resident</label>
+        <select id="resident" class="field"><option>Loading…</option></select>
       </div>
-
-      <div class="notice warn" id="gaps" hidden></div>
-
-      <div class="row">
-        <section class="card col-main" style="flex: 1 1 380px">
-          <h2>Symptoms to watch for</h2>
-          <ul class="lines" id="watch"></ul>
-        </section>
-        <section class="card col-main" style="flex: 1 1 380px">
-          <h2>Prevention steps</h2>
-          <ul class="lines" id="prevent"></ul>
-        </section>
+      <div class="inline" id="conditions" aria-label="Recorded conditions"></div>
+      <div class="form-actions">
+        <div class="alert-box alert-info hidden" id="status" role="status"></div>
+        <button id="go" type="button" class="btn btn-primary" style="margin-left: auto;">Draft guidance</button>
       </div>
+    </section>
 
-      <section class="card danger">
-        <h2>Removed by the automatic safety check</h2>
-        <p class="small">The AI wrote these, but the safety filter removed them. Nobody else sees them.</p>
+    <div id="result" class="stack" hidden style="margin-top: 16px;">
+      <p class="alert-box alert-warn"><strong>AI draft.</strong> Carers will not see this until you approve it in step 3 below.</p>
+      <p class="alert-box alert-warn hidden" id="gaps"></p>
+
+      <section class="card">
+        <h2 class="card-title" style="margin-bottom: 12px;">Signs to watch for</h2>
+        <ul class="lines" id="watch"></ul>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title" style="margin-bottom: 12px;">Prevention steps</h2>
+        <ul class="lines" id="prevent"></ul>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">Removed by the safety check</h2>
+        <p class="sub-text" style="margin: 4px 0 12px;">The AI wrote these, but the check removed them (wrong quote, medicine or diagnosis). Carers never see them.</p>
         <ul class="lines" id="dropped"></ul>
       </section>
 
       <section class="card">
-        <details class="sources">
-          <summary><strong>Approved sources the AI was allowed to use</strong> (click to open)</summary>
-          <ul class="lines" id="sources"></ul>
+        <details>
+          <summary style="cursor: pointer; font-weight: 600;">Reference notes used</summary>
+          <ul class="lines" id="sources" style="margin-top: 12px;"></ul>
         </details>
-        <p class="tiny" id="meta"></p>
+        <p class="text-mono text-muted" id="meta" style="margin-top: 12px;"></p>
       </section>
     </div>
 
-    <footer class="foot">
-      Age-Care Intelligence · Team Trio · IA728001 Studio 5. All residents and staff are fictional.
-    </footer>
+    <section class="card" id="review" hidden style="margin-top: 16px;" aria-labelledby="reviewTitle">
+      <div class="card-header">
+        <div>
+          <h2 class="card-title lg" id="reviewTitle">Check and approve</h2>
+          <p class="sub-text" id="reviewFor"></p>
+        </div>
+        <span class="badge badge-amber">Not yet approved</span>
+      </div>
+      <p class="sub-text" style="margin-bottom: 8px;">Untick a line to leave it out. You can change the wording; changed lines are marked as written by the nurse.</p>
+
+      <p class="section-label">Signs to watch for</p>
+      <div id="editWatch"></div>
+      <p class="section-label">Prevention steps</p>
+      <div id="editPrevent"></div>
+
+      <div class="grid-equal" style="margin-top: 16px;">
+        <div class="form-group">
+          <label for="reviewer">Your name</label>
+          <input id="reviewer" class="field" type="text" maxlength="60">
+        </div>
+        <div class="form-group">
+          <label for="reviewNote">Note <span class="hint">needed if you reject</span></label>
+          <input id="reviewNote" class="field" type="text" maxlength="500">
+        </div>
+      </div>
+      <div class="form-actions" style="margin-top: 0;">
+        <p class="text-sm" id="reviewMsg" role="status"></p>
+        <div class="inline">
+          <button id="reject" type="button" class="btn btn-secondary">Reject</button>
+          <button id="approve" type="button" class="btn btn-primary">Approve for carers</button>
+        </div>
+      </div>
+    </section>
   </main>
+
+  <footer class="foot"></footer>
 
   <script src="/static/auth.js"></script>
   <script>
@@ -118,14 +124,19 @@
       return node;
     }
 
+    function step(n) {
+      ["st1", "st2", "st3"].forEach((id, i) => $(id).classList.toggle("active", i < n));
+    }
+
     let residents = [];
+    let current = null; // the draft being reviewed
 
     function showConditions() {
       const box = $("conditions");
       box.replaceChildren();
       const chosen = residents.find((r) => String(r.resident_id) === $("resident").value);
       if (!chosen) return;
-      for (const name of chosen.conditions) box.append(el("span", "badge draft", name));
+      for (const name of chosen.conditions || []) box.append(el("span", "badge badge-neutral", name));
     }
 
     async function loadResidents() {
@@ -135,24 +146,20 @@
         const select = $("resident");
         select.replaceChildren();
         for (const r of residents) {
-          const option = el("option", "", r.name);
+          const option = el("option", "", r.name + " (Room " + (100 + Number(r.resident_id)) + ")");
           option.value = r.resident_id;
           select.append(option);
         }
         showConditions();
       } catch (error) {
-        setStatus("Could not load residents. Is the API running?", "error");
+        setStatus("Could not load residents. Check that the backend is running.", "error");
       }
     }
 
     function setStatus(message, kind) {
       const box = $("status");
       box.textContent = message || "";
-      if (!message) {
-        box.className = "notice info hidden";
-      } else {
-        box.className = "notice " + (kind === "error" ? "err" : "info");
-      }
+      box.className = !message ? "alert-box hidden" : "alert-box " + (kind === "error" ? "alert-danger" : "alert-info");
     }
 
     function fillLines(listId, lines, emptyText) {
@@ -160,16 +167,16 @@
       list.replaceChildren();
       if (!lines.length) {
         const item = el("li");
-        item.append(el("span", "empty", emptyText));
+        item.append(el("span", "empty-line", emptyText));
         list.append(item);
         return;
       }
       for (const line of lines) {
         const item = el("li");
         item.append(el("div", "", line.text));
-        item.append(el("span", "src", line.source_id + " · " + line.source));
+        item.append(el("span", "src-pill", line.source_id + " · " + line.source));
         const details = el("details");
-        details.append(el("summary", "", "Exact words from the source"));
+        details.append(el("summary", "", "Show the source words"));
         details.append(el("q", "", line.quote));
         item.append(details);
         list.append(item);
@@ -178,40 +185,45 @@
 
     function render(data) {
       const gaps = $("gaps");
-      gaps.hidden = !data.gaps.length;
-      gaps.textContent = data.gaps.length
-        ? "No line was kept about: " + data.gaps.join(", ") + ". A nurse should add one if it is needed."
-        : "";
-      fillLines("watch", data.watch_for, "No line passed the checks.");
-      fillLines("prevent", data.prevention, "No line passed the checks.");
+      if (data.gaps && data.gaps.length) {
+        gaps.classList.remove("hidden");
+        gaps.textContent = "No reference line was found for: " + data.gaps.join(", ") + ". Add your own line in step 3 if needed.";
+      } else {
+        gaps.classList.add("hidden");
+        gaps.textContent = "";
+      }
+
+      fillLines("watch", data.watch_for || [], "No lines passed the safety check.");
+      fillLines("prevent", data.prevention || [], "No lines passed the safety check.");
 
       const dropped = $("dropped");
       dropped.replaceChildren();
-      if (!data.dropped.length) {
+      if (!data.dropped || !data.dropped.length) {
         const item = el("li");
-        item.append(el("span", "empty", "Nothing was removed."));
+        item.append(el("span", "empty-line", "Nothing was removed."));
         dropped.append(item);
-      }
-      for (const line of data.dropped) {
-        const item = el("li");
-        item.append(el("div", "", line.text || "(empty line)"));
-        item.append(el("div", "reason", "Removed: " + line.reason));
-        dropped.append(item);
+      } else {
+        for (const line of data.dropped) {
+          const item = el("li");
+          item.append(el("div", "", line.text || "(empty line)"));
+          item.append(el("div", "dropped-reason", "Removed: " + line.reason));
+          dropped.append(item);
+        }
       }
 
       const sources = $("sources");
       sources.replaceChildren();
-      for (const s of data.sources) {
+      for (const s of data.sources || []) {
         const item = el("li");
-        item.append(el("span", "src", s.id + " · " + s.source));
-        item.append(el("div", "", s.text));
+        item.append(el("span", "src-pill", s.id + " · " + s.source));
+        item.append(el("div", "text-sm", s.text));
         sources.append(item);
       }
 
       $("meta").textContent =
-        "Model: " + data.model + " (runs on this laptop). Time: " + data.seconds + " seconds. " +
-        "Lines kept: " + (data.watch_for.length + data.prevention.length) +
-        ". Lines removed: " + data.dropped.length + ".";
+        "Model " + data.model + " (local, Ollama) · " + data.seconds + "s · " +
+        ((data.watch_for || []).length + (data.prevention || []).length) + " lines kept · " +
+        (data.dropped || []).length + " removed";
       $("result").hidden = false;
     }
 
@@ -219,7 +231,9 @@
       const button = $("go");
       button.disabled = true;
       $("result").hidden = true;
-      setStatus("The AI is working on this laptop. This can take a minute...", "busy");
+      $("review").hidden = true;
+      step(2);
+      setStatus("Reading the reference notes on this computer. This can take a minute…", "busy");
       try {
         const response = await fetch("/api/guidance/draft", {
           method: "POST",
@@ -227,19 +241,157 @@
           body: JSON.stringify({ resident_id: Number($("resident").value) }),
         });
         const data = await response.json();
-        if (!response.ok) throw new Error(data.detail || "Something went wrong.");
+        if (!response.ok) throw new Error(typeof data.detail === "string" ? data.detail : "Something went wrong.");
         setStatus("");
         render(data);
+        if (data.draft_id) openDraft(data.draft_id, false);
+        loadPending();
       } catch (error) {
+        step(1);
         setStatus(error.message, "error");
       } finally {
         button.disabled = false;
       }
     }
 
+    // ---------- Step 3: nurse checks and approves ----------
+    async function loadPending() {
+      const res = await window.authFetch("/api/guidance/pending");
+      if (!res.ok) return;
+      const list = await res.json();
+      $("pendingCard").hidden = !list.length;
+      $("pendingCount").textContent = list.length + " waiting";
+      const ul = $("pendingList");
+      ul.replaceChildren();
+      for (const d of list) {
+        const open = el("button", "btn btn-secondary btn-sm", "Check");
+        open.type = "button";
+        open.addEventListener("click", () => openDraft(d.draft_id, true));
+        const info = el("div");
+        info.append(el("strong", "", d.resident), el("div", "sub-text", d.lines + " lines · drafted " + (d.created_at || "").slice(0, 16).replace("T", " ")));
+        const li = el("li", "between");
+        li.append(info, open);
+        ul.append(li);
+      }
+    }
+
+    function editRows(boxId, lines) {
+      const box = $(boxId);
+      box.replaceChildren();
+      if (!lines.length) {
+        box.append(el("p", "empty", "No lines in the draft."));
+      }
+      lines.forEach((line, i) => {
+        const row = el("div", "edit-line");
+        row.dataset.source = line.source_id || "";
+        row.dataset.original = line.text;
+        const keep = el("input");
+        keep.type = "checkbox";
+        keep.checked = true;
+        keep.setAttribute("aria-label", "Keep this line");
+        keep.addEventListener("change", () => row.classList.toggle("off", !keep.checked));
+        const text = el("textarea", "field");
+        text.rows = 2;
+        text.value = line.text;
+        text.setAttribute("aria-label", "Line " + (i + 1));
+        const right = el("div");
+        right.append(text, el("span", "src-pill", line.source || "Written by the nurse"));
+        row.append(keep, right);
+        box.append(row);
+      });
+      const add = el("button", "btn btn-quiet btn-sm", "Add a line");
+      add.type = "button";
+      add.style.marginTop = "8px";
+      add.addEventListener("click", () => {
+        const row = el("div", "edit-line");
+        row.dataset.source = "";
+        row.dataset.original = "";
+        const keep = el("input");
+        keep.type = "checkbox";
+        keep.checked = true;
+        keep.setAttribute("aria-label", "Keep this line");
+        const text = el("textarea", "field");
+        text.rows = 2;
+        text.setAttribute("aria-label", "New line");
+        const right = el("div");
+        right.append(text, el("span", "src-pill", "Written by the nurse"));
+        row.append(keep, right);
+        box.insertBefore(row, add);
+        text.focus();
+      });
+      box.append(add);
+    }
+
+    function collect(boxId) {
+      const out = [];
+      for (const row of $(boxId).querySelectorAll(".edit-line")) {
+        if (!row.querySelector("input[type=checkbox]").checked) continue;
+        const text = row.querySelector("textarea").value.trim();
+        if (!text) continue;
+        out.push({ text: text, source_id: row.dataset.source, edited: text !== row.dataset.original });
+      }
+      return out;
+    }
+
+    function reviewMsg(text, kind) {
+      $("reviewMsg").textContent = text;
+      $("reviewMsg").className = "text-sm " + (kind === "ok" ? "alert-success" : "alert-danger");
+    }
+
+    async function openDraft(id, scroll) {
+      const res = await window.authFetch("/api/guidance/draft/" + id);
+      if (!res.ok) return;
+      current = await res.json();
+      $("reviewFor").textContent = current.resident + " · draft " + current.draft_id + " · " + (current.conditions || []).join(", ");
+      editRows("editWatch", current.watch_for || []);
+      editRows("editPrevent", current.prevention || []);
+      $("reviewMsg").textContent = "";
+      $("reviewMsg").className = "text-sm";
+      $("review").hidden = false;
+      step(3);
+      if (scroll) $("review").scrollIntoView({ block: "start" });
+    }
+
+    async function decide(decision) {
+      if (!current) return;
+      const reviewer = $("reviewer").value.trim();
+      const note = $("reviewNote").value.trim();
+      if (reviewer.length < 2) { reviewMsg("Enter your name first.", "err"); $("reviewer").focus(); return; }
+      if (decision === "reject" && !note) { reviewMsg("Write a short note saying why you are rejecting it.", "err"); $("reviewNote").focus(); return; }
+      const body = { decision: decision, reviewer: reviewer, note: note };
+      if (decision === "approve") {
+        body.watch_for = collect("editWatch");
+        body.prevention = collect("editPrevent");
+      }
+      $("approve").disabled = true;
+      $("reject").disabled = true;
+      try {
+        const res = await window.authFetch("/api/guidance/draft/" + current.draft_id + "/decision", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(typeof data.detail === "string" ? data.detail : "Could not save. Check each line.");
+        reviewMsg(decision === "approve" ? "Approved. Carers can now see this guidance." : "Draft rejected. Carers will not see it.", "ok");
+        if (window.showToast) window.showToast(decision === "approve" ? "Guidance approved for " + current.resident : "Draft rejected");
+        current = null;
+        loadPending();
+      } catch (error) {
+        reviewMsg(error.message, "err");
+      } finally {
+        $("approve").disabled = false;
+        $("reject").disabled = false;
+      }
+    }
+
     $("resident").addEventListener("change", showConditions);
     $("go").addEventListener("click", draft);
+    $("approve").addEventListener("click", () => decide("approve"));
+    $("reject").addEventListener("click", () => decide("reject"));
+    $("reviewer").value = localStorage.getItem("agecare_name") || "";
     loadResidents();
+    loadPending();
   </script>
 </body>
 </html>

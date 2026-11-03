@@ -3,116 +3,101 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AgeCare · Understand Resident Care Instantly</title>
+  <title>AgeCare</title>
+  <meta name="description" content="Student prototype: helps rest home carers record care, nurses decide who needs them first, and families get a checked daily update.">
   <link rel="icon" type="image/png" href="/static/img/favicon.png">
   <link rel="stylesheet" href="/static/app.css">
 </head>
-<body class="has-bg-video">
-  <div class="bg-video-wrap" aria-hidden="true">
-    <video class="bg-video" autoplay muted loop playsinline preload="auto">
-      <source src="/static/age-care-anatomy.mp4" type="video/mp4">
-    </video>
-    <div class="bg-video-overlay"></div>
-  </div>
+<body>
   <header class="topbar"></header>
 
-  <!-- ClearScan-style Hero -->
-  <section class="cs-hero">
-    <div class="cs-hero-watermark" aria-hidden="true">Understand Resident Care</div>
-    <h1>Care Insights Instantly</h1>
-    <p class="cs-sub">
-      Transform shift notes, vital signs, and medical records into clear, nurse-reviewed insights across all four aged-care roles.
-    </p>
-    <div class="cs-privacy-note">Your resident information is processed locally and privately via Ollama.</div>
-    <div class="cs-trust-row">
-      <span><b>✓</b> Source-Backed AI</span>
-      <span><b>✓</b> Local &amp; Private</span>
-      <span><b>✓</b> Nurse-Approved</span>
-      <span><b>✓</b> 4 Role Credentials</span>
-    </div>
-  </section>
-
-  <!-- Common Horizontal Feature Strip -->
-  <div class="cs-strip">
-    <div class="cs-strip-inner">
-      <span class="cs-strip-item">💊 Person-centred care plans.</span>
-      <span class="cs-strip-item">📋 Save time writing shift handovers.</span>
-      <span class="cs-strip-item">✅ Nurse-verified clinical guidance.</span>
-      <span class="cs-strip-item">🩺 Understand vital sign trends.</span>
-      <span class="cs-strip-item">⚡ Warm plain-language family updates.</span>
-    </div>
-  </div>
-
-  <main class="page">
-    <!-- ClearScan-style Split Showcase -->
-    <section class="cs-showcase">
+  <main class="page-container">
+    <section class="hero">
       <div>
-        <div class="eyebrow">Understand Every Role in the Facility</div>
-        <h2>Unlock Clearer Insights Across All Four Roles</h2>
-        <p class="small" style="margin-top: 12px; max-width: 460px">
-          Every person in the rest home signs in with their own credentials and sees a workspace tailored to their responsibility—connected through a single SQLite &amp; local-SLM backend.
-        </p>
+        <p class="eyebrow">AI Age-Care Intelligence System · student prototype</p>
+        <h1>Carers record the shift. The nurse sees who needs them first.</h1>
+        <p class="lede">AgeCare turns carer notes and vital signs into a Red, Amber or Green care priority. A local AI suggests; the nurse makes the final decision.</p>
+        <a href="/login" class="btn btn-primary">Sign in</a>
+      </div>
+      <figure class="shot">
+        <img src="/static/img/shot-nurse.png" alt="Nurse dashboard: residents sorted by care priority, the selected resident's care priority with reasons, and items waiting for the nurse" width="1280" height="800">
+        <figcaption>Nurse dashboard, demo data</figcaption>
+      </figure>
+    </section>
+
+    <section class="section" aria-labelledby="whoTitle">
+      <h2 id="whoTitle">Who it is for</h2>
+
+      <div class="role-row">
+        <div>
+          <p class="eyebrow">Carers</p>
+          <h3>Record care in a few taps</h3>
+          <p>Pick a resident, then save a task, a set of vital signs, or a concern for the nurse.</p>
+          <ul>
+            <li>Large buttons that work on a phone</li>
+            <li>Only guidance the nurse has approved</li>
+            <li>Readings outside the usual range go to the nurse</li>
+          </ul>
+        </div>
+        <figure class="shot">
+          <img src="/static/img/shot-carer.png" alt="Carer shift page with resident buttons, a care task form and approved guidance" width="1280" height="800" loading="lazy">
+        </figure>
       </div>
 
-      <div class="cs-feature-list">
-        <div class="cs-feature-item">
-          <span class="cs-check-circle">✓</span>
-          <div>
-            <h3>1. Carer Shift Portal</h3>
-            <p class="small">Record daily care tasks, spot vitals, and shift concern notes that immediately sync to the Registered Nurse.</p>
-          </div>
+      <div class="role-row">
+        <div>
+          <p class="eyebrow">Registered nurses</p>
+          <h3>Know who needs you first</h3>
+          <p>Each resident gets a suggested priority with the reasons and the carer's own words. Accept it or change it with a reason; both go in the audit log.</p>
+          <ul>
+            <li>Approve or edit AI guidance before carers see it</li>
+            <li>Check numbers read from printed health reports</li>
+            <li>Decide on face and room check alerts</li>
+          </ul>
         </div>
-        <div class="cs-feature-item">
-          <span class="cs-check-circle">✓</span>
-          <div>
-            <h3>2. Nurse Clinical Review</h3>
-            <p class="small">Triage care priorities (Green/Amber/Red), approve source-linked AI guidance, read health reports via OCR, and approve family updates.</p>
-          </div>
+        <figure class="shot">
+          <img src="/static/img/shot-guidance.png" alt="Guidance page where the nurse checks AI drafted lines and approves them" width="1280" height="800" loading="lazy">
+        </figure>
+      </div>
+
+      <div class="role-row">
+        <div>
+          <p class="eyebrow">Families</p>
+          <h3>A daily update you can trust</h3>
+          <p>A short, plain update about your family member, checked by a nurse first, and a way to message the care team.</p>
+          <ul>
+            <li>No clinical scores or AI output</li>
+            <li>Opening hours and who to contact</li>
+          </ul>
         </div>
-        <div class="cs-feature-item">
-          <span class="cs-check-circle">✓</span>
-          <div>
-            <h3>3. Manager &amp; Compliance</h3>
-            <p class="small">Monitor live facility KPIs, manage staff and family user accounts, and inspect the full clinical audit trail.</p>
-          </div>
-        </div>
-        <div class="cs-feature-item">
-          <span class="cs-check-circle">✓</span>
-          <div>
-            <h3>4. Family Portal</h3>
-            <p class="small">Read warm, nurse-approved daily updates for their linked loved one and message the care team directly.</p>
-          </div>
-        </div>
+        <figure class="shot">
+          <img src="/static/img/shot-family.png" alt="Family page with today's update checked by a nurse and contact details" width="1280" height="800" loading="lazy">
+        </figure>
       </div>
     </section>
 
-    <!-- Four Role Overview Cards (no direct links) -->
-    <div class="kpis">
-      <div class="card">
-        <span class="section-label">Role 01 · Frontline</span>
-        <h2>Carer Portal</h2>
-        <p class="small">Log tasks, spot vitals, and observations during your shift.</p>
-      </div>
-      <div class="card">
-        <span class="section-label">Role 02 · Clinical RN</span>
-        <h2>Nurse Portal</h2>
-        <p class="small">Review care priorities, approve AI drafts, and send family updates.</p>
-      </div>
-      <div class="card">
-        <span class="section-label">Role 03 · Governance</span>
-        <h2>Manager Portal</h2>
-        <p class="small">Facility KPIs, role account credentials, and compliance audit log.</p>
-      </div>
-      <div class="card">
-        <span class="section-label">Role 04 · Whānau</span>
-        <h2>Family Portal</h2>
-        <p class="small">Nurse-approved daily updates and direct messages to the care team.</p>
-      </div>
-    </div>
+    <section class="section" aria-labelledby="rulesTitle">
+      <h2 id="rulesTitle">Safety rules</h2>
+      <ol class="rules">
+        <li><span><strong>The nurse decides</strong>The AI suggests a priority and drafts guidance. A registered nurse accepts, changes or rejects it.</span></li>
+        <li><span><strong>Every line has a source</strong>Guidance lines must quote an approved reference note. Lines that mention medicines or diagnoses are removed.</span></li>
+        <li><span><strong>AI runs locally</strong>The language model runs with Ollama on this computer. Notes are not sent to a cloud AI service.</span></li>
+        <li><span><strong>Photos are not saved</strong>Report photos, face photos and video frames are read in memory and then discarded.</span></li>
+        <li><span><strong>Demo data only</strong>All residents, staff and readings are fake.</span></li>
+        <li><span><strong>Not a medical device</strong>This is a student prototype for learning, not for real care.</span></li>
+      </ol>
 
-    <footer class="foot"></footer>
+      <div class="cta-band">
+        <div>
+          <h2>Try it with a demo account</h2>
+          <p>Sign in as nurse1, carer1, family1 or manager1. The password is password123.</p>
+        </div>
+        <a href="/login" class="btn btn-primary">Sign in</a>
+      </div>
+    </section>
   </main>
 
+  <footer class="foot"></footer>
   <script src="/static/auth.js"></script>
 </body>
 </html>

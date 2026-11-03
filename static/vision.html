@@ -3,129 +3,133 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Age-Care · Face &amp; Room Check</title>
+  <title>Camera checks · AgeCare</title>
   <link rel="icon" type="image/png" href="/static/img/favicon.png">
   <link rel="stylesheet" href="/static/app.css">
-  <style>
-    .level { display: inline-block; padding: 3px 12px; border-radius: 999px; font-weight: 700; text-transform: uppercase; font-size: 12px; }
-    .level.low { background: var(--good-bg); color: var(--good); border: 1px solid rgba(52, 211, 153, 0.35); }
-    .level.medium { background: var(--warn-bg); color: var(--warn); border: 1px solid rgba(251, 191, 36, 0.35); }
-    .level.high { background: var(--bad-bg); color: var(--bad); border: 1px solid rgba(248, 113, 113, 0.35); }
-    .cue { display: grid; grid-template-columns: 180px 1fr 48px; align-items: center; gap: 10px; font-size: 13px; margin-top: 8px; color: var(--ink2); }
-    .bar { height: 7px; border-radius: 999px; background: rgba(148, 163, 184, 0.2); overflow: hidden; }
-    .bar i { display: block; height: 100%; background: var(--brand); }
-    .status { margin-top: 12px; padding: 10px 14px; border-radius: 10px; font-size: 13.5px; background: var(--brand-soft); color: #93b4ff; border: 1px solid rgba(79, 124, 255, 0.3); }
-    .status.error { background: var(--bad-bg); color: var(--bad); border-color: rgba(248, 113, 113, 0.35); }
-    .alert { border: 1px solid var(--line); border-left: 4px solid var(--bad); border-radius: 12px; padding: 14px 16px; margin-top: 12px; background: rgba(9, 16, 34, 0.55); }
-    html[data-theme="light"] .alert { background: #f8fafc; }
-    .alert.done { border-left-color: var(--good); opacity: 0.88; }
-    .alert .top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
-    .alert .msg { font-weight: 700; color: var(--ink); }
-    .alert .meta { color: var(--muted); font-size: 12.5px; }
-    .outcomes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-    input[type=file] { width: 100%; padding: 14px; border: 2px dashed var(--line); border-radius: 12px; background: rgba(9, 16, 34, 0.5); color: var(--ink2); cursor: pointer; }
-    html[data-theme="light"] input[type=file] { background: #f8fafc; }
-  </style>
 </head>
 <body>
-
   <header class="topbar"></header>
 
-  <section class="cs-hero">
-    <div class="cs-watermark" aria-hidden="true">Observation &amp; Safety</div>
-    <div class="cs-hero-inner">
-      <div class="cs-eyebrow">Clinical Tool · Non-Diagnostic Vision AI</div>
-      <h1>Face &amp; Room Check Instantly</h1>
-      <p class="cs-sub">Looks for non-diagnostic facial discomfort cues or room inactivity and alerts the nurse on shift. Photos and videos are never stored.</p>
-      <div class="cs-cta-wrap">
-        <a class="cs-glow-btn" href="#visionTools">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
-          Open Vision Check
-        </a>
-        <span class="cs-cta-note">Zero media retention · Nurse records final clinical outcome</span>
-      </div>
-      <div class="cs-trust-row">
-        <span><i class="ck">✓</i> Facial Discomfort Cues</span>
-        <span><i class="ck">✓</i> Fall &amp; Stillness Monitor</span>
-        <span><i class="ck">✓</i> No Photos or Video Saved</span>
-        <span><i class="ck">✓</i> Nurse Decision Logged</span>
-      </div>
-    </div>
-  </section>
-
-  <div class="cs-strip">
-    <div class="cs-strip-inner">
-      <div class="cs-strip-item"><span class="ic">🙂</span> Facial cue check (brow, eye, lip tension)</div>
-      <div class="cs-strip-item"><span class="ic">🎥</span> Room clip &amp; live camera stillness monitor</div>
-      <div class="cs-strip-item"><span class="ic">🔔</span> Automatic alert routing to shift nurse</div>
-      <div class="cs-strip-item"><span class="ic">🛡️</span> Privacy-first: frames processed in memory only</div>
-    </div>
-  </div>
-
-  <main class="page" id="visionTools">
-    <div class="notice warn" style="margin-bottom:18px">
-      <strong>Demo only.</strong> Use photos and videos of team members who agreed to take part. Never use real residents.
-    </div>
-
-    <div class="card" style="margin-bottom:20px">
-      <div class="row-between">
-        <div>
-          <h2 style="margin:0">Select Resident Context</h2>
-          <p class="sub" style="margin:4px 0 0">Link any triggered alert to a resident on shift, or choose practice mode.</p>
-        </div>
-        <div style="min-width:260px">
-          <label for="resident" style="margin-top:0">Resident</label>
-          <select id="resident"></select>
-        </div>
+  <main class="page-container page-narrow">
+    <div class="page-head">
+      <div>
+        <p class="eyebrow">Nurse</p>
+        <h1>Face and room check</h1>
+        <p class="lede">Check a face photo for signs of discomfort, or a room video for a possible fall. Alerts come to you to decide.</p>
       </div>
     </div>
 
-    <div class="grid-2">
-      <section class="card">
-        <h2>Face Cue Check</h2>
-        <p class="sub">Looks at facial movements linked to discomfort and gives low, medium, or high.</p>
-        <input id="photo" type="file" accept="image/png,image/jpeg" aria-label="Choose a face photo">
-        <div class="btn-row" style="margin-top:14px">
-          <button class="btn primary" id="checkBtn" type="button">Check the Photo</button>
-        </div>
-        <div id="cueOut"></div>
-      </section>
+    <p class="notice"><strong>Demo data only.</strong> Use test photos and videos of project volunteers who agreed, never real residents. Photos and video frames are not saved; only the alert and your decision are logged.</p>
 
-      <section class="card">
-        <h2>Room Monitor (YOLO)</h2>
-        <p class="sub">Looks for a possible fall, or no movement for a long time.</p>
-        <input id="clip" type="file" accept="video/*" aria-label="Choose a test video">
-        <label for="still">Alert after this many seconds without movement</label>
-        <input id="still" type="number" value="20" min="5" max="3600">
-        <div class="btn-row" style="margin-top:14px">
-          <button class="btn primary" id="clipBtn" type="button">Check the Video</button>
-          <button class="btn" id="startBtn" type="button">Start Live Camera</button>
-          <button class="btn" id="stopBtn" type="button">Stop Camera</button>
+    <ol class="steps" aria-label="Steps">
+      <li class="step active"><span class="num">1</span>Choose resident</li>
+      <li class="step active"><span class="num">2</span>Run a check</li>
+      <li class="step active"><span class="num">3</span>Decide on alerts</li>
+    </ol>
+
+    <section class="card" style="margin-bottom: 16px;">
+      <h2 class="card-title" style="margin-bottom: 12px;">1. Resident</h2>
+      <label for="resident" class="sr-only">Resident</label>
+      <select id="resident" class="field"></select>
+      <p class="sub-text" style="margin-top: 6px;">Alerts are linked to this resident. Choose practice mode to try it out.</p>
+    </section>
+
+    <section class="card" style="margin-bottom: 16px;">
+      <h2 class="card-title" style="margin-bottom: 12px;">2. Run a check</h2>
+      <div class="tabs" role="tablist" aria-label="Type of check">
+        <button type="button" class="tab" role="tab" id="tab-face" aria-controls="panel-face" aria-selected="true">Face photo</button>
+        <button type="button" class="tab" role="tab" id="tab-room" aria-controls="panel-room" aria-selected="false">Room video</button>
+      </div>
+
+      <div id="panel-face" role="tabpanel" aria-labelledby="tab-face">
+        <p class="sub-text" style="margin-bottom: 12px;">Looks for facial tension (low, medium or high). High sends you an alert. This is not a diagnosis.</p>
+        <div class="form-group">
+          <label for="photo">Face photo</label>
+          <input id="photo" type="file" accept="image/png,image/jpeg" class="field">
         </div>
-        <div id="roomOut"></div>
-      </section>
-    </div>
+        <button class="btn btn-primary" id="checkBtn" type="button">Check photo</button>
+        <div id="cueOut" style="margin-top: 16px;"></div>
+      </div>
+
+      <div id="panel-room" role="tabpanel" aria-labelledby="tab-room" hidden>
+        <p class="sub-text" style="margin-bottom: 12px;">Looks for a possible fall, or no movement for too long.</p>
+        <div class="grid-equal">
+          <div class="form-group">
+            <label for="clip">Test video</label>
+            <input id="clip" type="file" accept="video/*" class="field">
+          </div>
+          <div class="form-group">
+            <label for="still">Alert after no movement for <span class="hint">seconds</span></label>
+            <input id="still" type="number" value="20" min="5" max="3600" class="field num-tabular">
+          </div>
+        </div>
+        <div class="inline">
+          <button class="btn btn-primary" id="clipBtn" type="button">Check video</button>
+          <button class="btn btn-secondary" id="startBtn" type="button">Start live camera</button>
+          <button class="btn btn-secondary" id="stopBtn" type="button">Stop camera</button>
+        </div>
+        <div id="roomOut" style="margin-top: 16px;"></div>
+      </div>
+    </section>
 
     <section class="card">
-      <h2>Alerts for the Nurse</h2>
-      <p class="sub">Check on the resident, then record what happened. Only a nurse can sign off an alert outcome.</p>
-      <div style="max-width:340px;margin-bottom:12px">
-        <label for="nurse">Your name (Nurse)</label>
-        <input id="nurse" type="text" maxlength="60" placeholder="e.g. Nurse Riya Patel">
+      <div class="card-header">
+        <h2 class="card-title">3. Alerts to decide</h2>
+        <div style="min-width: 220px;">
+          <label for="nurse">Your name</label>
+          <input id="nurse" type="text" maxlength="60" class="field">
+        </div>
       </div>
-      <div id="alerts"></div>
+      <div id="alerts"><div class="skeleton w80"></div><div class="skeleton w60"></div></div>
     </section>
   </main>
+
+  <footer class="foot"></footer>
 
   <script src="/static/auth.js"></script>
   <script>
     const $ = (id) => document.getElementById(id);
-    const CUE_NAMES = { brow_lowering: "Brow lowering", eye_narrowing: "Eye narrowing",
-      nose_wrinkle_or_lip_raise: "Nose wrinkle or lip raise", eyes_closed: "Eyes closed" };
-    const TYPE_NAMES = { high_cue: "Face check", possible_fall: "Possible fall", no_movement: "No movement" };
-    const OUTCOME_LABELS = { fine: "Resident is fine", action_taken: "I helped them",
-      false_alarm: "False alarm", escalated: "Escalate" };
+    const CUE_NAMES = {
+      brow_lowering: "Brow lowering",
+      eye_narrowing: "Eye narrowing",
+      nose_wrinkle_or_lip_raise: "Lip or nose tension",
+      eyes_closed: "Eyes closed"
+    };
+    const TYPE_NAMES = {
+      high_cue: "Face check",
+      possible_fall: "Possible fall",
+      no_movement: "No movement"
+    };
+    const OUTCOME_LABELS = {
+      fine: "Resident is fine",
+      action_taken: "I helped them",
+      false_alarm: "False alarm",
+      escalated: "Escalate"
+    };
     let residents = {};
+
+    // Tabs
+    (function () {
+      const tabs = Array.from(document.querySelectorAll(".tab"));
+      function show(tab) {
+        tabs.forEach((t) => {
+          const on = t === tab;
+          t.setAttribute("aria-selected", String(on));
+          t.tabIndex = on ? 0 : -1;
+          document.getElementById(t.getAttribute("aria-controls")).hidden = !on;
+        });
+      }
+      tabs.forEach((t, i) => {
+        t.addEventListener("click", () => show(t));
+        t.addEventListener("keydown", (e) => {
+          if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+          const next = tabs[(i + 1) % tabs.length];
+          show(next);
+          next.focus();
+        });
+      });
+      show(tabs[0]);
+    })();
 
     function el(tag, cls, text) {
       const e = document.createElement(tag);
@@ -133,20 +137,24 @@
       if (text !== undefined) e.textContent = text;
       return e;
     }
+
     function say(box, text, isError) {
-      box.replaceChildren(el("div", "status" + (isError ? " error" : ""), text));
+      box.replaceChildren(el("p", "alert-box " + (isError ? "alert-danger" : "alert-info"), text));
     }
+
     function send(url, options) {
       options = options || {};
       if (window.authFetch && localStorage.getItem("agecare_token")) return window.authFetch(url, options);
       options.headers = Object.assign({ "X-Role": localStorage.getItem("agecare_role") || "nurse" }, options.headers || {});
       return fetch(url, options);
     }
+
     async function readJson(r) {
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(typeof d.detail === "string" ? d.detail : "Something went wrong.");
       return d;
     }
+
     function residentForm(file) {
       const form = new FormData();
       form.append("file", file);
@@ -156,10 +164,11 @@
 
     async function loadResidents() {
       const list = await (await fetch("/api/residents")).json();
-      $("resident").append(new Option("No resident (practice)", ""));
+      $("resident").replaceChildren();
+      $("resident").append(new Option("Practice mode (no resident)", ""));
       for (const p of list) {
         residents[p.resident_id] = p.name;
-        $("resident").append(new Option(p.name, p.resident_id));
+        $("resident").append(new Option(p.name + " (Room " + (100 + Number(p.resident_id)) + ")", p.resident_id));
       }
     }
 
@@ -167,25 +176,37 @@
       const file = $("photo").files[0];
       if (!file) return say($("cueOut"), "Choose a photo first.", true);
       $("checkBtn").disabled = true;
-      say($("cueOut"), "Checking the photo...");
+      say($("cueOut"), "Checking the photo…");
       try {
         const d = await readJson(await fetch("/api/vision/cue-check", { method: "POST", body: residentForm(file) }));
         const out = $("cueOut");
         out.replaceChildren();
         if (d.status !== "ok") return say(out, d.message, true);
-        const head = el("p");
-        head.append("Level: ", el("span", "level " + d.level, d.level), " (score " + d.score + ")");
-        out.append(head, el("p", "msg", d.message));
-        for (const [key, value] of Object.entries(d.cues)) {
-          const row = el("div", "cue");
-          const bar = el("div", "bar");
-          const fill = el("i");
-          fill.style.width = Math.round(value * 100) + "%";
-          bar.append(fill);
-          row.append(el("span", "", CUE_NAMES[key] || key), bar, el("span", "", value.toFixed(2)));
-          out.append(row);
+
+        const badgeClass = d.level === "high" ? "badge-red" : d.level === "medium" ? "badge-amber" : "badge-green";
+        const top = el("div", "between");
+        top.append(el("strong", "", "Result"), el("span", "badge " + badgeClass, d.level.charAt(0).toUpperCase() + d.level.slice(1) + " · score " + (d.score || 0)));
+        const msg = el("p", "text-sm", d.message);
+        msg.style.marginTop = "6px";
+        out.append(top, msg);
+
+        const cuesWrap = el("div", "cue-grid");
+        for (const [key, value] of Object.entries(d.cues || {})) {
+          const row = el("div", "cue-row");
+          const track = el("div", "cue-bar-track");
+          const bar = el("div", "cue-bar-fill");
+          bar.style.width = Math.round(value * 100) + "%";
+          track.append(bar);
+          row.append(el("span", "", CUE_NAMES[key] || key), track, el("span", "text-mono", value.toFixed(2)));
+          cuesWrap.append(row);
         }
-        if (d.alert_id) out.append(el("div", "status", "An alert was sent to the nurse (see below)."));
+        out.append(cuesWrap);
+
+        if (d.alert_id) {
+          const warn = el("p", "alert-box alert-warn", "High level. An alert has been added to step 3.");
+          warn.style.marginTop = "12px";
+          out.append(warn);
+        }
         loadAlerts();
       } catch (error) {
         say($("cueOut"), error.message, true);
@@ -200,10 +221,10 @@
       const form = residentForm(file);
       form.append("still_seconds", $("still").value);
       $("clipBtn").disabled = true;
-      say($("roomOut"), "Checking the video. On a laptop this takes about as long as the video.");
+      say($("roomOut"), "Checking the video…");
       try {
         const d = await readJson(await fetch("/api/vision/monitor/clip", { method: "POST", body: form }));
-        say($("roomOut"), d.count ? d.count + " alert(s) found. See the alerts below." : "Nothing found in this video.");
+        say($("roomOut"), d.count ? d.count + " event(s) found. See step 3." : "No fall or long stillness found in this video.");
         loadAlerts();
       } catch (error) {
         say($("roomOut"), error.message, true);
@@ -213,12 +234,18 @@
     };
 
     $("startBtn").onclick = async () => {
-      const body = { camera_index: 0, still_seconds: Number($("still").value),
-                     resident_id: $("resident").value ? Number($("resident").value) : null };
+      const body = {
+        camera_index: 0,
+        still_seconds: Number($("still").value),
+        resident_id: $("resident").value ? Number($("resident").value) : null
+      };
       try {
-        await readJson(await send("/api/vision/monitor/start", { method: "POST",
-          headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }));
-        say($("roomOut"), "Live camera is on. Nothing is recorded. Alerts appear below.");
+        await readJson(await send("/api/vision/monitor/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        }));
+        say($("roomOut"), "Live camera is on. Frames are not saved. Alerts will appear in step 3.");
       } catch (error) {
         say($("roomOut"), error.message, true);
       }
@@ -236,8 +263,11 @@
     async function decide(alert, outcome, noteBox, msgBox) {
       try {
         await readJson(await send("/api/vision/alerts/" + alert.id + "/decision", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ outcome: outcome, note: noteBox.value, nurse: $("nurse").value }) }));
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ outcome: outcome, note: noteBox.value, nurse: $("nurse").value })
+        }));
+        if (window.showToast) window.showToast("Decision saved");
         loadAlerts(true);
       } catch (error) {
         say(msgBox, error.message, true);
@@ -245,26 +275,35 @@
     }
 
     function alertCard(a) {
-      const card = el("div", "alert" + (a.outcome ? " done" : ""));
-      const top = el("div", "top");
-      top.append(el("span", "msg", (TYPE_NAMES[a.alert_type] || a.alert_type) + ": " + a.message));
-      const where = a.resident_id ? residents[a.resident_id] || "Resident " + a.resident_id : a.camera || "No resident";
-      top.append(el("span", "meta", where + " · " + a.created_at.replace("T", " ").replace("+00:00", " UTC")));
-      card.append(top);
+      const card = el("div", "alert-card" + (a.outcome ? " done" : ""));
+      const top = el("div", "between");
+      top.append(
+        el("strong", "", TYPE_NAMES[a.alert_type] || a.alert_type),
+        el("span", "badge " + (a.outcome ? "badge-green" : "badge-red"), a.outcome ? "Decided" : "Open")
+      );
+      const where = a.resident_id ? residents[a.resident_id] || "Resident " + a.resident_id : a.camera || "Practice mode";
+      card.append(top, el("p", "text-sm", a.message), el("p", "sub-text", where + " · " + (a.created_at || "").slice(0, 16).replace("T", " ")));
+
       if (a.outcome) {
         let text = "Decided by " + a.decided_by + ": " + OUTCOME_LABELS[a.outcome];
         if (a.outcome_note) text += ". " + a.outcome_note;
-        card.append(el("p", "meta", text));
+        const p = el("p", "text-sm", text);
+        p.style.marginTop = "6px";
+        card.append(p);
         return card;
       }
-      const note = el("textarea");
+
+      const note = el("textarea", "field");
       note.rows = 2;
       note.maxLength = 300;
-      note.placeholder = "What did you do? Needed for 'I helped them' and 'Escalate'.";
+      note.style.marginTop = "10px";
+      note.placeholder = "What you did (needed for 'I helped them' and 'Escalate')";
+      note.setAttribute("aria-label", "Note about this alert");
+
       const msg = el("div");
-      const buttons = el("div", "outcomes");
+      const buttons = el("div", "outcome-btn-row");
       for (const [key, label] of Object.entries(OUTCOME_LABELS)) {
-        const b = el("button", "btn sm" + (key === "escalated" ? " bad" : key === "action_taken" ? " primary" : ""), label);
+        const b = el("button", "btn btn-sm " + (key === "escalated" ? "btn-danger" : key === "action_taken" ? "btn-primary" : "btn-secondary"), label);
         b.type = "button";
         b.onclick = () => decide(a, key, note, msg);
         buttons.append(b);
@@ -278,7 +317,7 @@
       const list = await (await fetch("/api/vision/alerts")).json();
       const box = $("alerts");
       box.replaceChildren();
-      if (!list.length) return box.append(el("p", "sub", "No alerts yet."));
+      if (!list.length) return box.append(el("p", "empty", "No alerts today. Run a check in step 2 to try it."));
       for (const a of list) box.append(alertCard(a));
     }
 

@@ -3,163 +3,176 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Family Portal · AgeCare</title>
+  <title>Family updates · AgeCare</title>
   <link rel="icon" type="image/png" href="/static/img/favicon.png">
   <link rel="stylesheet" href="/static/app.css">
+  <style>
+    .update-text { font-size: 17px; line-height: 1.65; white-space: pre-line; color: var(--ink); }
+    .update-meta { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); }
+  </style>
 </head>
 <body>
   <header class="topbar"></header>
 
-  <!-- Common ClearScan Hero -->
-  <section class="cs-hero">
-    <div class="cs-hero-watermark" aria-hidden="true">Family &amp; Whānau Updates</div>
-    <div class="cs-hero-eyebrow">Role 04 · Family Portal</div>
-    <h1 id="greetingHeading">Kia ora, Whānau</h1>
-    <p class="cs-sub">
-      Read warm, plain-language daily updates checked and approved by your loved one's Registered Nurse, and message the care team directly.
-    </p>
-    <div class="cs-cta-row">
-      <a class="cs-glow-btn" href="#famMsg">
-        <span>✓</span> Message Care Team
-      </a>
+  <main class="page-container page-narrow">
+    <div class="page-head">
+      <div>
+        <p class="eyebrow" id="resRoom">Kōwhai Gardens rest home</p>
+        <h1 id="resTitle">Today's update</h1>
+        <p class="lede">Every update here has been checked by a registered nurse before it is shared with you.</p>
+      </div>
     </div>
-    <div class="cs-privacy-note">Families see only nurse-approved updates—never raw clinical notes (Health Information Privacy Code 2020).</div>
-    <div class="cs-trust-row">
-      <span><b>✓</b> Nurse-Checked Updates</span>
-      <span><b>✓</b> Plain-Language Clarity</span>
-      <span><b>✓</b> Direct Staff Messaging</span>
-      <span><b>✓</b> Single-Resident Privacy</span>
-    </div>
-  </section>
 
-  <!-- Common Horizontal Feature Strip -->
-  <div class="cs-strip">
-    <div class="cs-strip-inner">
-      <span class="cs-strip-item">💌 Reassuring daily summaries.</span>
-      <span class="cs-strip-item">🩺 Reviewed by a Registered Nurse before sending.</span>
-      <span class="cs-strip-item">🔒 Linked strictly to your family member.</span>
-      <span class="cs-strip-item">⚡ Send questions or visit times to staff.</span>
-    </div>
-  </div>
+    <div class="stack">
+      <section class="card" aria-labelledby="latestTitle">
+        <div class="card-header">
+          <h2 class="card-title" id="latestTitle">Latest update</h2>
+          <span class="badge badge-green">Checked by a nurse</span>
+        </div>
+        <div id="updateBody"><div class="skeleton w80"></div><div class="skeleton w80"></div><div class="skeleton w60"></div></div>
+      </section>
 
-  <main class="page" style="max-width: 1040px">
-    <div class="row">
-      <!-- Left: Today's approved update -->
-      <section class="card col-main">
-        <div class="inline" style="gap: 14px">
-          <div id="resInitials" aria-hidden="true" style="width: 52px; height: 52px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px">MT</div>
+      <section class="card" aria-labelledby="contactTitle">
+        <div class="card-header">
+          <h2 class="card-title" id="contactTitle">Who to contact</h2>
+        </div>
+        <dl class="kv">
+          <dt>Nurse on duty</dt><dd>24 hours, through reception</dd>
+          <dt>Reception</dt><dd>Weekdays 8:30 am to 5 pm</dd>
+          <dt>Visiting hours</dt><dd>Every day 9 am to 8 pm</dd>
+        </dl>
+        <p class="sub-text" style="margin-top: 12px;">For anything urgent, phone reception and ask for the nurse on duty.</p>
+      </section>
+
+      <section class="card" aria-labelledby="msgTitle">
+        <div class="card-header">
           <div>
-            <h2 id="resTitle" style="font-size: 21px">Today's update</h2>
-            <div class="small" id="resRoom">Kōwhai Gardens</div>
+            <h2 class="card-title" id="msgTitle">Messages with the nurses</h2>
+            <p class="sub-text">For questions, news or visits. The nurses usually reply between 8 am and 8 pm. For anything urgent, phone reception and ask for the nurse on duty.</p>
           </div>
         </div>
-
-        <div id="updateBody" class="stack">
-          <p class="muted" style="font-size: 17px">Loading today's update…</p>
+        <div class="chat" id="chat" aria-live="polite"><div class="skeleton w60"></div></div>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="famMsg">Your message</label>
+          <textarea id="famMsg" class="field" rows="3" maxlength="1000" placeholder="For example: I will visit on Saturday morning with the grandchildren."></textarea>
         </div>
-      </section>
-
-      <!-- Right: Message the care team -->
-      <section class="card col-side">
-        <h2>Message the Care Team</h2>
-        <label class="lbl" for="famMsg">
-          <span class="small" style="font-weight: 400">Questions, or anything staff should know</span>
-          <textarea id="famMsg" class="field" rows="3" placeholder="e.g. I'll visit Saturday morning with the grandkids"></textarea>
-        </label>
-        <div class="between">
-          <p class="msg" id="famStatus"></p>
-          <button type="button" id="sendBtn" class="btn btn-primary" onclick="sendMessage()">Send Message →</button>
+        <div class="form-actions">
+          <p class="text-sm" id="famStatus" role="status"></p>
+          <button type="button" id="sendBtn" class="btn btn-primary" onclick="sendMessage()">Send message</button>
         </div>
-
-        <div id="sentList" class="stack"></div>
       </section>
     </div>
-
-    <footer class="foot">
-      Prototype for Team Trio · IA728001 Studio 5. All residents and staff are fictional.
-    </footer>
   </main>
+
+  <footer class="foot"></footer>
 
   <script src="/static/auth.js"></script>
   <script>
     const $ = (id) => document.getElementById(id);
 
-    async function loadFamily() {
-      const fullName = localStorage.getItem("agecare_name") || "Family";
-      const firstName = fullName.split(" ")[0];
-      $("greetingHeading").textContent = "Kia ora, " + firstName;
+    function el(tag, className, text) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
 
+    async function loadFamily() {
       const res = await window.authFetch("/api/family/me");
-      if (!res.ok) return;
+      if (!res.ok) {
+        $("updateBody").replaceChildren(el("p", "alert-box alert-danger", "Could not load the update. Please sign in again."));
+        return;
+      }
       const data = await res.json();
       const r = data.resident;
-      const initials = r.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
-      $("resInitials").textContent = initials;
-      $("resTitle").textContent = "Today's update for " + r.name.split(" ")[0];
-      $("resRoom").textContent = r.room + " · Kōwhai Gardens";
+      const first = r.name ? r.name.split(" ")[0] : "your family member";
+      $("resTitle").textContent = "How " + first + " is today";
+      $("resRoom").textContent = (r.room || "Room") + " · Kōwhai Gardens rest home";
 
       const updateBody = $("updateBody");
-      updateBody.innerHTML = "";
-      if (!data.updates.length) {
-        const p = document.createElement("p");
-        p.className = "muted";
-        p.style.fontSize = "17px";
-        p.textContent = "No update has been approved yet today. Updates are checked by a nurse before they're shared with you.";
-        updateBody.appendChild(p);
+      updateBody.replaceChildren();
+      if (!data.updates || !data.updates.length) {
+        updateBody.appendChild(el("p", "empty", "No update yet today. The care team writes one each day, and a nurse checks it before it appears here."));
       } else {
         const latest = data.updates[0];
-        const p = document.createElement("p");
-        p.style.fontSize = "18px";
-        p.style.lineHeight = "1.6";
-        p.style.whiteSpace = "pre-line";
-        p.textContent = latest.text;
-
-        const meta = document.createElement("div");
-        meta.className = "tiny inline";
-        meta.innerHTML = `<span class="badge ok">✓ Nurse Approved</span>`;
-        const span = document.createElement("span");
-        span.textContent = "Approved by " + (latest.approved_by || "Registered Nurse") + " · " + (latest.sent_at || "").slice(11, 16);
-        meta.appendChild(span);
-        updateBody.append(p, meta);
+        const meta = el("div", "between update-meta");
+        meta.append(
+          el("span", "sub-text", "Checked by " + (latest.approved_by || "a registered nurse")),
+          el("span", "mono-time", "Sent " + (latest.sent_at || "").slice(11, 16))
+        );
+        updateBody.append(el("p", "update-text", latest.text), meta);
       }
 
-      const sentList = $("sentList");
-      sentList.innerHTML = "";
-      data.messages.forEach((m) => {
-        const item = document.createElement("div");
-        item.className = "list-item";
-        item.style.flexDirection = "column";
-        item.style.gap = "4px";
-        const txt = document.createElement("div");
-        txt.textContent = m.text;
-        const sub = document.createElement("div");
-        sub.className = "tiny";
-        sub.textContent = (m.created_at || "").slice(11, 16) + " · " + (m.read_by ? "Read by " + m.read_by : "Sent to nurse");
-        item.append(txt, sub);
-        sentList.appendChild(item);
+      residentId = r.resident_id;
+      loadChat(true);
+    }
+
+    let residentId = null;
+    async function loadChat(scroll) {
+      if (residentId == null) return;
+      const res = await window.authFetch("/api/chat/" + residentId);
+      if (!res.ok) return;
+      const thread = await res.json();
+      const box = $("chat");
+      box.replaceChildren();
+      if (!thread.length) {
+        box.appendChild(el("p", "empty", "No messages yet. The nurses read and answer messages during the day."));
+      }
+      thread.forEach((m) => {
+        const mine = m.sender_role !== "nurse";
+        const bubble = el("div", "msg" + (mine ? " mine" : ""), m.text);
+        const who = mine ? "You" + (m.urgent ? " · marked as possibly urgent" : "") : m.from_name;
+        bubble.append(el("span", "meta", who + " · " + (m.created_at || "").slice(11, 16) + (mine && m.read_by ? " · read" : "")));
+        box.appendChild(bubble);
       });
+      if (scroll) box.scrollTop = box.scrollHeight;
     }
 
     async function sendMessage() {
       const text = $("famMsg").value.trim();
-      if (text.length < 2) return;
+      if (text.length < 2) {
+        $("famStatus").textContent = "Write a short message first.";
+        $("famStatus").className = "text-sm alert-danger";
+        $("famMsg").focus();
+        return;
+      }
       $("sendBtn").disabled = true;
-      const res = await window.authFetch("/api/family/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: text }),
-      });
-      $("sendBtn").disabled = false;
-      if (res.ok) {
-        $("famMsg").value = "";
-        $("famStatus").textContent = "Message sent to the care team.";
-        $("famStatus").className = "msg ok";
-        if (window.showToast) window.showToast("Message sent to care team");
-        loadFamily();
+      try {
+        const res = await window.authFetch("/api/chat/" + residentId, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: text }),
+        });
+        if (res.ok) {
+          const sent = await res.json();
+          $("famMsg").value = "";
+          if (sent.urgent) {
+            $("famStatus").textContent = "Sent. If this is urgent, please phone reception now and ask for the nurse on duty. Messages are not watched all the time.";
+            $("famStatus").className = "text-sm alert-warn";
+          } else if (sent.out_of_hours) {
+            $("famStatus").textContent = "Sent. The nurses will read it after 8 am.";
+            $("famStatus").className = "text-sm alert-success";
+          } else {
+            $("famStatus").textContent = "Message sent to the nurses.";
+            $("famStatus").className = "text-sm alert-success";
+          }
+          loadChat(true);
+        } else {
+          $("famStatus").textContent = "Could not send the message. Please try again.";
+          $("famStatus").className = "text-sm alert-danger";
+        }
+      } catch (e) {
+        $("famStatus").textContent = "Network problem. Please try again.";
+        $("famStatus").className = "text-sm alert-danger";
+      } finally {
+        $("sendBtn").disabled = false;
       }
     }
 
     loadFamily();
+    setInterval(() => {
+      if (document.visibilityState === "visible" && document.activeElement !== $("famMsg")) loadChat(false);
+    }, 20000);
   </script>
 </body>
 </html>

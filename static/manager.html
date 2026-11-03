@@ -3,187 +3,105 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Manager Portal · Overview &amp; Compliance · AgeCare</title>
+  <title>User accounts · AgeCare</title>
   <link rel="icon" type="image/png" href="/static/img/favicon.png">
   <link rel="stylesheet" href="/static/app.css">
 </head>
 <body>
   <header class="topbar"></header>
 
-  <!-- Common ClearScan Hero -->
-  <section class="cs-hero">
-    <div class="cs-hero-watermark" aria-hidden="true">Governance &amp; Compliance</div>
-    <div class="cs-hero-eyebrow">Role 03 · Manager &amp; Admin Portal</div>
-    <h1>Facility Overview Instantly</h1>
-    <p class="cs-sub">
-      Monitor live rest-home KPIs, manage staff and family role credentials, and inspect the complete NZS 8134 clinical audit log.
-    </p>
-    <div class="cs-cta-row">
-      <button type="button" class="cs-glow-btn" onclick="loadOverview()">
-        <span>✓</span> Refresh Live Metrics
-      </button>
-    </div>
-    <div class="cs-privacy-note">Every AI draft, nurse decision, and account action is logged with a timestamp.</div>
-    <div class="cs-trust-row">
-      <span><b>✓</b> NZS 8134 Evidence</span>
-      <span><b>✓</b> HIPC 2020 Privacy</span>
-      <span><b>✓</b> 4-Role Credentials</span>
-      <span><b>✓</b> Tamper-Evident Audit</span>
-    </div>
-  </section>
-
-  <!-- Common Horizontal Feature Strip -->
-  <div class="cs-strip">
-    <div class="cs-strip-inner">
-      <span class="cs-strip-item">📊 Real-time shift completion KPIs.</span>
-      <span class="cs-strip-item">🔑 Provision Carer, Nurse, Manager &amp; Family logins.</span>
-      <span class="cs-strip-item">✅ Verify human-in-the-loop compliance.</span>
-      <span class="cs-strip-item">⚡ Complete timestamped audit trail.</span>
-    </div>
-  </div>
-
-  <main class="page">
+  <main class="page-container">
     <div class="page-head">
       <div>
-        <div class="eyebrow">Admin / Manager</div>
-        <h2 class="page-title">Facility KPIs, Accounts &amp; Compliance</h2>
+        <p class="eyebrow">Manager</p>
+        <h1>User accounts</h1>
+        <p class="lede">Who can sign in, and what each person can see.</p>
       </div>
     </div>
 
-    <!-- KPI strip -->
-    <div class="kpis" id="kpiGrid"></div>
-
-    <div class="row">
-      <!-- Left: Residents overview + User accounts management -->
-      <div class="col-main">
-        <section class="card">
-          <h2>Residents Overview</h2>
+    <div class="grid-layout">
+      <div class="stack">
+        <section class="card" aria-labelledby="usersTitle">
+          <div class="card-header">
+            <h2 class="card-title" id="usersTitle">Accounts</h2>
+            <span class="sub-text" id="userCount"></span>
+          </div>
           <div class="table-wrap">
             <table class="tbl">
               <thead>
-                <tr>
-                  <th>Resident</th>
-                  <th>Room</th>
-                  <th>Tasks today</th>
-                  <th>Concerns</th>
-                  <th>Family update</th>
-                </tr>
+                <tr><th>Name</th><th>Username</th><th>Role</th><th>Resident</th><th>Medicines</th><th><span class="sr-only">Actions</span></th></tr>
               </thead>
-              <tbody id="residentRows"></tbody>
+              <tbody id="userRows">
+                <tr><td colspan="6"><div class="skeleton w80"></div><div class="skeleton w60"></div></td></tr>
+              </tbody>
             </table>
           </div>
         </section>
 
-        <section class="card">
-          <div class="between">
-            <h2>User Logins &amp; Role Credentials</h2>
-            <span class="small">Create logins for carers, nurses, managers, and families</span>
-          </div>
-
-          <div class="table-wrap">
-            <table class="tbl">
-              <thead>
-                <tr>
-                  <th>Username</th>
-                  <th>Full name</th>
-                  <th>Role</th>
-                  <th>Linked resident</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody id="userRows"></tbody>
-            </table>
-          </div>
-
-          <form class="divider stack" onsubmit="createUser(event)">
-            <div class="section-label">Create a new login</div>
-            <div class="grid-fields">
-              <label class="lbl" for="uFullName">
-                Full name
-                <input id="uFullName" class="field" type="text" required placeholder="e.g. Mere Walker">
-              </label>
-              <label class="lbl" for="uUsername">
-                Username
-                <input id="uUsername" class="field" type="text" required minlength="3" placeholder="e.g. family2">
-              </label>
-              <label class="lbl" for="uPassword">
-                Password
-                <input id="uPassword" class="field" type="password" required minlength="6" placeholder="Min 6 chars">
-              </label>
-              <label class="lbl" for="uRole">
-                Role
+        <section class="card" aria-labelledby="addTitle">
+          <h2 class="card-title" id="addTitle" style="margin-bottom: 16px;">Add an account</h2>
+          <form onsubmit="createUser(event)">
+            <div class="grid-equal">
+              <div class="form-group">
+                <label for="uFullName">Full name</label>
+                <input id="uFullName" class="field" type="text" required placeholder="Mere Walker">
+              </div>
+              <div class="form-group">
+                <label for="uUsername">Username or email</label>
+                <input id="uUsername" class="field" type="text" required minlength="3" placeholder="mere.walker">
+              </div>
+              <div class="form-group">
+                <label for="uPassword">Temporary password <span class="hint">at least 6 characters</span></label>
+                <input id="uPassword" class="field" type="password" required minlength="6">
+              </div>
+              <div class="form-group">
+                <label for="uRole">Role</label>
                 <select id="uRole" class="field" onchange="toggleResSelect()">
                   <option value="carer">Carer</option>
-                  <option value="nurse">Nurse</option>
+                  <option value="nurse">Registered nurse</option>
                   <option value="manager">Manager</option>
                   <option value="family">Family</option>
                 </select>
-              </label>
-              <label class="lbl hidden" id="uResWrap" for="uResident">
-                Resident (Family only)
-                <select id="uResident" class="field"></select>
-              </label>
+              </div>
             </div>
-            <div class="between">
-              <p class="msg" id="userMsg"></p>
-              <button type="submit" class="btn btn-primary btn-sm">Add user account</button>
+            <div class="form-group hidden" id="uResWrap">
+              <label for="uResident">Family member in care</label>
+              <select id="uResident" class="field"></select>
+            </div>
+            <div class="form-actions" style="margin-top: 4px;">
+              <p class="text-sm" id="userMsg" role="status"></p>
+              <button type="submit" class="btn btn-primary">Add account</button>
             </div>
           </form>
         </section>
       </div>
 
-      <!-- Right: Compliance evidence & Audit log -->
-      <aside class="col-side">
-        <section class="card">
-          <h2>Compliance Evidence</h2>
-          <div class="cs-feature-list">
-            <div class="cs-feature-item">
-              <span class="cs-check-circle">✓</span>
-              <div>
-                <strong>Human-in-the-loop (NZS 8134)</strong>
-                <div class="small">AI drafts are never shown to carers or families until a Registered Nurse approves them.</div>
-              </div>
-            </div>
-            <div class="cs-feature-item">
-              <span class="cs-check-circle">✓</span>
-              <div>
-                <strong>Health Information Privacy Code 2020</strong>
-                <div class="small">Each role has its own login. Family accounts see only nurse-approved updates for their linked resident.</div>
-              </div>
-            </div>
-            <div class="cs-feature-item">
-              <span class="cs-check-circle">✓</span>
-              <div>
-                <strong>Local AI processing</strong>
-                <div class="small">Small language model runs locally via Ollama so resident notes stay on facility hardware.</div>
-              </div>
-            </div>
-            <div class="cs-feature-item">
-              <span class="cs-check-circle">✓</span>
-              <div>
-                <strong>Full audit trail</strong>
-                <div class="small">Every draft, nurse approval, priority review and account change is timestamped below.</div>
-              </div>
-            </div>
+      <aside class="card" aria-labelledby="auditTitle">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title" id="auditTitle">Audit log</h2>
+            <p class="sub-text">Every sign-off and account change</p>
           </div>
-        </section>
-
-        <section class="card dark">
-          <h2>Audit Log</h2>
-          <ol class="audit" id="auditList"></ol>
-        </section>
+        </div>
+        <ol class="audit-list" id="auditList"><li><div class="skeleton w80" style="width: 100%;"></div></li></ol>
       </aside>
     </div>
-
-    <footer class="foot">
-      Prototype for Team Trio · IA728001 Studio 5. All residents and staff are fictional.
-    </footer>
   </main>
+
+  <footer class="foot"></footer>
 
   <script src="/static/auth.js"></script>
   <script>
     const $ = (id) => document.getElementById(id);
+    const ROLE_NAMES = { carer: "Carer", nurse: "Nurse", manager: "Manager", family: "Family" };
     let residentsMap = {};
+
+    function el(tag, className, text) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
 
     function toggleResSelect() {
       $("uResWrap").classList.toggle("hidden", $("uRole").value !== "family");
@@ -199,57 +117,25 @@
       if (resP.ok) {
         const list = await resP.json();
         const sel = $("uResident");
-        sel.innerHTML = "";
+        sel.replaceChildren();
         list.forEach((p) => {
           residentsMap[p.resident_id] = p.name;
-          sel.add(new Option(p.name + " (Room " + (100 + p.resident_id) + ")", p.resident_id));
+          sel.add(new Option(p.name + " (Room " + (100 + Number(p.resident_id)) + ")", p.resident_id));
         });
       }
 
       if (ovRes.ok) {
         const data = await ovRes.json();
-        const kpiGrid = $("kpiGrid");
-        kpiGrid.innerHTML = "";
-        data.kpis.forEach((k) => {
-          const card = document.createElement("div");
-          card.className = "kpi";
-          card.innerHTML = `
-            <div class="small">${k.label}</div>
-            <div class="kpi-value ${k.alert ? "alert" : ""}">${k.value}</div>
-            <div class="tiny">${k.sub}</div>
-          `;
-          kpiGrid.appendChild(card);
-        });
-
-        const rBody = $("residentRows");
-        rBody.innerHTML = "";
-        data.residents.forEach((r) => {
-          const tr = rBody.insertRow();
-          tr.insertCell().innerHTML = `<strong>${r.name}</strong>`;
-          tr.insertCell().textContent = r.room;
-          tr.insertCell().textContent = r.tasks;
-          const cCell = tr.insertCell();
-          cCell.textContent = r.concerns ? r.concerns + " flagged" : "None";
-          if (r.concerns) cCell.className = "st-concern";
-          tr.insertCell().textContent = r.family_update;
-        });
-
         const auditList = $("auditList");
-        auditList.innerHTML = "";
-        if (!data.audit.length) {
-          auditList.innerHTML = `<li><span class="t">–</span><span>No audit events yet.</span></li>`;
+        auditList.replaceChildren();
+        if (!data.audit || !data.audit.length) {
+          auditList.appendChild(el("li", "empty", "Nothing logged yet."));
         } else {
           data.audit.forEach((a) => {
-            const li = document.createElement("li");
-            const t = document.createElement("span");
-            t.className = "t";
-            t.textContent = (a.at || "").slice(11, 16);
-            const body = document.createElement("span");
-            const who = document.createElement("strong");
-            who.textContent = a.actor + " ";
-            body.appendChild(who);
-            body.appendChild(document.createTextNode(a.action.replace(/_/g, " ") + (a.detail ? " · " + a.detail : "")));
-            li.append(t, body);
+            const body = el("span", "text-sm");
+            body.append(el("strong", "", a.actor + " "), document.createTextNode((a.action || "").replace(/_/g, " ") + (a.detail ? ". " + a.detail : "")));
+            const li = el("li");
+            li.append(el("span", "audit-time", (a.at || "").slice(5, 16).replace("T", " ")), body);
             auditList.appendChild(li);
           });
         }
@@ -257,21 +143,55 @@
 
       if (usrRes.ok) {
         const users = await usrRes.json();
+        $("userCount").textContent = users.length + (users.length === 1 ? " account" : " accounts");
         const uBody = $("userRows");
-        uBody.innerHTML = "";
+        uBody.replaceChildren();
         const myUser = (localStorage.getItem("agecare_username") || "").toLowerCase();
+
         users.forEach((u) => {
           const tr = uBody.insertRow();
-          tr.insertCell().innerHTML = `<span class="mono">${u.username}</span>`;
           tr.insertCell().textContent = u.full_name;
-          tr.insertCell().innerHTML = `<span class="badge none">${u.role}</span>`;
-          tr.insertCell().textContent = u.resident_id ? (residentsMap[u.resident_id] || "Resident #" + u.resident_id) : "All / staff";
+          const tdUser = tr.insertCell();
+          tdUser.className = "text-mono";
+          tdUser.textContent = u.username;
+          tr.insertCell().append(el("span", "role-badge", ROLE_NAMES[u.role] || u.role));
+          const tdRes = tr.insertCell();
+          tdRes.className = "sub-text";
+          tdRes.textContent = u.resident_id ? residentsMap[u.resident_id] || "Resident " + u.resident_id : "";
+          const tdMed = tr.insertCell();
+          if (u.role === "carer") {
+            const lab = el("label", "inline");
+            lab.style.cssText = "margin: 0; font-weight: 500; cursor: pointer; flex-wrap: nowrap;";
+            const sw = el("input", "switch");
+            sw.type = "checkbox";
+            sw.setAttribute("role", "switch");
+            sw.checked = Boolean(u.med_competent);
+            sw.setAttribute("aria-label", "Signed off to give medicines: " + u.full_name);
+            const word = el("span", "sub-text", sw.checked ? "Signed off" : "No");
+            sw.addEventListener("change", async () => {
+              sw.disabled = true;
+              const res = await window.authFetch("/api/manager/users/" + encodeURIComponent(u.username) + "/medicines", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ competent: sw.checked }),
+              });
+              if (!res.ok) sw.checked = !sw.checked;
+              word.textContent = sw.checked ? "Signed off" : "No";
+              if (window.showToast) window.showToast(res.ok ? (sw.checked ? u.full_name + " can now tick medicine rounds" : u.full_name + " can no longer tick medicine rounds") : "Could not save", !res.ok);
+              sw.disabled = false;
+            });
+            lab.append(sw, word);
+            tdMed.append(lab);
+          } else {
+            tdMed.className = "text-muted";
+            tdMed.textContent = u.role === "nurse" ? "Always" : "";
+          }
           const act = tr.insertCell();
+          act.style.textAlign = "right";
           if (u.username.toLowerCase() !== myUser) {
-            const btn = document.createElement("button");
+            const btn = el("button", "btn btn-quiet btn-sm", "Remove");
             btn.type = "button";
-            btn.className = "btn btn-ghost btn-sm";
-            btn.textContent = "Remove";
+            btn.setAttribute("aria-label", "Remove " + u.username);
             btn.onclick = () => removeUser(u.username);
             act.appendChild(btn);
           }
@@ -297,20 +217,20 @@
       const data = await res.json();
       const msg = $("userMsg");
       if (!res.ok) {
-        msg.textContent = data.detail || "Could not create user.";
-        msg.className = "msg err";
+        msg.textContent = typeof data.detail === "string" ? data.detail : "Could not add the account.";
+        msg.className = "text-sm alert-danger";
         return;
       }
-      msg.textContent = "Created account " + data.username + " (" + data.role + ").";
-      msg.className = "msg ok";
+      msg.textContent = "Added " + data.username + " as " + (ROLE_NAMES[data.role] || data.role) + ".";
+      msg.className = "text-sm alert-success";
       $("uFullName").value = "";
       $("uUsername").value = "";
       $("uPassword").value = "";
-      if (window.showToast) window.showToast("Added user " + data.username);
       loadOverview();
     }
 
     async function removeUser(username) {
+      if (!confirm("Remove the account '" + username + "'? They will no longer be able to sign in.")) return;
       const res = await window.authFetch("/api/manager/users/" + encodeURIComponent(username), { method: "DELETE" });
       if (res.ok) {
         if (window.showToast) window.showToast("Removed " + username);

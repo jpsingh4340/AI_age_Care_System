@@ -105,6 +105,12 @@ def init_auth_db() -> None:
             conn.execute("ALTER TABLE users_temp RENAME TO users")
             conn.execute("PRAGMA foreign_keys = ON")
 
+        # Signed off by a manager as safe to give medicines (carers only; nurses always are).
+        # Added after the rebuild above so the rebuild cannot drop it.
+        cur.execute("PRAGMA table_info(users)")
+        if "med_competent" not in [r["name"] for r in cur.fetchall()]:
+            conn.execute("ALTER TABLE users ADD COLUMN med_competent INTEGER NOT NULL DEFAULT 0")
+
         # The bedside "patient" role was replaced by the Family portal - remove old patient logins.
         conn.execute("DELETE FROM user_sessions WHERE role NOT IN ('nurse', 'carer', 'manager', 'family')")
         conn.execute("DELETE FROM users WHERE role NOT IN ('nurse', 'carer', 'manager', 'family')")
@@ -298,9 +304,28 @@ def list_users() -> list[dict]:
     """All accounts (no password data) - for the manager page."""
     with _get_connection() as conn:
         rows = conn.execute(
-            "SELECT id, username, full_name, role, resident_id, created_at FROM users ORDER BY role, username"
+            "SELECT id, username, full_name, role, resident_id, created_at, med_competent FROM users ORDER BY role, username"
         ).fetchall()
-    return [dict(r) for r in rows]
+    return [{**dict(r), "med_competent": bool(r["med_competent"])} for r in rows]
+
+
+def set_med_competent(username: str, competent: bool) -> bool:
+    """A manager signs a carer off (or not) as medication competent. Returns False if no such carer."""
+    with _get_connection() as conn:
+        cur = conn.execute(
+            "UPDATE users SET med_competent = ? WHERE username = ? AND role = 'carer'",
+            (1 if competent else 0, username.strip().lower()),
+        )
+        return cur.rowcount > 0
+
+
+def can_give_medicines(username: str, role: str) -> bool:
+    """Nurses always can. Carers only when a manager has signed them off."""
+    if role == "nurse":
+        return True
+    with _get_connection() as conn:
+        row = conn.execute("SELECT med_competent FROM users WHERE username = ?", (username.strip().lower(),)).fetchone()
+    return bool(row and row["med_competent"])
 
 
 def delete_user(username: str) -> bool:
