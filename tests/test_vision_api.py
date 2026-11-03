@@ -195,3 +195,14 @@ def test_ai_suggestions_accept_how_small_models_name_the_line(monkeypatch):
     alert = alerts.add_alert("room_monitor", "possible_fall", "Possible fall.", resident_id=2)
     r = client.post(f"/api/vision/alerts/{alert['id']}/ai-suggestions").json()
     assert r["method"] == "ai" and len(r["steps"]) == 3
+
+
+
+def test_live_view_is_a_stick_figure_only():
+    import numpy as np
+    kp = np.zeros((17, 3))
+    kp[:, 0], kp[:, 1], kp[:, 2] = np.linspace(100, 200, 17), np.linspace(50, 400, 17), 0.9
+    picture = vision.draw_skeleton([(1, (90, 40, 210, 410), kp)], (480, 640))
+    assert picture[:2] == b"\xff\xd8"  # a JPEG drawn from keypoints, not the camera image
+    status = client.get("/api/vision/monitor/status").json()
+    assert status["running"] is False and "people" in status

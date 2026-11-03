@@ -247,7 +247,10 @@ class PoseMonitor:
         source: int | str,
         should_stop: Callable[[], bool] = lambda: False,
         live: bool | None = None,
+        on_frame: Callable | None = None,
     ) -> Iterator[Event]:
+        """``on_frame(t, people, (height, width))`` is called after each checked frame,
+        so the page can show who is in view. It gets keypoints only, never the picture."""
         import cv2
 
         live = isinstance(source, int) if live is None else live
@@ -266,8 +269,11 @@ class PoseMonitor:
                 if index % self.frame_stride:
                     continue
                 t = time.time() - start if live else index / fps
-                for pid, bbox, kp in self.people_in(frame):
+                people = self.people_in(frame)
+                for pid, bbox, kp in people:
                     yield from self.detector.update(pid, PersonFrame(t, bbox, kp))
+                if on_frame is not None:
+                    on_frame(t, people, frame.shape[:2])
                 del frame  # nothing is kept
         finally:
             cap.release()

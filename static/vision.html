@@ -92,6 +92,8 @@
     .suggest li { margin: 3px 0; }
     .suggest small { display: block; color: var(--ink3); font-size: 12px; }
     .suggest .btn { padding: 6px 12px; font-size: 13px; margin-top: 6px; }
+    .live { margin-top: 12px; }
+    .live img { width: 100%; max-width: 480px; border-radius: 12px; background: #0c2f3a; min-height: 120px; }
     .check { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--ink2); margin-left: 12px; }
   </style>
 </head>
@@ -146,6 +148,11 @@
             <button class="btn light" id="stopBtn" type="button">Stop camera</button>
           </div>
           <div id="roomOut"></div>
+          <div class="live" id="liveBox" hidden>
+            <div class="status" id="liveText">Starting the camera...</div>
+            <img id="skeleton" alt="Stick figures of the people the camera can see">
+            <p class="sub">Only a stick figure is shown. The camera picture is never shown or saved.</p>
+          </div>
         </section>
       </div>
 
@@ -276,6 +283,7 @@
         await readJson(await send("/api/vision/monitor/start", { method: "POST",
           headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }));
         say($("roomOut"), "Live camera is on. Nothing is recorded. Alerts appear below.");
+        watchCamera();
       } catch (error) {
         say($("roomOut"), error.message, true);
       }
@@ -289,6 +297,29 @@
         say($("roomOut"), error.message, true);
       }
     };
+
+    // While the camera is on, show who is in view once a second.
+    let watching = null;
+    async function watchCamera() {
+      if (watching) return;
+      $("liveBox").hidden = false;
+      watching = setInterval(async () => {
+        const st = await (await fetch("/api/vision/monitor/status")).json();
+        if (!st.running) {
+          clearInterval(watching);
+          watching = null;
+          $("liveBox").hidden = true;
+          if (st.error) say($("roomOut"), "The camera stopped: " + st.error, true);
+          return;
+        }
+        const who = st.people.length
+          ? st.people.map(p => "Person " + p.id + (p.lying ? " is lying down" : " is upright")).join(", ")
+          : "Nobody in view";
+        $("liveText").textContent = "Camera on. " + st.frames + " frames checked. " + who + ".";
+        if (st.frames) $("skeleton").src = "/api/vision/monitor/skeleton.jpg?t=" + Date.now();
+        loadAlerts();
+      }, 1000);
+    }
 
     async function decide(alert, outcome, noteBox, msgBox) {
       try {
@@ -380,6 +411,7 @@
 
     $("nurse").value = localStorage.getItem("agecare_name") || "";
     loadResidents();
+    fetch("/api/vision/monitor/status").then(r => r.json()).then(st => { if (st.running) watchCamera(); });
     setInterval(loadAlerts, 5000);
   </script>
 </body>
