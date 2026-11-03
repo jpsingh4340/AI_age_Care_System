@@ -106,19 +106,19 @@ def ai_for_alert(alert):
 
     kept, dropped = [], {"no source": 0, "too long": 0, "unsafe": 0}
     for step in steps:
-        if isinstance(step, str):  # small models sometimes send plain text
+         if isinstance(step, str):  # small models sometimes send plain text
             step = {"text": step, "source": ""}
-            text = re.sub(r"^\s*L?\d+\s*[:.)-]\s*", "", str(step.get("text", ""))).strip()  # drop a copied "L1:" label
-        source = numbered.get(_line_id(step.get("source", ""), text, numbered))
-        if not text:
+         text = re.sub(r"^\s*L?\d+\s*[:.)-]\s*", "", str(step.get("text", ""))).strip()  # drop a copied "L1:" label
+         source = numbered.get(_line_id(step.get("source", ""), text, numbered))
+         if not text:
             continue
-        if source is None:
+         if source is None:
             dropped["no source"] += 1
-        elif len(text) > 300:
+         elif len(text) > 300:
             dropped["too long"] += 1
-        elif guidance.contains_blocked(text):
+         elif guidance.contains_blocked(text):
             dropped["unsafe"] += 1
-        else:
+         else:
             kept.append({"text": text, "source": source["source"]})
     removed = ", ".join(f"{n} {why}" for why, n in dropped.items() if n)
     if not kept:
