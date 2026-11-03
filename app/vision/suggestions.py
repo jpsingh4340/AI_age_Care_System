@@ -11,6 +11,7 @@ Two levels:
 The nurse decides. These are prompts, not instructions.
 """
 import json
+import re
 
 from app import guidance, ollama_client
 from app.config import CHAT_MODEL
@@ -103,12 +104,38 @@ def ai_for_alert(alert):
     except (ollama_client.OllamaError, ValueError) as error:
         return {**base, "note": f"AI not available, showing the care plan instead. {error}"}
 
-    kept = []
+    kept, dropped = [], {"no source": 0, "too long": 0, "unsafe": 0}
     for step in steps:
+        if isinstance(step, str):  # small models sometimes send plain text
+            step = {"text": step, "source": ""}
         text = str(step.get("text", "")).strip()
-        source = numbered.get(str(step.get("source", "")).strip())
-        if text and source and len(text) <= 220 and not guidance.contains_blocked(text):
+        source = numbered.get(_line_id(step.get("source", ""), text, numbered))
+        if not text:
+            continue
+        if source is None:
+            dropped["no source"] += 1
+        elif len(text) > 300:
+            dropped["too long"] += 1
+        elif guidance.contains_blocked(text):
+            dropped["unsafe"] += 1
+        else:
             kept.append({"text": text, "source": source["source"]})
+    removed = ", ".join(f"{n} {why}" for why, n in dropped.items() if n)
     if not kept:
-        return {**base, "note": "The AI answer did not pass the safety checks, showing the care plan instead."}
-    return {"method": "ai", "model": CHAT_MODEL, "steps": kept[:4]}
+        why = f" Removed: {removed}." if removed else ""
+        return {**base, "note": f"The AI answer did not pass the safety checks, showing the care plan instead.{why}"}
+    result = {"method": "ai", "model": CHAT_MODEL, "steps": kept[:4]}
+    if removed:
+        result["note"] = f"Some AI steps were removed by the safety checks ({removed})."
+    return result
+
+
+def _line_id(source, text, numbered):
+    """Find which line a step came from. Small models write "L2", "2", "Line 2" or copy the line itself."""
+    match = re.search(r"(\d+)", str(source))
+    if match and f"L{match.group(1)}" in numbered:
+        return f"L{match.group(1)}"
+    for key, line in numbered.items():  # no usable id: accept it if it repeats a given line
+        if line["text"].lower()[:40] in text.lower() or text.lower()[:40] in line["text"].lower():
+            return key
+    return None

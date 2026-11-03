@@ -182,3 +182,16 @@ def test_ai_suggestions_fall_back_when_ollama_is_off(monkeypatch):
     alert = alerts.add_alert("cue_check", "high_cue", "Please look closer.", resident_id=1)
     r = client.post(f"/api/vision/alerts/{alert['id']}/ai-suggestions").json()
     assert r["method"] == "care plan" and r["steps"] and "AI not available" in r["note"]
+
+
+
+def test_ai_suggestions_accept_how_small_models_name_the_line(monkeypatch):
+    import json
+    from app import ollama_client
+    answer = {"steps": [{"text": "Stay with Ron and keep him still.", "source": "Line 2"},
+                        {"text": "Ask if he hurts anywhere.", "source": "3"},
+                        "Do not lift them until a nurse has checked them for injury."]}
+    monkeypatch.setattr(ollama_client, "chat_json", lambda system, user, schema: json.dumps(answer))
+    alert = alerts.add_alert("room_monitor", "possible_fall", "Possible fall.", resident_id=2)
+    r = client.post(f"/api/vision/alerts/{alert['id']}/ai-suggestions").json()
+    assert r["method"] == "ai" and len(r["steps"]) == 3
