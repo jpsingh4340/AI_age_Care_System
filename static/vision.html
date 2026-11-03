@@ -86,6 +86,7 @@
     .alert .meta { color: var(--ink3); font-size: 12.5px; }
     .outcomes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
     .outcomes .btn { padding: 8px 14px; font-size: 13.5px; }
+    .check { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--ink2); margin-left: 12px; }
   </style>
 </head>
 <body>
@@ -143,7 +144,8 @@
       </div>
 
       <section class="panel">
-        <h2><img class="ico" src="/static/img/ico/flag-teal.png" alt="">Alerts for the nurse</h2>
+        <h2><img class="ico" src="/static/img/ico/flag-teal.png" alt="">Alerts for <span id="alertsFor">the nurse</span>
+          <label class="check"><input id="showAll" type="checkbox"> Show all residents</label></h2>
         <p class="sub">Check on the resident, then record what happened. Only a nurse can do this.</p>
         <label for="nurse">Your name</label>
         <input id="nurse" type="text" maxlength="60" placeholder="e.g. Nurse Sam" style="max-width:320px">
@@ -192,12 +194,24 @@
 
     async function loadResidents() {
       const list = await (await fetch("/api/residents")).json();
-      $("resident").append(new Option("No resident (practice)", ""));
       for (const p of list) {
         residents[p.resident_id] = p.name;
         $("resident").append(new Option(p.name, p.resident_id));
       }
+      $("resident").append(new Option("Practice (no resident)", ""));
+      showResident();
     }
+
+    // A new resident: clear the old results and show only their alerts.
+    function showResident() {
+      const id = $("resident").value;
+      $("cueOut").replaceChildren();
+      $("roomOut").replaceChildren();
+      $("alertsFor").textContent = id && !$("showAll").checked ? residents[id] : "all residents";
+      loadAlerts(true);
+    }
+    $("resident").onchange = showResident;
+    $("showAll").onchange = showResident;
 
     $("checkBtn").onclick = async () => {
       const file = $("photo").files[0];
@@ -312,7 +326,9 @@
     async function loadAlerts(force) {
       // Do not redraw while the nurse is typing a note.
       if (!force && document.activeElement && document.activeElement.tagName === "TEXTAREA") return;
-      const list = await (await fetch("/api/vision/alerts")).json();
+      const id = $("resident").value;
+      const url = id && !$("showAll").checked ? "/api/vision/alerts?resident_id=" + id : "/api/vision/alerts";
+      const list = await (await fetch(url)).json();
       const box = $("alerts");
       box.replaceChildren();
       if (!list.length) return box.append(el("p", "sub", "No alerts yet."));
@@ -320,7 +336,7 @@
     }
 
     $("nurse").value = localStorage.getItem("agecare_name") || "";
-    loadResidents().then(() => loadAlerts(true));
+    loadResidents();
     setInterval(loadAlerts, 5000);
   </script>
 </body>

@@ -182,9 +182,9 @@ def monitor_status():
 
 # ---------- alerts and nurse outcomes ----------
 @router.get("/api/vision/alerts")
-def list_alerts(open_only: bool = False):
-    """Alerts, newest first. open_only=true shows the ones still waiting for a nurse."""
-    return alerts.list_alerts(open_only)
+def list_alerts(open_only: bool = False, resident_id: int | None = None):
+    """Alerts, newest first. resident_id shows one resident's alerts only."""
+    return alerts.list_alerts(open_only, resident_id=resident_id)
 
 
 @router.get("/api/vision/outcomes")

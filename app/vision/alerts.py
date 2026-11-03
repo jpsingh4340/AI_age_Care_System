@@ -62,16 +62,18 @@ def get_alert(alert_id):
     return dict(row) if row else None
 
 
-def list_alerts(open_only=False, limit=50):
-    sql = "SELECT * FROM vision_alerts"
+def list_alerts(open_only=False, limit=50, resident_id=None):
+    sql, args = "SELECT * FROM vision_alerts WHERE 1 = 1", []
     if open_only:
-        sql += " WHERE outcome IS NULL"
+        sql += " AND outcome IS NULL"
+    if resident_id is not None:
+        sql += " AND resident_id = ?"
+        args.append(resident_id)
     sql += " ORDER BY id DESC LIMIT ?"
     with db.session() as conn:
         conn.execute(TABLE)
-        rows = conn.execute(sql, (limit,)).fetchall()
+        rows = conn.execute(sql, (*args, limit)).fetchall()
     return [dict(r) for r in rows]
-
 
 def decide_alert(alert_id, outcome, nurse, note=""):
     """A nurse records what happened after checking the resident."""

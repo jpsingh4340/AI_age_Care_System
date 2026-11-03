@@ -140,3 +140,11 @@ def test_alert_messages_never_name_a_disease():
     words = " ".join(list(MESSAGES.values()) + list(ALERT_TEXT.values()) + list(alerts.OUTCOMES.values())).lower()
     for banned in ["dementia", "stroke", "fracture", "infection", "delirium", "paracetamol", "mg"]:
         assert banned not in words.split()
+
+
+
+def test_alerts_can_be_shown_for_one_resident():
+    alerts.add_alert("cue_check", "high_cue", "Please look closer.", resident_id=1)
+    alerts.add_alert("cue_check", "high_cue", "Please look closer.", resident_id=2)
+    only_ron = client.get("/api/vision/alerts", params={"resident_id": 2}).json()
+    assert [a["resident_id"] for a in only_ron] == [2]
