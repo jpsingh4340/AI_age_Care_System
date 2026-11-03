@@ -190,6 +190,16 @@ def list_alerts(open_only: bool = False, resident_id: int | None = None):
     return found
 
 
+
+@router.post("/api/vision/alerts/{alert_id}/ai-suggestions")
+async def ai_suggestions(alert_id: int):
+    """Ask the local AI to turn the care-plan lines into a short plan. Falls back to the care plan."""
+    alert = alerts.get_alert(alert_id)
+    if alert is None:
+        raise HTTPException(status_code=404, detail="There is no alert with that number.")
+    return await run_in_threadpool(suggestions.ai_for_alert, alert)
+
+
 @router.get("/api/vision/outcomes")
 def outcomes():
     return {"outcomes": alerts.OUTCOMES, "note_needed": sorted(alerts.NOTE_NEEDED)}

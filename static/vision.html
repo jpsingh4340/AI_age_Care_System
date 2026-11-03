@@ -169,6 +169,7 @@
     const OUTCOME_LABELS = { fine: "Resident is fine", action_taken: "I helped them",
       false_alarm: "False alarm", escalated: "Escalate" };
     let residents = {};
+    const aiCache = {};  // AI suggestions per alert, kept while the page refreshes
 
     function el(tag, cls, text) {
       const e = document.createElement(tag);
@@ -332,9 +333,11 @@
 
     function suggestionBox(a) {
       const box = el("div", "suggest");
-      const s = a.suggestions;
+      const ai = aiCache[a.id];
+      const s = ai && ai !== "thinking" ? ai : a.suggestions;
       if (!s) return box;
-      box.append(el("b", "", "Suggested next steps (from the care plan)"));
+      const title = s.method === "ai" ? "AI suggestion (" + s.model + "). The nurse decides." : "Suggested next steps (from the care plan)";
+      box.append(el("b", "", title));
       const list = el("ol");
       for (const step of s.steps) {
         const li = el("li", "", step.text);
@@ -342,6 +345,24 @@
         list.append(li);
       }
       box.append(list);
+      if (s.note) box.append(el("small", "", s.note));
+      if (!ai || ai === "thinking") {
+        const ask = el("button", "btn light", ai ? "The AI is thinking (up to a minute on a laptop)..." : "Ask AI for advice");
+        ask.type = "button";
+        ask.disabled = Boolean(ai);
+        ask.onclick = async () => {
+          aiCache[a.id] = "thinking";
+          loadAlerts(true);
+          try {
+            aiCache[a.id] = await readJson(await fetch("/api/vision/alerts/" + a.id + "/ai-suggestions", { method: "POST" }));
+          } catch (error) {
+            delete aiCache[a.id];
+            alert(error.message);
+          }
+          loadAlerts(true);
+        };
+        box.append(ask);
+      }
       return box;
     }
 

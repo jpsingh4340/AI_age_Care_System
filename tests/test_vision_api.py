@@ -157,3 +157,28 @@ def test_open_alerts_come_with_care_plan_suggestions():
     texts = [s["text"] for s in alert["suggestions"]["steps"]]
     assert "Do not lift them until a nurse has checked them for injury." in texts
     assert any("arm's reach" in t for t in texts)  # from Ron's own care plan
+
+
+
+def test_ai_suggestions_keep_only_safe_grounded_steps(monkeypatch):
+    import json
+    from app import ollama_client
+    answer = {"steps": [{"text": "Stay with Ron and do not lift him.", "source": "L2"},
+                        {"text": "Give him 500 mg of paracetamol.", "source": "L1"},
+                        {"text": "Made-up step with no source.", "source": "L99"}]}
+    monkeypatch.setattr(ollama_client, "chat_json", lambda system, user, schema: json.dumps(answer))
+    alert = alerts.add_alert("room_monitor", "possible_fall", "Possible fall.", resident_id=2)
+    r = client.post(f"/api/vision/alerts/{alert['id']}/ai-suggestions").json()
+    assert r["method"] == "ai"
+    assert [s["text"] for s in r["steps"]] == ["Stay with Ron and do not lift him."]
+
+
+def test_ai_suggestions_fall_back_when_ollama_is_off(monkeypatch):
+    from app import ollama_client
+
+    def off(*args):
+        raise ollama_client.OllamaError("Cannot reach Ollama.")
+    monkeypatch.setattr(ollama_client, "chat_json", off)
+    alert = alerts.add_alert("cue_check", "high_cue", "Please look closer.", resident_id=1)
+    r = client.post(f"/api/vision/alerts/{alert['id']}/ai-suggestions").json()
+    assert r["method"] == "care plan" and r["steps"] and "AI not available" in r["note"]

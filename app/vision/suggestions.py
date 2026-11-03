@@ -1,13 +1,19 @@
 """Feature C: suggested next steps for the nurse when an alert comes in.
 
-Fixed safe first steps for the alert type, plus the lines from the resident's
-care plan and the home's procedures that match the alert.
+Two levels:
+  1. Always: fixed safe first steps for the alert type, plus the lines from the
+     resident's care plan and the home's procedures that match the alert.
+  2. On request: the local AI (Ollama) turns those same lines into a short,
+     ordered plan. It may only use the lines it is given, every step must name
+     its source, and any step that mentions a medicine, a dose or a diagnosis
+     is removed. If Ollama is not running, the nurse still gets level 1.
 
 The nurse decides. These are prompts, not instructions.
 """
 import json
 
-from app import guidance
+from app import guidance, ollama_client
+from app.config import CHAT_MODEL
 
 # Safe first steps we wrote ourselves, per alert type. No diagnosis, no medicine.
 FIRST_STEPS = {
@@ -41,6 +47,27 @@ KEYWORDS = {
     "medium_cue": ["pain", "sick", "feel", "drink", "position", "enjoys", "phone"],
 }
 
+AI_SYSTEM = (
+    "You help an aged-care nurse decide what to do after an alert. "
+    "Use ONLY the numbered lines you are given. Write 2 to 4 short steps in plain words, "
+    "most urgent first. Each step must give the id of the line it comes from. "
+    "Never name or guess a disease or a cause. Never mention a medicine or a dose."
+)
+AI_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "steps": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {"text": {"type": "string"}, "source": {"type": "string"}},
+                "required": ["text", "source"],
+            },
+        }
+    },
+    "required": ["steps"],
+}
+
 
 def _care_plan_lines(alert_type, resident_id):
     data = json.loads((guidance.DATA_DIR / "care_plans.json").read_text(encoding="utf-8"))
@@ -62,3 +89,26 @@ def for_alert(alert):
     first = [{"text": t, "source": "Feature C first steps"} for t in FIRST_STEPS.get(alert["alert_type"], [])]
     return {"method": "care plan", "steps": first + _care_plan_lines(alert["alert_type"], alert["resident_id"])}
 
+
+def ai_for_alert(alert):
+    """Level 2: the local AI orders and words the same lines. Falls back to level 1."""
+    base = for_alert(alert)
+    numbered = {f"L{i + 1}": s for i, s in enumerate(base["steps"])}
+    prompt = f"Alert: {alert['message']}\n\nLines you may use:\n" + "\n".join(
+        f"{key}: {s['text']} ({s['source']})" for key, s in numbered.items()
+    )
+    try:
+        raw = ollama_client.chat_json(AI_SYSTEM, prompt, AI_SCHEMA)
+        steps = json.loads(raw).get("steps", [])
+    except (ollama_client.OllamaError, ValueError) as error:
+        return {**base, "note": f"AI not available, showing the care plan instead. {error}"}
+
+    kept = []
+    for step in steps:
+        text = str(step.get("text", "")).strip()
+        source = numbered.get(str(step.get("source", "")).strip())
+        if text and source and len(text) <= 220 and not guidance.contains_blocked(text):
+            kept.append({"text": text, "source": source["source"]})
+    if not kept:
+        return {**base, "note": "The AI answer did not pass the safety checks, showing the care plan instead."}
+    return {"method": "ai", "model": CHAT_MODEL, "steps": kept[:4]}
