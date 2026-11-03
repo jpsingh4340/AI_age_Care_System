@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 
 from app import auth, guidance
-from app.vision import alerts
+from app.vision import alerts, suggestions
 from app.vision.fall_monitor import FallConfig
 
 router = APIRouter(tags=["Feature C: vision"])
@@ -183,8 +183,11 @@ def monitor_status():
 # ---------- alerts and nurse outcomes ----------
 @router.get("/api/vision/alerts")
 def list_alerts(open_only: bool = False, resident_id: int | None = None):
-    """Alerts, newest first. resident_id shows one resident's alerts only."""
-    return alerts.list_alerts(open_only, resident_id=resident_id)
+    """Alerts, newest first. Each open alert comes with suggested next steps."""
+    found = alerts.list_alerts(open_only, resident_id=resident_id)
+    for alert in found:
+        alert["suggestions"] = None if alert["outcome"] else suggestions.for_alert(alert)
+    return found
 
 
 @router.get("/api/vision/outcomes")

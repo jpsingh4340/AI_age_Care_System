@@ -86,6 +86,12 @@
     .alert .meta { color: var(--ink3); font-size: 12.5px; }
     .outcomes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
     .outcomes .btn { padding: 8px 14px; font-size: 13.5px; }
+    .suggest { background: var(--accent-soft); border-radius: 10px; padding: 10px 14px; margin-top: 10px; }
+    .suggest b { font-size: 13.5px; }
+    .suggest ol { margin: 6px 0 4px; padding-left: 20px; }
+    .suggest li { margin: 3px 0; }
+    .suggest small { display: block; color: var(--ink3); font-size: 12px; }
+    .suggest .btn { padding: 6px 12px; font-size: 13px; margin-top: 6px; }
     .check { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--ink2); margin-left: 12px; }
   </style>
 </head>
@@ -307,6 +313,7 @@
         card.append(el("p", "meta", text));
         return card;
       }
+      card.append(suggestionBox(a));
       const note = el("textarea");
       note.rows = 2;
       note.maxLength = 300;
@@ -321,6 +328,21 @@
       }
       card.append(note, buttons, msg);
       return card;
+    }
+
+    function suggestionBox(a) {
+      const box = el("div", "suggest");
+      const s = a.suggestions;
+      if (!s) return box;
+      box.append(el("b", "", "Suggested next steps (from the care plan)"));
+      const list = el("ol");
+      for (const step of s.steps) {
+        const li = el("li", "", step.text);
+        li.append(el("small", "", step.source));
+        list.append(li);
+      }
+      box.append(list);
+      return box;
     }
 
     async function loadAlerts(force) {

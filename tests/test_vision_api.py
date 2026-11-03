@@ -148,3 +148,12 @@ def test_alerts_can_be_shown_for_one_resident():
     alerts.add_alert("cue_check", "high_cue", "Please look closer.", resident_id=2)
     only_ron = client.get("/api/vision/alerts", params={"resident_id": 2}).json()
     assert [a["resident_id"] for a in only_ron] == [2]
+
+    
+
+def test_open_alerts_come_with_care_plan_suggestions():
+    alerts.add_alert("room_monitor", "possible_fall", "Possible fall.", resident_id=2)
+    alert = client.get("/api/vision/alerts", params={"resident_id": 2}).json()[0]
+    texts = [s["text"] for s in alert["suggestions"]["steps"]]
+    assert "Do not lift them until a nurse has checked them for injury." in texts
+    assert any("arm's reach" in t for t in texts)  # from Ron's own care plan
