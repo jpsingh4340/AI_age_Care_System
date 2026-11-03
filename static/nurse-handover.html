@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Handovers · AgeCare</title>
+  <link rel="icon" type="image/png" href="/static/img/favicon.png">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <header class="topbar"></header>
+
+  <main class="page-container">
+    <div class="page-head">
+      <div>
+        <p class="eyebrow" data-today>Today</p>
+        <h1>Handovers</h1>
+        <p class="lede">Read each carer's handover next to their notes, fix anything, and approve it. Then send the family a short update and answer their messages.</p>
+      </div>
+    </div>
+
+    <p class="notice"><strong>Demo data only.</strong> These are fake residents. The AI drafts; the nurse makes the final decision before anything reaches carers or families.</p>
+
+    <section class="card card-flush" style="margin-bottom: 24px;" aria-labelledby="listTitle">
+      <div class="card-header">
+        <h2 class="card-title" id="listTitle">From carers</h2>
+        <span class="badge" id="waitingCount"></span>
+      </div>
+      <div class="table-wrap" style="padding: 0 20px 8px;">
+        <table class="tbl">
+          <thead>
+            <tr><th>Resident</th><th>Carer</th><th>Shift</th><th>Sent</th><th>Status</th><th><span class="sr-only">Action</span></th></tr>
+          </thead>
+          <tbody id="hoRows">
+            <tr><td colspan="6"><div class="skeleton w80"></div><div class="skeleton w60"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="card" style="margin-bottom: 24px; padding: 14px 20px;">
+      <div class="between">
+        <strong class="text-sm">Resident</strong>
+      </div>
+      <div class="pills" id="residentPills" role="group" aria-label="Choose a resident" style="margin-top: 8px;"></div>
+    </div>
+
+    <div class="grid-layout">
+      <div class="stack">
+        <section class="card" id="review" aria-labelledby="revTitle">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title lg" id="revTitle">Handover</h2>
+              <p class="sub-text" id="revSub"></p>
+            </div>
+            <span class="badge" id="revStatus"></span>
+          </div>
+          <div id="revBody"><div class="skeleton w80"></div><div class="skeleton w60"></div></div>
+        </section>
+
+        <section class="card" aria-labelledby="srcTitle">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title" id="srcTitle">Carer's notes</h2>
+              <p class="sub-text">The records this handover was drafted from, with times</p>
+            </div>
+          </div>
+          <ul class="src-list" id="sources"></ul>
+          <div id="notDone"></div>
+        </section>
+      </div>
+
+      <aside class="stack">
+        <section class="card" aria-labelledby="famTitle">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title" id="famTitle">Family update</h2>
+              <p class="sub-text" id="famSub">Drafted from the approved handover</p>
+            </div>
+          </div>
+          <div id="famBody"></div>
+        </section>
+
+        <section class="card" aria-labelledby="chatTitle">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title" id="chatTitle">Messages with family</h2>
+              <p class="sub-text" id="chatSub"></p>
+            </div>
+          </div>
+          <div class="chat" id="chat" aria-live="polite"></div>
+          <form class="chat-form" id="chatForm">
+            <label for="chatText" class="sr-only">Message to the family</label>
+            <textarea id="chatText" class="field" rows="2" maxlength="1000" placeholder="Write to the family"></textarea>
+            <button type="submit" class="btn btn-primary">Send</button>
+          </form>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="foot"></footer>
+
+  <script src="/static/auth.js"></script>
+  <script src="/static/isbar.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const STATUS = {
+      waiting: ["Waiting for you", "status-waiting"],
+      approved: ["Approved", "status-approved"],
+      returned: ["Sent back", "status-returned"],
+    };
+    const state = {
+      people: [], handovers: [], famUpdates: [], unread: {}, selected: null, handoverId: null,
+      edits: {}, famEdits: {}, drafting: false,
+    };
+
+    function el(tag, className, text) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
+    const time = (iso) => (iso || "").slice(11, 16);
+    // server times are local, so compare with the local date (not UTC)
+    const todayStr = () => {
+      const d = new Date();
+      return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    };
+    const when = (iso) => {
+      if (!iso) return "";
+      return iso.slice(0, 10) === todayStr() ? time(iso) : iso.slice(8, 10) + "/" + iso.slice(5, 7) + " " + time(iso);
+    };
+    const personOf = (rid) => state.people.find((p) => Number(p.resident_id) === Number(rid));
+    const room = (p) => "Room " + (100 + Number(p.resident_id));
+
+    async function api(path, options) {
+      const res = await window.authFetch(path, options || {});
+      let data = null;
+      try { data = await res.json(); } catch (e) {}
+      if (!res.ok) throw new Error(data && typeof data.detail === "string" ? data.detail : "Something went wrong. Please try again.");
+      return data;
+    }
+    const post = (path, body) => api(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body || {}) });
+
+    async function loadLists() {
+      const [people, waiting, todays, fam, msgs] = await Promise.all([
+        state.people.length ? state.people : api("/api/residents"),
+        api("/api/handovers?status=waiting"),
+        api("/api/handovers"),
+        api("/api/family-updates"),
+        api("/api/messages"),
+      ]);
+      state.people = people;
+      const seen = new Set();
+      state.handovers = [...waiting, ...todays].filter((h) => h.status !== "draft" && !seen.has(h.id) && seen.add(h.id));
+      state.famUpdates = fam;
+      state.unread = {};
+      msgs.filter((m) => !m.read_by && (m.sender_role || "family") === "family").forEach((m) => {
+        state.unread[m.resident_id] = (state.unread[m.resident_id] || 0) + 1;
+      });
+      if (state.selected == null) {
+        const first = state.handovers.find((h) => h.status === "waiting") || state.handovers[0];
+        state.selected = first ? first.resident_id : people[0] && people[0].resident_id;
+      }
+    }
+
+    function handoverFor(rid) {
+      if (state.handoverId != null) {
+        const exact = state.handovers.find((h) => h.id === state.handoverId && Number(h.resident_id) === Number(rid));
+        if (exact) return exact;
+      }
+      const mine = state.handovers.filter((h) => Number(h.resident_id) === Number(rid));
+      return mine.find((h) => h.status === "waiting") || mine[0] || null;
+    }
+
+    function renderList() {
+      const body = $("hoRows");
+      body.replaceChildren();
+      const waiting = state.handovers.filter((h) => h.status === "waiting").length;
+      $("waitingCount").className = "badge " + (waiting ? "status-waiting" : "badge-neutral");
+      $("waitingCount").textContent = waiting + " waiting";
+      if (!state.handovers.length) {
+        const td = body.insertRow().insertCell();
+        td.colSpan = 6;
+        td.className = "empty";
+        td.textContent = "No handovers yet today. They appear here when a carer sends one.";
+        return;
+      }
+      for (const h of state.handovers) {
+        const tr = body.insertRow();
+        const current = handoverFor(state.selected);
+        if (current && current.id === h.id) tr.className = "is-selected";
+        const p = personOf(h.resident_id);
+        const name = tr.insertCell();
+        name.append(el("strong", "", h.resident), el("div", "sub-text", p ? room(p) : ""));
+        tr.insertCell().textContent = h.carer;
+        const sh = tr.insertCell();
+        sh.className = "sub-text";
+        sh.textContent = (h.shift_label || "").split(", ").slice(0, 2).join(", ");
+        const sent = tr.insertCell();
+        sent.className = "text-mono";
+        sent.textContent = when(h.sent_at);
+        tr.insertCell().append(el("span", "badge " + STATUS[h.status][1], STATUS[h.status][0]));
+        const act = tr.insertCell();
+        act.className = "actions";
+        const b = el("button", "btn btn-sm " + (h.status === "waiting" ? "btn-primary" : "btn-secondary"), h.status === "waiting" ? "Review" : "Open");
+        b.type = "button";
+        b.addEventListener("click", () => select(h.resident_id, h.id, true));
+        act.append(b);
+      }
+    }
+
+    function renderPills() {
+      const wrap = $("residentPills");
+      wrap.replaceChildren();
+      for (const p of state.people) {
+        const n = state.unread[p.resident_id] || 0;
+        const b = el("button", "pill", p.name + (n ? " · " + n + " new message" + (n > 1 ? "s" : "") : ""));
+        b.type = "button";
+        b.setAttribute("aria-pressed", String(Number(p.resident_id) === Number(state.selected)));
+        b.addEventListener("click", () => select(p.resident_id, null, false));
+        wrap.append(b);
+      }
+    }
+
+    function renderSources(h) {
+      const list = $("sources");
+      list.replaceChildren();
+      $("notDone").replaceChildren();
+      if (!h) {
+        list.append(el("li", "empty", "No handover to show notes for."));
+        return;
+      }
+      const entries = (h.sources && h.sources.entries) || [];
+      if (!entries.length) list.append(el("li", "empty", "The carer recorded nothing this shift."));
+      for (const e of entries) {
+        const li = el("li");
+        const what = el("span", "", e.text);
+        what.append(el("span", "by", e.by));
+        li.append(el("span", "mono-time", time(e.at)), el("span", "kind k-" + e.kind.replace(/\s/g, ""), e.kind), what);
+        list.append(li);
+      }
+      const notDone = (h.sources && h.sources.not_done) || [];
+      if (notDone.length) {
+        $("notDone").append(el("p", "section-label", "Care plan not done when drafted"));
+        const ul = el("ul", "bullets");
+        notDone.forEach((t) => ul.append(el("li", "", t)));
+        $("notDone").append(ul);
+      }
+    }
+
+    function renderReview() {
+      const p = personOf(state.selected);
+      const h = handoverFor(state.selected);
+      const body = $("revBody");
+      body.replaceChildren();
+      $("revTitle").textContent = "Handover" + (p ? " for " + p.name : "");
+      renderSources(h);
+      if (!h) {
+        $("revSub").textContent = p ? room(p) : "";
+        $("revStatus").className = "badge hidden";
+        body.append(el("p", "empty", "No handover from a carer for this resident yet today."));
+        return;
+      }
+      $("revSub").textContent = (h.shift_label ? h.shift_label + ". " : "") + "From " + h.carer + ", sent " + when(h.sent_at) + " · drafted by " + (h.drafted_by === "AI" ? "the AI" : "the rules");
+      $("revStatus").className = "badge " + STATUS[h.status][1];
+      $("revStatus").textContent = STATUS[h.status][0];
+
+      if (h.status !== "waiting") {
+        const info = h.status === "approved"
+          ? el("p", "alert-box alert-success", "Approved by " + h.reviewed_by + " at " + time(h.reviewed_at) + ".")
+          : el("p", "alert-box alert-danger", "Sent back by " + h.reviewed_by + ": " + h.review_note);
+        const view = window.isbarView(h.text);
+        view.style.marginTop = "16px";
+        body.append(info, view);
+        return;
+      }
+
+      const label = el("label", "", "AI summary from the carer (ISBAR)");
+      label.htmlFor = "revText";
+      const box = el("textarea", "field");
+      box.id = "revText";
+      box.rows = 12;
+      box.value = state.edits[h.id] != null ? state.edits[h.id] : h.text;
+      box.addEventListener("input", () => { state.edits[h.id] = box.value; });
+
+      const noteLabel = el("label", "", "Note for the carer ");
+      noteLabel.htmlFor = "revNote";
+      noteLabel.append(el("span", "hint", "needed if you send it back"));
+      const note = el("input", "field");
+      note.id = "revNote";
+      note.type = "text";
+      note.maxLength = 500;
+
+      const msg = el("p", "text-sm");
+      msg.setAttribute("role", "status");
+      const back = el("button", "btn btn-secondary", "Send back to carer");
+      const ok = el("button", "btn btn-primary", "Approve handover");
+      back.type = ok.type = "button";
+
+      async function decide(decision) {
+        if (decision === "return" && !note.value.trim()) {
+          msg.className = "text-sm alert-danger";
+          msg.textContent = "Write a note telling the carer what to change.";
+          note.focus();
+          return;
+        }
+        back.disabled = ok.disabled = true;
+        try {
+          await post("/api/handovers/" + h.id + "/review", { decision: decision, text: box.value.trim(), note: note.value.trim() });
+          delete state.edits[h.id];
+          if (window.updateBadges) window.updateBadges();
+          if (window.showToast) window.showToast(decision === "approve" ? "Handover approved" : "Sent back to " + h.carer);
+          await refresh();
+        } catch (e) {
+          msg.className = "text-sm alert-danger";
+          msg.textContent = e.message;
+          back.disabled = ok.disabled = false;
+        }
+      }
+      back.addEventListener("click", () => decide("return"));
+      ok.addEventListener("click", () => decide("approve"));
+
+      const actions = el("div", "form-actions");
+      const right = el("div", "inline");
+      right.append(back, ok);
+      actions.append(msg, right);
+      const g1 = el("div", "form-group");
+      g1.append(label, box, el("p", "hint", "Check it against the carer's notes below. Your changes are saved with the approval."));
+      const g2 = el("div", "form-group");
+      g2.style.marginBottom = "0";
+      g2.append(noteLabel, note);
+      body.append(g1, g2, actions);
+    }
+
+    function renderFamily() {
+      const p = personOf(state.selected);
+      const h = handoverFor(state.selected);
+      const body = $("famBody");
+      body.replaceChildren();
+      $("famSub").textContent = p ? "For " + p.name + "'s family, drafted from the approved handover" : "";
+      const mine = state.famUpdates.filter((u) => Number(u.resident_id) === Number(state.selected));
+      const draft = mine.find((u) => u.status === "draft");
+      const sentToday = mine.find((u) => u.status === "sent" && (u.sent_at || "").slice(0, 10) === todayStr());
+
+      if (state.drafting) {
+        body.append(el("p", "sub-text", "Reading the handover…"), el("div", "skeleton w80"), el("div", "skeleton w60"));
+        return;
+      }
+
+      if (draft) {
+        const box = el("textarea", "field");
+        box.rows = 6;
+        box.setAttribute("aria-label", "Family update text");
+        box.value = state.famEdits[draft.id] != null ? state.famEdits[draft.id] : draft.text;
+        box.addEventListener("input", () => { state.famEdits[draft.id] = box.value; });
+        const send = el("button", "btn btn-primary btn-block", "Approve and send to family");
+        send.type = "button";
+        send.style.marginTop = "12px";
+        send.addEventListener("click", async () => {
+          send.disabled = true;
+          try {
+            await post("/api/family-updates/" + draft.id + "/send", { text: box.value.trim() });
+            delete state.famEdits[draft.id];
+            if (window.showToast) window.showToast("Update sent to the family");
+            await refresh();
+          } catch (e) {
+            if (window.showToast) window.showToast(e.message, true);
+            send.disabled = false;
+          }
+        });
+        const hint = el("p", "sub-text", "Drafted by " + (draft.drafted_by === "AI" ? "the AI" : "the rules") + ". Edit before sending.");
+        hint.style.marginBottom = "8px";
+        body.append(hint, box, send);
+        return;
+      }
+
+      if (sentToday) {
+        body.append(el("p", "alert-box alert-success", "Sent at " + time(sentToday.sent_at) + " by " + (sentToday.approved_by || "a nurse") + "."));
+        const t = el("p", "text-sm", sentToday.text);
+        t.style.cssText = "margin-top: 12px; white-space: pre-line;";
+        body.append(t);
+      }
+
+      if (h && h.status === "approved") {
+        const b = el("button", "btn " + (sentToday ? "btn-secondary" : "btn-primary") + " btn-block", sentToday ? "Draft another update" : "Draft family update with AI");
+        b.type = "button";
+        b.style.marginTop = sentToday ? "16px" : "0";
+        b.addEventListener("click", async () => {
+          state.drafting = true;
+          renderFamily();
+          try {
+            await post("/api/handovers/" + h.id + "/family-draft");
+          } catch (e) {
+            if (window.showToast) window.showToast(e.message, true);
+          }
+          state.drafting = false;
+          await refresh();
+        });
+        body.append(b);
+      } else if (!sentToday) {
+        body.append(el("p", "empty", "Approve the handover first. Then the AI can draft a short update for the family."));
+      }
+    }
+
+    async function loadChat(markRead) {
+      const rid = state.selected;
+      if (rid == null) return;
+      const p = personOf(rid);
+      $("chatSub").textContent = p ? "About " + p.name : "";
+      const box = $("chat");
+      let thread = [];
+      try {
+        thread = await api("/api/chat/" + rid);
+      } catch (e) {
+        box.replaceChildren(el("p", "alert-box alert-danger", e.message));
+        return;
+      }
+      if (rid !== state.selected) return;
+      const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
+      box.replaceChildren();
+      if (!thread.length) box.append(el("p", "empty", "No messages yet. You can write to the family first."));
+      for (const m of thread) {
+        const mine = m.sender_role === "nurse";
+        const bubble = el("div", "msg" + (mine ? " mine" : "") + (m.urgent ? " urgent" : ""));
+        if (m.urgent) bubble.append(el("span", "flag", "May be urgent: check now"));
+        bubble.append(document.createTextNode(m.text));
+        bubble.append(el("span", "meta", m.from_name + " · " + when(m.created_at)));
+        box.append(bubble);
+      }
+      if (atBottom || markRead) box.scrollTop = box.scrollHeight;
+      if (markRead && thread.some((m) => m.sender_role !== "nurse" && !m.read_by)) {
+        try { await post("/api/chat/" + rid + "/read"); } catch (e) {}
+        state.unread[rid] = 0;
+        renderPills();
+        if (window.updateBadges) window.updateBadges();
+      }
+    }
+
+    $("chatForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const text = $("chatText").value.trim();
+      if (!text) return;
+      try {
+        await post("/api/chat/" + state.selected, { text: text });
+        $("chatText").value = "";
+        await loadChat(true);
+      } catch (err) {
+        if (window.showToast) window.showToast(err.message, true);
+      }
+    });
+    $("chatText").addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) $("chatForm").requestSubmit();
+    });
+
+    function renderAll() {
+      renderList();
+      renderPills();
+      renderReview();
+      renderFamily();
+    }
+
+    async function refresh() {
+      await loadLists();
+      renderAll();
+      await loadChat(false);
+    }
+
+    function select(rid, handoverId, scroll) {
+      state.selected = Number(rid);
+      state.handoverId = handoverId;
+      history.replaceState(null, "", "?resident=" + rid);
+      renderAll();
+      loadChat(true);
+      if (scroll) $("review").scrollIntoView({ block: "start" });
+    }
+
+    const wanted = new URLSearchParams(location.search).get("resident");
+    if (wanted) state.selected = Number(wanted);
+    loadLists()
+      .then(() => { renderAll(); return loadChat(true); })
+      .catch((e) => { $("revBody").replaceChildren(el("p", "alert-box alert-danger", e.message)); });
+
+    setInterval(() => {
+      const typing = document.activeElement && ["TEXTAREA", "INPUT"].includes(document.activeElement.tagName);
+      if (document.visibilityState === "visible" && !typing && !state.drafting) refresh().catch(() => {});
+    }, 20000);
+  </script>
+</body>
+</html>

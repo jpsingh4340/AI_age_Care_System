@@ -3,127 +3,143 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Ask AI · Age-Care Intelligence</title>
+  <title>Ask AI · AgeCare</title>
+  <link rel="icon" type="image/png" href="/static/img/favicon.png">
+  <link rel="stylesheet" href="/static/app.css">
   <style>
-    :root {
-      --bg: #f5f6f8; --card: #ffffff; --text: #1f2933; --muted: #616e7c;
-      --line: #d9dee4; --accent: #1f5f8b; --ok: #1e7a4c; --warn: #9a6700; --err: #b42318;
-    }
-    * { box-sizing: border-box; }
-    body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-           background: var(--bg); color: var(--text); line-height: 1.5; }
-    header { background: var(--card); border-bottom: 1px solid var(--line); padding: 14px 20px;
-             display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
-    header h1 { font-size: 18px; margin: 0; }
-    nav a { color: var(--accent); text-decoration: none; margin-left: 16px; font-size: 14px; }
-    main { max-width: 780px; margin: 24px auto; padding: 0 16px; }
-    .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 20px; margin-bottom: 16px; }
-    label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 6px; }
-    select, textarea { width: 100%; font: inherit; padding: 10px; border: 1px solid var(--line);
-                       border-radius: 6px; background: #fff; color: var(--text); }
-    textarea { min-height: 110px; resize: vertical; }
-    .row { display: flex; gap: 12px; align-items: center; margin-top: 14px; flex-wrap: wrap; }
-    button { font: inherit; font-weight: 600; background: var(--accent); color: #fff; border: 0;
-             border-radius: 6px; padding: 10px 20px; cursor: pointer; }
-    button:disabled { opacity: .55; cursor: wait; }
-    .hint { color: var(--muted); font-size: 13px; }
-    .status { font-size: 13px; margin-top: 6px; }
-    .status.ok { color: var(--ok); } .status.err { color: var(--err); }
-    .badge { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 4px; margin-bottom: 10px; }
-    .badge.grounded { background: #e3f4ea; color: var(--ok); }
-    .badge.general { background: #fff4d6; color: var(--warn); }
-    #answer { white-space: pre-wrap; }
-    .error { color: var(--err); }
-    .meta { color: var(--muted); font-size: 13px; margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px; }
+    #answer { font-size: 16px; line-height: 1.65; white-space: pre-line; }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Ask AI</h1>
-    <nav><a href="/">Dashboard</a><a href="/guidance">Guidance</a><a href="/ocr">OCR</a></nav>
-  </header>
-  <main>
-    <div class="card">
-      <label for="model">AI model</label>
-      <select id="model"><option>Loading...</option></select>
-      <div id="ollama" class="status"></div>
+  <header class="topbar"></header>
 
-      <label for="question" style="margin-top:16px">Your question</label>
-      <textarea id="question" placeholder="e.g. What should I check before helping a resident stand up?"></textarea>
-      <div class="row">
-        <button id="send">Ask</button>
-        <span class="hint">Runs on this computer. Smaller models answer faster.</span>
+  <main class="page-container page-narrow">
+    <div class="page-head">
+      <div>
+        <p class="eyebrow">Carers and nurses</p>
+        <h1>Ask a care question</h1>
+        <p class="lede">Practical questions about everyday care, answered from approved reference notes where possible.</p>
       </div>
     </div>
 
-    <div class="card" id="result" hidden>
-      <span id="badge" class="badge"></span>
+    <p class="notice"><strong>Demo data only.</strong> The AI runs on this computer. It does not diagnose or give medicine doses. If you are worried about a resident, tell the nurse.</p>
+
+    <ol class="steps" aria-label="Steps">
+      <li class="step active"><span class="num">1</span>Type your question</li>
+      <li class="step" id="st2"><span class="num">2</span>Ask</li>
+      <li class="step" id="st3"><span class="num">3</span>Read the answer</li>
+    </ol>
+
+    <section class="card">
+      <div class="form-group">
+        <label for="question">Your question</label>
+        <textarea id="question" class="field" rows="4" placeholder="For example: What should I check before helping someone stand with a walking frame?"></textarea>
+      </div>
+
+      <details style="margin-bottom: 4px;">
+        <summary class="sub-text" style="cursor: pointer; font-weight: 600; min-height: 32px;">Model settings</summary>
+        <div class="form-group" style="margin-top: 8px;">
+          <label for="model">Local AI model</label>
+          <select id="model" class="field"><option>Loading…</option></select>
+          <div id="ollama" class="text-sm" style="margin-top: 8px;"></div>
+        </div>
+      </details>
+
+      <div class="form-actions">
+        <span class="text-muted">Ctrl + Enter also sends</span>
+        <button id="send" type="button" class="btn btn-primary">Ask</button>
+      </div>
+    </section>
+
+    <section class="card" id="result" hidden style="margin-top: 16px;" aria-live="polite">
+      <div class="card-header">
+        <h2 class="card-title">Answer</h2>
+        <span id="badge" class="badge"></span>
+      </div>
       <div id="answer"></div>
-      <div id="meta" class="meta"></div>
-    </div>
+      <p id="meta" class="text-mono text-muted" style="border-top: 1px solid var(--line); padding-top: 10px; margin-top: 16px;"></p>
+    </section>
   </main>
 
+  <footer class="foot"></footer>
+
+  <script src="/static/auth.js"></script>
   <script>
     const $ = (id) => document.getElementById(id);
-    let defaultModel = "";
 
     async function loadModels() {
       const select = $("model");
       try {
         const r = await fetch("/api/ask/models");
         const data = await r.json();
-        defaultModel = data.default;
-        select.innerHTML = "";
+        select.replaceChildren();
         if (!data.ollama_running) {
-          select.add(new Option("No models found", ""));
+          select.add(new Option("No local models found", ""));
           setStatus("Ollama is not running. Start it with: ollama serve", "err");
           return;
         }
-        for (const name of data.models) {
+        for (const name of data.models || []) {
           const label = name === data.default ? name + " (recommended)" : name;
           select.add(new Option(label, name, false, name === data.default));
         }
-        setStatus(data.models.length + " model(s) installed", "ok");
+        setStatus((data.models || []).length + " model(s) on this computer", "ok");
       } catch (e) {
-        setStatus("Could not reach the server", "err");
+        setStatus("Could not reach the model server", "err");
       }
     }
 
     function setStatus(text, kind) {
-      $("ollama").textContent = text;
-      $("ollama").className = "status " + kind;
+      const box = $("ollama");
+      box.textContent = text;
+      box.className = "badge " + (kind === "ok" ? "badge-green" : "badge-amber");
+    }
+
+    function step(n) {
+      $("st2").classList.toggle("active", n >= 2);
+      $("st3").classList.toggle("active", n >= 3);
     }
 
     async function ask() {
       const question = $("question").value.trim();
-      if (question.length < 3) { $("question").focus(); return; }
+      if (question.length < 3) {
+        $("question").focus();
+        return;
+      }
       const btn = $("send");
-      btn.disabled = true; btn.textContent = "Thinking...";
+      btn.disabled = true;
+      btn.textContent = "Asking…";
+      step(2);
       $("result").hidden = false;
-      $("badge").textContent = ""; $("badge").className = "badge";
-      $("answer").className = ""; $("answer").textContent = "Waiting for the model. On CPU this can take a little while.";
+      $("badge").textContent = "";
+      $("badge").className = "badge hidden";
+      $("answer").textContent = "Reading care notes…";
       $("meta").textContent = "";
+
       const started = Date.now();
       try {
         const r = await fetch("/api/ask", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ question, model: $("model").value || null }),
+          body: JSON.stringify({ question: question, model: $("model").value || null }),
         });
         const data = await r.json();
-        if (!r.ok) throw new Error(data.detail || "Something went wrong");
-        $("badge").textContent = data.grounded ? "From approved guidance" : "General answer, not from approved guidance";
-        $("badge").className = "badge " + (data.grounded ? "grounded" : "general");
+        if (!r.ok) throw new Error(typeof data.detail === "string" ? data.detail : "Something went wrong.");
+
+        $("badge").textContent = data.grounded ? "From approved notes" : "General answer";
+        $("badge").className = "badge " + (data.grounded ? "badge-green" : "badge-amber");
         $("answer").textContent = data.answer;
-        const secs = ((Date.now() - started) / 1000).toFixed(1);
-        let meta = "Model: " + data.model + " · " + secs + "s";
-        if (data.sources.length) meta += " · Sources: " + data.sources.join(", ");
+
+        let meta = data.model + " · " + ((Date.now() - started) / 1000).toFixed(1) + "s";
+        if (data.sources && data.sources.length) meta += " · Sources: " + data.sources.join(", ");
         $("meta").textContent = meta;
+        step(3);
       } catch (e) {
-        $("answer").className = "error";
-        $("answer").textContent = typeof e.message === "string" ? e.message : "Something went wrong";
+        $("answer").textContent = e.message || "Something went wrong.";
+        $("badge").textContent = "Error";
+        $("badge").className = "badge badge-red";
       } finally {
-        btn.disabled = false; btn.textContent = "Ask";
+        btn.disabled = false;
+        btn.textContent = "Ask";
       }
     }
 
@@ -131,6 +147,7 @@
     $("question").addEventListener("keydown", (e) => {
       if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) ask();
     });
+
     loadModels();
   </script>
 </body>
