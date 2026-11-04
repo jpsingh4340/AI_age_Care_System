@@ -138,6 +138,7 @@ function changeResident() {
     $(m).className = "text-sm";
   });
   renderPills();
+    if (window.loadFollowups) window.loadFollowups(person.resident_id);  // Feature C: nurse follow-ups
   loadGuide();
   loadSchedule().then(loadToday);
 }
