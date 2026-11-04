@@ -314,12 +314,17 @@
       const score = Math.max(0, Math.min(1, d.score || 0));
       const meter = el("div", "meter");
       const mark = el("i");
-      mark.style.left = (score * 100) + "%";
+       // The marker always sits in the band of the level. The sad look can lift a low score to medium,
+      // so then the marker goes to the start of the medium band and the label says why.
+      const band = { low: [0, 0.25], medium: [0.25, 0.45], high: [0.45, 1] }[d.level] || [0, 1];
+      const lifted = score < band[0];
+      const pos = Math.min(Math.max(score, band[0] + 0.02), band[1] - 0.01);
+      mark.style.left = (pos * 100) + "%";
       meter.append(mark);
       meter.setAttribute("role", "img");
       meter.setAttribute("aria-label", "Score " + score.toFixed(2) + " out of 1");
       const labels = el("div", "meter-labels");
-      labels.append(el("span", "", "Low"), el("span", "", "Score " + score.toFixed(2)), el("span", "", "High"));
+      labels.append(el("span", "", "Score " + score.toFixed(2) + (lifted ? " · raised to " + d.level + " by the sad look" : "")));
       box.append(meter, labels, el("h3", "", "What the check saw"));
 
       const cues = el("div", "cue-grid");
