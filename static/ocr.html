@@ -34,7 +34,9 @@
         <span id="dropHint" class="sub-text">PNG or JPG, under 6 MB. Read on this computer.</span>
         <img class="drop-thumb" id="thumb" alt="Selected photo" hidden>
       </label>
-      <div class="form-actions">
+      <div class="form-actions" style="flex-wrap: wrap; gap: 8px;">
+        <button class="btn btn-secondary" id="sampleNormal" type="button">Load Sample Report (Normal)</button>
+        <button class="btn btn-secondary" id="sampleAlert" type="button">Load Sample Report (Unusual BP)</button>
         <div class="text-sm" id="status" role="status"></div>
         <button class="btn btn-primary" id="go" type="button" disabled style="margin-left: auto;">Read report</button>
       </div>
@@ -99,6 +101,7 @@
   <script>
     const $ = (id) => document.getElementById(id);
 
+    // Helper to create DOM elements safely with textContent
     function el(tag, className, text) {
       const node = document.createElement(tag);
       if (className) node.className = className;
@@ -123,6 +126,7 @@
       ["s1", "s2", "s3"].forEach((id, i) => $(id).classList.toggle("active", i < n));
     }
 
+    // Store the selected image file and show a small preview thumbnail
     let chosen = null;
     function chooseFile(file) {
       if (!file) return;
@@ -152,6 +156,59 @@
 
     $("photoBox").addEventListener("click", () => $("photoBox").classList.toggle("zoom"));
 
+    // Generate a clean sample printed health report PNG on canvas for live demos
+    function buildSampleReport(kind) {
+      const canvas = document.createElement("canvas");
+      canvas.width = 760;
+      canvas.height = 520;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = "#cbd5e1";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(20, 20, 720, 480);
+
+      ctx.fillStyle = "#0f172a";
+      ctx.font = "bold 26px Arial, sans-serif";
+      ctx.fillText("KOWHAI GARDENS HEALTH REPORT", 48, 72);
+
+      const rows = kind === "alert"
+        ? [
+            "Date: 14/11/2026",
+            "Blood pressure: 245 / 95 mmHg",
+            "Pulse: 88 bpm",
+            "Temperature: 38.4 C",
+            "Oxygen saturation: 93 %",
+            "Weight: 68.5 kg",
+            "Blood glucose: 7.4 mmol/L"
+          ]
+        : [
+            "Date: 14/11/2026",
+            "Blood pressure: 126 / 78 mmHg",
+            "Pulse: 74 bpm",
+            "Temperature: 36.7 C",
+            "Oxygen saturation: 97 %",
+            "Weight: 71.2 kg",
+            "Blood glucose: 5.8 mmol/L"
+          ];
+
+      ctx.font = "22px Arial, sans-serif";
+      rows.forEach((line, idx) => {
+        ctx.fillText(line, 48, 135 + idx * 50);
+      });
+
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        const fileName = kind === "alert" ? "sample-unusual-report.png" : "sample-normal-report.png";
+        const file = new File([blob], fileName, { type: "image/png" });
+        chooseFile(file);
+        readReport();
+      }, "image/png");
+    }
+    $("sampleNormal").addEventListener("click", () => buildSampleReport("normal"));
+    $("sampleAlert").addEventListener("click", () => buildSampleReport("alert"));
+
+    // Only unlock the Save button when the nurse ticks every single value
     function updateProgress() {
       const boxes = [...document.querySelectorAll("#rows input[type=checkbox]")];
       const done = boxes.filter((b) => b.checked).length;
@@ -164,6 +221,7 @@
       if (!$("result").hidden) setStep(all ? 3 : 2);
     }
 
+    // Show each extracted reading with its confidence bar, input box, and nurse tick-box
     function render(data) {
       const rows = $("rows");
       rows.replaceChildren();
@@ -205,6 +263,7 @@
           row.classList.toggle("ticked", check.checked);
           updateProgress();
         });
+        // If the nurse edits a number, untick it so they have to check it again
         input.addEventListener("input", () => {
           if (check.checked) {
             check.checked = false;
@@ -219,11 +278,12 @@
       });
 
       $("raw").textContent = (data.lines || []).map((l) => l.text + "  (" + Math.round((l.confidence || 0) * 100) + "%)").join("\n");
-      $("meta").textContent = "Read in " + data.seconds + "s with Tesseract on this computer. " + (data.status_note || "");
+      $("meta").textContent = "Read in " + data.seconds + "s on this computer. " + (data.status_note || "");
       $("result").hidden = false;
       updateProgress();
     }
 
+    // Send the report photo to POST /api/ocr/extract
     async function readReport() {
       if (!chosen) { setStatus("Choose a photo first.", "error"); return; }
       $("go").disabled = true;
@@ -262,6 +322,7 @@
       }
     }
 
+    // Save the nurse-checked values to the resident's record and audit log
     async function saveValues() {
       const reviewer = $("reviewer").value.trim();
       if (reviewer.length < 2) { setSaveNote("Enter your name first.", "error"); $("reviewer").focus(); return; }
