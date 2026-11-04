@@ -67,6 +67,18 @@
     .decided { margin-top: 14px; }
     .decided summary { cursor: pointer; font-weight: 600; color: var(--ink-2); font-size: 14px; padding: 6px 0; }
 
+    /* Follow-ups sent to the carer */
+    .carer-box { border: 1px dashed var(--line-strong); border-radius: var(--r-card); padding: 10px 14px; margin-top: 12px; }
+    .carer-box b { font-size: 13.5px; }
+    .fu { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; font-size: 14px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+    .fu:last-of-type { border-bottom: 0; }
+    .fu small { color: var(--muted); font-size: 12px; display: block; }
+    .fu-state { font-size: 12px; font-weight: 700; white-space: nowrap; padding: 2px 8px; border-radius: 999px; border: 1px solid; }
+    .fu-wait { background: var(--amber-soft); border-color: var(--amber-line); color: var(--amber); }
+    .fu-done { background: var(--green-soft); border-color: var(--green-line); color: var(--green); }
+    .send-row { display: flex; gap: 8px; margin-top: 8px; }
+    .send-row input { flex: 1; }
+
     /* Suggestions and AI advice */
     .suggest { background: var(--accent-soft); border: 1px solid var(--accent-line); border-radius: var(--r-card); padding: 12px 14px; margin-top: 12px; }
     .suggest-head { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13.5px; }
@@ -482,6 +494,7 @@
         let text = OUTCOME_LABELS[a.outcome] + " · decided by " + a.decided_by;
         if (a.outcome_note) text += ". " + a.outcome_note;
         body.append(head, el("p", "text-sm", text));
+        if ((a.followups || []).length) body.append(carerBox(a, false));
         card.append(body);
         return card;
       }
@@ -492,7 +505,7 @@
       const body = el("div");
       const head = el("div", "ahead");
       head.append(el("strong", "", TYPE_NAMES[a.alert_type] || a.alert_type), el("span", "when", whereAndWhen(a)));
-      body.append(head, el("p", "text-sm", a.message), suggestionBox(a));
+      body.append(head, el("p", "text-sm", a.message), suggestionBox(a), carerBox(a, true));
 
       const note = el("textarea", "field");
       note.rows = 2;
@@ -512,6 +525,50 @@
       body.append(note, buttons, msg);
       card.append(body);
       return card;
+    }
+
+    // Follow-ups for the carer: what was sent, whether it is done, and (on open alerts) a box to send one.
+    function carerBox(a, canSend) {
+      const box = el("div", "carer-box");
+      box.append(el("b", "", "Follow-up for the carer"));
+      for (const f of a.followups || []) {
+        const row = el("div", "fu");
+        const left = el("div", "", f.instruction);
+        let sub = "Sent by " + f.sent_by + " at " + (f.sent_at || "").slice(11, 16);
+        if (f.done_at) sub += " · done by " + f.done_by + " at " + f.done_at.slice(11, 16) + (f.done_note ? ": " + f.done_note : "");
+        left.append(el("small", "", sub));
+        row.append(left, el("span", "fu-state " + (f.done_at ? "fu-done" : "fu-wait"), f.done_at ? "Done" : "Waiting"));
+        box.append(row);
+      }
+      if (!canSend) return box;
+      if (!a.resident_id) {
+        box.append(el("small", "sub-text", "Practice alert: choose a resident to send follow-ups to a carer."));
+        return box;
+      }
+      const row = el("div", "send-row");
+      const input = el("input", "field");
+      input.maxLength = 300;
+      input.placeholder = "e.g. Check on them every 30 minutes tonight";
+      input.setAttribute("aria-label", "Instruction for the carer");
+      const btn = el("button", "btn btn-secondary btn-sm", "Send to carer");
+      btn.type = "button";
+      const msg = el("div");
+      btn.onclick = async () => {
+        try {
+          await readJson(await send("/api/vision/alerts/" + a.id + "/send-to-carer", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ instruction: input.value, nurse: $("nurse").value })
+          }));
+          if (window.showToast) window.showToast("Sent to the carer");
+          loadAlerts(true);
+        } catch (error) {
+          say(msg, error.message, true);
+        }
+      };
+      row.append(input, btn);
+      box.append(row, msg);
+      return box;
     }
 
     function suggestionBox(a) {
@@ -557,7 +614,7 @@
     }
 
     async function loadAlerts(force) {
-      if (!force && document.activeElement && document.activeElement.tagName === "TEXTAREA") return;
+      if (!force && document.activeElement && ["TEXTAREA", "INPUT"].includes(document.activeElement.tagName)) return;
       const id = $("resident").value;
       const url = id && !$("showAll").checked ? "/api/vision/alerts?resident_id=" + id : "/api/vision/alerts";
       const list = await (await fetch(url)).json();
