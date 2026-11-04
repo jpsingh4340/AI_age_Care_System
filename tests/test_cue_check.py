@@ -77,3 +77,25 @@ def test_broad_smile_is_not_flagged():
         "eyeBlinkLeft": 0.27, "eyeBlinkRight": 0.25,
     }
     assert score_blendshapes(smiling).level == "low"
+
+
+
+SICK_LOOK = {  # real blendshapes from a stock photo of a man looking sad and unwell
+    "mouthShrugLower": 0.63, "mouthRollLower": 0.37, "browInnerUp": 0.15,
+    "eyeSquintLeft": 0.45, "eyeSquintRight": 0.22, "browDownLeft": 0.19, "browDownRight": 0.08,
+    "eyeBlinkLeft": 0.12, "eyeBlinkRight": 0.07,
+}
+
+
+def test_sad_look_lifts_low_to_medium():
+    result = score_blendshapes(SICK_LOOK)
+    assert result.level == "medium"
+    assert result.cues["sad_look"] == pytest.approx(0.63)
+
+
+def test_sad_look_alone_is_never_high():
+    assert score_blendshapes({"mouthShrugLower": 1.0, "browInnerUp": 1.0}).level == "medium"
+
+
+def test_smile_cancels_the_sad_look():
+    assert score_blendshapes({**SICK_LOOK, "mouthSmileLeft": 0.9, "mouthSmileRight": 0.9}).level == "low"

@@ -9,13 +9,13 @@ import threading
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 
 from app import auth, guidance
-from app.vision import alerts
-from app.vision.fall_monitor import FallConfig
+from app.vision import alerts, suggestions
+from app.vision.fall_monitor import FallConfig, PersonFrame, is_lying
 
 router = APIRouter(tags=["Feature C: vision"])
 
@@ -24,7 +24,12 @@ MAX_IMAGE_BYTES = 6 * 1024 * 1024
 MAX_VIDEO_BYTES = 100 * 1024 * 1024
 
 _checker = None
-_live = {"running": False, "stop": False, "thread": None, "error": None}
+_live = {"running": False, "stop": False, "thread": None, "error": None,
+         "frames": 0, "people": [], "skeleton": None}
+
+# Which keypoints to join with a line to draw a stick figure (COCO order).
+BONES = [(5, 6), (5, 7), (7, 9), (6, 8), (8, 10), (5, 11), (6, 12), (11, 12),
+         (11, 13), (13, 15), (12, 14), (14, 16), (0, 5), (0, 6)]
 
 
 # ---------- helpers ----------
@@ -73,6 +78,28 @@ def check_resident(resident_id):
         raise HTTPException(status_code=404, detail="There is no resident with that number.")
 
 
+def draw_skeleton(people, shape):
+    """A stick figure of each person on a plain background, as a JPEG.
+    Only keypoints are drawn, so the picture never shows a face or the room."""
+    import cv2
+    import numpy as np
+
+    height, width = shape
+    scale = 480 / max(width, 1)
+    canvas = np.full((int(height * scale), 480, 3), (58, 47, 12), dtype=np.uint8)
+    for pid, bbox, kp in people:
+        points = [(int(x * scale), int(y * scale), c) for x, y, c in kp]
+        for a, b in BONES:
+            if points[a][2] > 0.3 and points[b][2] > 0.3:
+                cv2.line(canvas, points[a][:2], points[b][:2], (181, 193, 63), 3)
+        for x, y, c in points:
+            if c > 0.3:
+                cv2.circle(canvas, (x, y), 4, (255, 255, 255), -1)
+        cv2.putText(canvas, f"Person {pid}", (int(bbox[0] * scale), max(int(bbox[1] * scale) - 6, 14)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+    return cv2.imencode(".jpg", canvas)[1].tobytes()
+
+
 def save_event(event, resident_id=None):
     alerts.add_alert("room_monitor", event.event_type, event.message,
                      resident_id=resident_id, camera=event.camera, confidence=round(event.confidence, 2))
@@ -100,8 +127,8 @@ async def cue_check(file: UploadFile = File(...), resident_id: int | None = Form
     finally:
         del data  # the photo is never saved
     body = result.to_dict()
-    if result.level == "high":
-        alert = alerts.add_alert("cue_check", "high_cue", result.message,
+    if result.level in ("medium", "high"):
+        alert = alerts.add_alert("cue_check", f"{result.level}_cue", result.message,
                                  resident_id=resident_id, confidence=round(result.score, 2))
         body["alert_id"] = alert["id"]
     return body
@@ -150,16 +177,24 @@ def monitor_start(settings: LiveSettings, factory=Depends(get_monitor_factory),
         raise HTTPException(status_code=409, detail="The camera is already running.")
     monitor = factory(FallConfig(still_seconds=settings.still_seconds), f"camera-{settings.camera_index}")
 
+    cfg = FallConfig(still_seconds=settings.still_seconds)
+
+    def seen(t, people, shape):
+        _live["frames"] += 1
+        _live["people"] = [{"id": pid, "lying": is_lying(PersonFrame(t, bbox, kp), cfg)}
+                           for pid, bbox, kp in people]
+        _live["skeleton"] = draw_skeleton(people, shape)
+
     def work():
         try:
-            for event in monitor.run(settings.camera_index, should_stop=lambda: _live["stop"]):
+            for event in monitor.run(settings.camera_index, should_stop=lambda: _live["stop"], on_frame=seen):
                 save_event(event, settings.resident_id)
         except Exception as error:
             _live["error"] = str(error)
         finally:
             _live["running"] = False
 
-    _live.update(running=True, stop=False, error=None)
+    _live.update(running=True, stop=False, error=None, frames=0, people=[], skeleton=None)
     _live["thread"] = threading.Thread(target=work, daemon=True)
     _live["thread"].start()
     return {"running": True}
@@ -177,14 +212,35 @@ def monitor_stop(x_role: str = Header(default=""), authorization: str = Header(d
 
 @router.get("/api/vision/monitor/status")
 def monitor_status():
-    return {"running": _live["running"], "error": _live["error"]}
+    """Is the camera on, how many frames were checked, and who is in view (standing or lying)."""
+    return {key: _live[key] for key in ("running", "error", "frames", "people")}
+
+
+@router.get("/api/vision/monitor/skeleton.jpg")
+def monitor_skeleton():
+    """The latest stick-figure picture (keypoints only, no camera image)."""
+    if not _live["skeleton"]:
+        raise HTTPException(status_code=404, detail="No picture yet.")
+    return Response(content=_live["skeleton"], media_type="image/jpeg", headers={"Cache-Control": "no-store"})
 
 
 # ---------- alerts and nurse outcomes ----------
 @router.get("/api/vision/alerts")
-def list_alerts(open_only: bool = False):
-    """Alerts, newest first. open_only=true shows the ones still waiting for a nurse."""
-    return alerts.list_alerts(open_only)
+def list_alerts(open_only: bool = False, resident_id: int | None = None):
+    """Alerts, newest first. Each open alert comes with suggested next steps."""
+    found = alerts.list_alerts(open_only, resident_id=resident_id)
+    for alert in found:
+        alert["suggestions"] = None if alert["outcome"] else suggestions.for_alert(alert)
+    return found
+
+
+@router.post("/api/vision/alerts/{alert_id}/ai-suggestions")
+async def ai_suggestions(alert_id: int):
+    """Ask the local AI to turn the care-plan lines into a short plan. Falls back to the care plan."""
+    alert = alerts.get_alert(alert_id)
+    if alert is None:
+        raise HTTPException(status_code=404, detail="There is no alert with that number.")
+    return await run_in_threadpool(suggestions.ai_for_alert, alert)
 
 
 @router.get("/api/vision/outcomes")

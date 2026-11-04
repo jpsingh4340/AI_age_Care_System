@@ -79,10 +79,25 @@ def test_no_movement_alert_after_still_time():
 
 
 def test_moving_person_gets_no_stillness_alert():
+    det = FallDetector(FallConfig(still_seconds=5))
+    # shifting about 25 pixels back and forth every couple of seconds
+    events = run(det, [person(i / FPS, 220 + 25 * np.sin(i / 3)) for i in range(70)])
+    assert events == []
+
+
+def test_webcam_shake_does_not_hide_a_still_person():
     rng = np.random.default_rng(0)
     det = FallDetector(FallConfig(still_seconds=5))
-    events = run(det, [person(i / FPS, 220, jitter=4.0, rng=rng) for i in range(70)])
-    assert events == []
+    events = run(det, [person(i / FPS, 220, jitter=3.0, rng=rng) for i in range(70)])
+    assert [e.event_type for e in events] == ["no_movement"]
+
+
+def test_upper_body_only_is_not_called_lying():
+    from app.vision.fall_monitor import is_lying
+    f = person(0, 220)
+    f.keypoints[11:, 2] = 0.1  # hips and legs out of view
+    f.bbox = (40, 60, 300, 230)  # wide box: arms and shoulders close to the camera
+    assert not is_lying(f, FallConfig())
 
 
 def test_low_confidence_keypoints_fall_back_to_box_shape():

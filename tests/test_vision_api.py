@@ -140,3 +140,69 @@ def test_alert_messages_never_name_a_disease():
     words = " ".join(list(MESSAGES.values()) + list(ALERT_TEXT.values()) + list(alerts.OUTCOMES.values())).lower()
     for banned in ["dementia", "stroke", "fracture", "infection", "delirium", "paracetamol", "mg"]:
         assert banned not in words.split()
+
+
+
+def test_alerts_can_be_shown_for_one_resident():
+    alerts.add_alert("cue_check", "high_cue", "Please look closer.", resident_id=1)
+    alerts.add_alert("cue_check", "high_cue", "Please look closer.", resident_id=2)
+    only_ron = client.get("/api/vision/alerts", params={"resident_id": 2}).json()
+    assert [a["resident_id"] for a in only_ron] == [2]
+
+    
+
+def test_open_alerts_come_with_care_plan_suggestions():
+    alerts.add_alert("room_monitor", "possible_fall", "Possible fall.", resident_id=2)
+    alert = client.get("/api/vision/alerts", params={"resident_id": 2}).json()[0]
+    texts = [s["text"] for s in alert["suggestions"]["steps"]]
+    assert "Do not lift them until a nurse has checked them for injury." in texts
+    assert any("arm's reach" in t for t in texts)  # from Ron's own care plan
+
+
+
+def test_ai_suggestions_keep_only_safe_grounded_steps(monkeypatch):
+    import json
+    from app import ollama_client
+    answer = {"steps": [{"text": "Stay with Ron and do not lift him.", "source": "L2"},
+                        {"text": "Give him 500 mg of paracetamol.", "source": "L1"},
+                        {"text": "Made-up step with no source.", "source": "L99"}]}
+    monkeypatch.setattr(ollama_client, "chat_json", lambda system, user, schema: json.dumps(answer))
+    alert = alerts.add_alert("room_monitor", "possible_fall", "Possible fall.", resident_id=2)
+    r = client.post(f"/api/vision/alerts/{alert['id']}/ai-suggestions").json()
+    assert r["method"] == "ai"
+    assert [s["text"] for s in r["steps"]] == ["Stay with Ron and do not lift him."]
+
+
+def test_ai_suggestions_fall_back_when_ollama_is_off(monkeypatch):
+    from app import ollama_client
+
+    def off(*args):
+        raise ollama_client.OllamaError("Cannot reach Ollama.")
+    monkeypatch.setattr(ollama_client, "chat_json", off)
+    alert = alerts.add_alert("cue_check", "high_cue", "Please look closer.", resident_id=1)
+    r = client.post(f"/api/vision/alerts/{alert['id']}/ai-suggestions").json()
+    assert r["method"] == "care plan" and r["steps"] and "AI not available" in r["note"]
+
+
+
+def test_ai_suggestions_accept_how_small_models_name_the_line(monkeypatch):
+    import json
+    from app import ollama_client
+    answer = {"steps": [{"text": "Stay with Ron and keep him still.", "source": "Line 2"},
+                        {"text": "Ask if he hurts anywhere.", "source": "3"},
+                        "Do not lift them until a nurse has checked them for injury."]}
+    monkeypatch.setattr(ollama_client, "chat_json", lambda system, user, schema: json.dumps(answer))
+    alert = alerts.add_alert("room_monitor", "possible_fall", "Possible fall.", resident_id=2)
+    r = client.post(f"/api/vision/alerts/{alert['id']}/ai-suggestions").json()
+    assert r["method"] == "ai" and len(r["steps"]) == 3
+
+
+
+def test_live_view_is_a_stick_figure_only():
+    import numpy as np
+    kp = np.zeros((17, 3))
+    kp[:, 0], kp[:, 1], kp[:, 2] = np.linspace(100, 200, 17), np.linspace(50, 400, 17), 0.9
+    picture = vision.draw_skeleton([(1, (90, 40, 210, 410), kp)], (480, 640))
+    assert picture[:2] == b"\xff\xd8"  # a JPEG drawn from keypoints, not the camera image
+    status = client.get("/api/vision/monitor/status").json()
+    assert status["running"] is False and "people" in status

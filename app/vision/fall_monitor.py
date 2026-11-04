@@ -46,7 +46,7 @@ class FallConfig:
     confirm_lying_s: float = 2.0  # still lying this long after the drop = fall
     reset_upright_s: float = 2.0  # upright this long = ready to detect a new fall
     still_seconds: float = 600.0  # no movement this long = no-movement alert (10 min)
-    still_threshold: float = 0.02  # mean keypoint movement per second, as share of body height
+    still_drift: float = 0.06  # body points moved less than this share of body size = still
     min_keypoint_conf: float = 0.3
 
 
@@ -81,6 +81,7 @@ class _Track:
     drop_seen_at: float | None = None
     drop_size: float = 0.0
     still_since: float | None = None
+    still_anchor: np.ndarray | None = None  # body points when the person last moved
     still_reported: bool = False
 
 
@@ -112,6 +113,10 @@ def is_lying(frame: PersonFrame, cfg: FallConfig) -> bool:
     angle = torso_angle(frame.keypoints, cfg.min_keypoint_conf)
     if angle is not None:
         return angle >= cfg.lying_torso_angle or w / h >= cfg.lying_aspect * 1.3
+    kp = frame.keypoints
+    shoulders_seen = np.all(kp[[L_SHOULDER, R_SHOULDER], 2] >= cfg.min_keypoint_conf)
+    if shoulders_seen and np.all(kp[[L_HIP, R_HIP], 2] < cfg.min_keypoint_conf):
+        return False  # only the upper body is in view (sitting close to the camera), so we can't call it lying
     return w / h >= cfg.lying_aspect
 
 
@@ -172,23 +177,26 @@ class FallDetector:
                 tr.drop_seen_at = None
                 tr.drop_size = 0.0
 
-        # 3. Stillness: mean keypoint movement per second, scaled by body size.
-        if tr.history:
-            prev = tr.history[-1]
-            dt = max(frame.t - prev.t, 1e-6)
-            ok = (frame.keypoints[:, 2] >= cfg.min_keypoint_conf) & (prev.keypoints[:, 2] >= cfg.min_keypoint_conf)
-            if ok.any():
-                body = max(frame.bbox[3] - frame.bbox[1], frame.bbox[2] - frame.bbox[0], 1e-6)
-                move = np.linalg.norm(frame.keypoints[ok, :2] - prev.keypoints[ok, :2], axis=1).mean() / body / dt
-                if move < cfg.still_threshold:
-                    if tr.still_since is None:
-                        tr.still_since = prev.t
-                    if not tr.still_reported and frame.t - tr.still_since >= cfg.still_seconds:
-                        events.append(self._event("no_movement", person_id, frame.t, 0.7))
-                        tr.still_reported = True
-                else:
-                    tr.still_since = None
-                    tr.still_reported = False
+               # 3. Stillness: compare the body points with where they were when the person last moved.
+        # Comparing with that saved pose (not the frame before) ignores the small shake a
+        # webcam adds to every frame, so a person sitting still is really seen as still.
+        ok = frame.keypoints[:, 2] >= cfg.min_keypoint_conf
+        if tr.still_anchor is not None:
+            ok &= tr.still_anchor[:, 2] >= cfg.min_keypoint_conf
+        if ok.sum() >= 3:
+            body = max(frame.bbox[3] - frame.bbox[1], frame.bbox[2] - frame.bbox[0], 1e-6)
+            drift = 1.0
+            if tr.still_anchor is not None:
+                drift = float(np.median(np.linalg.norm(frame.keypoints[ok, :2] - tr.still_anchor[ok, :2], axis=1))) / body
+            if drift < cfg.still_drift:
+                if not tr.still_reported and frame.t - tr.still_since >= cfg.still_seconds:
+                    events.append(self._event("no_movement", person_id, frame.t, 0.7))
+                    tr.still_reported = True
+            else:  # moved: start timing again from this pose
+                tr.still_anchor = frame.keypoints.copy()
+                tr.still_since = frame.t
+                tr.still_reported = False
+
 
         tr.history.append(frame)
         return events
@@ -247,7 +255,10 @@ class PoseMonitor:
         source: int | str,
         should_stop: Callable[[], bool] = lambda: False,
         live: bool | None = None,
+        on_frame: Callable | None = None,
     ) -> Iterator[Event]:
+        """``on_frame(t, people, (height, width))`` is called after each checked frame,
+        so the page can show who is in view. It gets keypoints only, never the picture."""
         import cv2
 
         live = isinstance(source, int) if live is None else live
@@ -266,8 +277,11 @@ class PoseMonitor:
                 if index % self.frame_stride:
                     continue
                 t = time.time() - start if live else index / fps
-                for pid, bbox, kp in self.people_in(frame):
+                people = self.people_in(frame)
+                for pid, bbox, kp in people:
                     yield from self.detector.update(pid, PersonFrame(t, bbox, kp))
+                if on_frame is not None:
+                    on_frame(t, people, frame.shape[:2])
                 del frame  # nothing is kept
         finally:
             cap.release()
