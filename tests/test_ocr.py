@@ -68,6 +68,13 @@ def test_unusual_or_unsure_values_are_kept_but_marked_for_checking():
     assert found["blood_pressure"].needs_check
 
 
+def test_value_error_validates_saved_vital_formats():
+    assert ocr.value_error("pulse", "76") == ""
+    assert ocr.value_error("blood_pressure", "128/82") == ""
+    assert ocr.value_error("pulse", "abc") != ""
+    assert ocr.value_error("unknown_key", "10") != ""
+
+
 def test_nothing_is_invented_when_the_page_has_no_numbers():
     assert ocr.extract_readings(lines(("Hello world", 0.9), ("Pulse: unreadable", 0.9))) == []
 
@@ -96,4 +103,3 @@ def test_api_says_so_when_ocr_is_not_installed(monkeypatch):
     monkeypatch.setattr(ocr, "read_lines", not_installed)
     response = TestClient(app).post("/api/ocr/extract", files={"file": ("r.png", PNG, "image/png")})
     assert response.status_code == 503
-    
