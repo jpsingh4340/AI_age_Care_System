@@ -28,3 +28,13 @@ Instead of treating the backend as a single box, the OCR Health Report Reader (`
 | **Mandatory Nurse Tick-Box Gate** | Manual entry | Pharmacist/GP only | None | Required before `Save` unlocks |
 | **4-Role Connected Workflow** | Staff only | Prescriber/Staff | Single user | Carer -> Nurse -> Manager -> Family |
 
+
+## 3. Requirements & Traceability Matrix (OCR & 4-Role Workflow)
+
+| Req ID | User Story | Subcomponent / File | Automated Test | Status |
+|---|---|---|---|---|
+| **REQ-OCR-01** | As a Nurse, I want to upload a printed health report photo under 6 MB so that vital numbers are extracted automatically. | `app/main.py` (`POST /api/ocr/extract`), `app/ocr.py` (`read_lines`) | `tests/test_ocr.py::test_api_reads_an_image` | Done |
+| **REQ-OCR-02** | As a Nurse, I want text boxes on the same horizontal line joined in reading order so labels match their numbers. | `app/ocr.py` (`group_into_lines`) | `tests/test_ocr.py::test_boxes_on_the_same_row_are_joined_in_order` | Done |
+| **REQ-OCR-03** | As a Nurse, I want unusual or low-confidence (`<70%`) values flagged in amber so I can verify them against the photo. | `app/ocr.py` (`_check`, `extract_readings`) | `tests/test_ocr.py::test_unusual_or_unsure_values_are_kept_but_marked_for_checking` | Done |
+| **REQ-OCR-04** | As a Clinical Governance lead, I want the Save button locked until every extracted value is ticked by a Registered Nurse. | `static/ocr.html` (`updateProgress`), `app/main.py` (`save_readings`) | `tests/test_readings_records.py` | Done |
+| **REQ-AUTH-01** | As a Staff/Family user, I want role-verified login and registration so each role accesses only its authorized portal. | `app/auth.py`, `static/login.html`, `static/auth.js` | `tests/test_auth.py` | Done |
