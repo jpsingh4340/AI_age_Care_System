@@ -103,3 +103,11 @@ def test_api_says_so_when_ocr_is_not_installed(monkeypatch):
     monkeypatch.setattr(ocr, "read_lines", not_installed)
     response = TestClient(app).post("/api/ocr/extract", files={"file": ("r.png", PNG, "image/png")})
     assert response.status_code == 503
+
+
+def test_invalid_report_date_is_flagged_for_nurse_check():
+    found = ocr.extract_readings(lines(("Date: 45/19/2026", 0.95)))
+    assert len(found) == 1
+    assert found[0].key == "report_date"
+    assert found[0].needs_check is True
+    assert "date" in found[0].reason.lower()
