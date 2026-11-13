@@ -359,7 +359,7 @@
       if (!rec) { fill("contacts", head("Who to call"), h("p", { class: "empty", text: "No contacts on file." })); return; }
       fill(
         "contacts",
-        head("Who to call"),
+        head("Who to call", null, h("a", { class: "btn btn-secondary btn-sm", href: "/nurse/doctor-summary?resident=" + state.selected, text: "Prepare doctor summary" })),
         h("dl", { class: "kv" },
           h("dt", {}, rec.doctor.name, h("span", { class: "sub-text", text: " · Doctor" })),
           h("dd", { class: "num", text: rec.doctor.phone }),

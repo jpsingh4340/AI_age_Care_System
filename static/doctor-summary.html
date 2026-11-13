@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Doctor summary · AgeCare</title>
+  <link rel="icon" type="image/png" href="/static/img/favicon.png">
+  <link rel="stylesheet" href="/static/app.css">
+  <style>
+    .ds-line { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: start; padding: 8px 0; border-bottom: 1px solid var(--line); }
+    .ds-line:last-child { border-bottom: 0; }
+    .ds-line input[type="checkbox"] { width: 20px; height: 20px; margin-top: 11px; accent-color: var(--accent); }
+    .ds-line textarea { min-height: 44px; font-size: 14px; }
+    .ds-line.off textarea { opacity: 0.45; text-decoration: line-through; }
+    .ds-line .src { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .fixed-box { background: var(--bg-subtle); border: 1px solid var(--line); border-radius: var(--r-card); padding: 10px 12px; font-size: 14px; }
+    .paper { background: #FFFFFF; color: #1B1F1E; border: 1px solid var(--line-strong); border-radius: var(--r-ctl); padding: 22px 24px; font-size: 13px; line-height: 1.5; }
+    .paper h3 { font-size: 18px; color: #12302D; margin: 0; }
+    .paper h4 { font-size: 13px; color: #0F5F5A; margin: 14px 0 2px; }
+    .paper .warn { color: #8A5A00; font-weight: 700; font-size: 11px; }
+    .paper hr { border: 0; border-top: 1px solid #D9D6CF; margin: 10px 0; }
+    .paper ul { margin: 2px 0 0; padding-left: 16px; }
+    .paper .src, .paper .lab { font-size: 11px; color: #66726F; }
+    .paper .fix { color: #8A5A00; font-size: 11px; }
+    .trail li { padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; display: flex; justify-content: space-between; gap: 8px; }
+    .trail li:last-child { border-bottom: 0; }
+  </style>
+</head>
+<body>
+  <header class="topbar"></header>
+
+  <main class="page-container">
+    <div class="page-head">
+      <div>
+        <p class="eyebrow">Nurse</p>
+        <h1>Doctor summary</h1>
+        <p class="lede">Prepare a summary from the resident's records, check and correct it, then send it yourself. Nothing is ever sent automatically.</p>
+      </div>
+    </div>
+
+    <p class="notice"><strong>Demo data only.</strong> These are fake residents. Sending is simulated: you download the PDF and no doctor is contacted. The facts come from the care records, not the AI.</p>
+
+    <ol class="steps" aria-label="Steps">
+      <li class="step active" id="st1"><span class="num">1</span>Prepare</li>
+      <li class="step" id="st2"><span class="num">2</span>Preview and correct</li>
+      <li class="step" id="st3"><span class="num">3</span>Send</li>
+    </ol>
+
+    <section class="card" style="margin-bottom: 24px;">
+      <h2 class="card-title" style="margin-bottom: 12px;">Resident</h2>
+      <div class="pills" id="residentPills" role="group" aria-label="Choose a resident"><div class="skeleton w60" style="height: 44px;"></div></div>
+      <div class="form-actions">
+        <div id="earlier" class="text-sm"></div>
+        <button type="button" class="btn btn-primary" id="prepareBtn">Prepare doctor summary</button>
+      </div>
+    </section>
+
+    <div class="grid-layout" id="workArea" hidden>
+      <section class="card" aria-labelledby="editTitle">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title lg" id="editTitle">Check and correct</h2>
+            <p class="sub-text" id="editSub"></p>
+          </div>
+          <span class="badge" id="statusBadge"></span>
+        </div>
+        <div id="editor"></div>
+        <div class="form-actions">
+          <p class="text-sm" id="editMsg" role="status"></p>
+          <div class="inline">
+            <button type="button" class="btn btn-secondary" id="saveBtn">Save changes</button>
+            <button type="button" class="btn btn-primary" id="reviewBtn">Mark as reviewed</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="stack">
+        <section class="card" aria-labelledby="sendTitle">
+          <h2 class="card-title" id="sendTitle" style="margin-bottom: 8px;">3. Send to the doctor</h2>
+          <p class="sub-text" id="sendHint" style="margin-bottom: 12px;"></p>
+          <button type="button" class="btn btn-primary btn-block" id="sendBtn">Send to doctor (simulated)</button>
+          <p class="text-sm" id="sendMsg" role="status" style="margin-top: 10px;"></p>
+        </section>
+
+        <section class="card" aria-labelledby="trailTitle">
+          <h2 class="card-title" id="trailTitle" style="margin-bottom: 8px;">Audit trail</h2>
+          <ul class="audit-list trail" id="trail"></ul>
+        </section>
+
+        <section class="card" aria-labelledby="previewTitle">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title" id="previewTitle">Preview</h2>
+              <p class="sub-text">Same content and order as the PDF</p>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" id="pdfBtn">Open PDF</button>
+          </div>
+          <div class="paper" id="paper"></div>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="foot"></footer>
+
+  <script src="/static/auth.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const STATUS = {
+      draft: ["Draft, not reviewed", "badge-neutral"],
+      reviewed: ["Reviewed, ready to send", "badge-green"],
+      sent: ["Sent (simulated)", "status-approved"],
+    };
+    const state = { people: [], selected: null, summary: null, dirty: false };
+
+    function el(tag, className, text) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
+    const when = (iso) => (iso ? iso.replace("T", " ").slice(0, 16) : "");
+
+    async function api(path, options) {
+      const res = await window.authFetch(path, options || {});
+      let data = null;
+      try { data = await res.json(); } catch (e) {}
+      if (!res.ok) throw new Error(data && typeof data.detail === "string" ? data.detail : "Something went wrong. Please try again.");
+      return data;
+    }
+    const send = (method, path, body) => api(path, { method: method, headers: { "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+
+    function msg(id, text, kind) {
+      $(id).textContent = text || "";
+      $(id).className = "text-sm" + (text ? " " + (kind === "ok" ? "alert-success" : "alert-danger") : "");
+    }
+
+    function step(n) {
+      ["st1", "st2", "st3"].forEach((id, i) => $(id).classList.toggle("active", i < n));
+    }
+
+    // ---------- residents and earlier summaries ----------
+    function renderPills() {
+      const wrap = $("residentPills");
+      wrap.replaceChildren();
+      for (const p of state.people) {
+        const b = el("button", "pill", p.name + " · Room " + (100 + Number(p.resident_id)));
+        b.type = "button";
+        b.setAttribute("aria-pressed", String(Number(p.resident_id) === Number(state.selected)));
+        b.addEventListener("click", () => selectResident(p.resident_id));
+        wrap.append(b);
+      }
+    }
+
+    async function selectResident(rid) {
+      if (state.dirty && !confirm("You have unsaved changes. Leave without saving?")) return;
+      state.selected = Number(rid);
+      state.summary = null;
+      state.dirty = false;
+      window.history.replaceState(null, "", "?resident=" + rid);
+      renderPills();
+      $("workArea").hidden = true;
+      step(1);
+      const list = await api("/api/doctor-summaries?resident_id=" + rid);
+      const box = $("earlier");
+      box.replaceChildren();
+      if (!list.length) {
+        box.append(el("span", "text-muted", "No summaries yet for this resident."));
+        return;
+      }
+      box.append(el("span", "sub-text", "Earlier: "));
+      list.slice(0, 5).forEach((s, i) => {
+        const a = el("button", "btn btn-quiet btn-sm", "#" + s.id + " " + STATUS[s.status][0].split(",")[0] + " " + when(s.prepared_at).slice(5));
+        a.type = "button";
+        a.addEventListener("click", () => openSummary(s.id));
+        box.append(a);
+      });
+      // carry on with an unfinished one
+      if (list[0].status !== "sent") openSummary(list[0].id);
+    }
+
+    // ---------- step 1: prepare ----------
+    $("prepareBtn").addEventListener("click", async () => {
+      if (state.dirty && !confirm("You have unsaved changes. Prepare a new summary anyway?")) return;
+      $("prepareBtn").disabled = true;
+      try {
+        const s = await send("POST", "/api/doctor-summaries", { resident_id: state.selected });
+        if (window.showToast) window.showToast("Summary prepared from the records");
+        await selectResidentKeep(s.id);
+      } catch (e) {
+        if (window.showToast) window.showToast(e.message, true);
+      } finally {
+        $("prepareBtn").disabled = false;
+      }
+    });
+
+    async function selectResidentKeep(id) {
+      state.dirty = false;
+      await selectResident(state.selected);
+      await openSummary(id);
+    }
+
+    async function openSummary(id) {
+      state.summary = await api("/api/doctor-summaries/" + id);
+      state.dirty = false;
+      render();
+      $("workArea").hidden = false;
+    }
+
+    // ---------- step 2: preview and correct ----------
+    function render() {
+      const s = state.summary;
+      const c = s.content;
+      const locked = s.status === "sent";
+      $("editSub").textContent = "Summary #" + s.id + " for " + c.resident.name + ", prepared by " + s.prepared_by + " at " + when(s.prepared_at);
+      $("statusBadge").className = "badge " + STATUS[s.status][1];
+      $("statusBadge").textContent = STATUS[s.status][0];
+      step(s.status === "draft" ? 2 : 3);
+
+      const ed = $("editor");
+      ed.replaceChildren();
+      const fixed = el("div", "fixed-box");
+      fixed.append(
+        el("div", "", "Allergies: " + c.resident.allergies.join(", ")),
+        el("div", "", "Conditions: " + (c.resident.conditions.join(", ") || "None recorded")),
+        el("div", "sub-text", "Always included. Change these in the resident's records, not here.")
+      );
+      ed.append(fixed);
+
+      c.sections.forEach((sec) => {
+        const h = el("p", "section-label", sec.title);
+        ed.append(h);
+        if (sec.label) ed.append(el("p", "sub-text", sec.label));
+        if (!sec.lines.length) ed.append(el("p", "empty", "Nothing recorded."));
+        sec.lines.forEach((ln) => {
+          const row = el("div", "ds-line" + (ln.include ? "" : " off"));
+          const keep = el("input");
+          keep.type = "checkbox";
+          keep.checked = ln.include;
+          keep.disabled = locked;
+          keep.setAttribute("aria-label", "Include this line");
+          const box = el("textarea", "field");
+          box.rows = 1;
+          box.value = ln.text;
+          box.disabled = locked;
+          box.setAttribute("aria-label", sec.title + " line");
+          keep.addEventListener("change", () => { ln.include = keep.checked; row.classList.toggle("off", !keep.checked); changed(); });
+          box.addEventListener("input", () => { ln.text = box.value; ln.edited = box.value.trim() !== ln.original; changed(); });
+          const right = el("div");
+          right.append(box);
+          const src = [ln.source, ln.edited ? "corrected by nurse" : ""].filter(Boolean).join(" · ");
+          if (src) right.append(el("div", "src", src));
+          row.append(keep, right);
+          ed.append(row);
+        });
+      });
+
+      ed.append(el("p", "section-label", "Note from the nurse"));
+      const note = el("textarea", "field");
+      note.rows = 3;
+      note.maxLength = 1000;
+      note.value = c.nurse_note || "";
+      note.disabled = locked;
+      note.placeholder = "Anything you want the doctor to know (optional)";
+      note.setAttribute("aria-label", "Note from the nurse");
+      note.addEventListener("input", () => { c.nurse_note = note.value; changed(); });
+      ed.append(note);
+
+      $("saveBtn").hidden = $("reviewBtn").hidden = locked;
+      $("reviewBtn").disabled = s.status !== "draft";
+      $("reviewBtn").textContent = s.status === "reviewed" ? "Reviewed" : "Mark as reviewed";
+      renderPaper();
+      renderTrail();
+      renderSend();
+    }
+
+    function changed() {
+      state.dirty = true;
+      if (state.summary.status === "reviewed") {
+        // a change after review means it must be reviewed again
+        state.summary.status = "draft";
+        $("statusBadge").className = "badge " + STATUS.draft[1];
+        $("statusBadge").textContent = "Changed, review again";
+        $("reviewBtn").disabled = false;
+        $("reviewBtn").textContent = "Mark as reviewed";
+        renderSend();
+      }
+      msg("editMsg", "Unsaved changes", "err");
+      $("editMsg").className = "text-sm text-muted";
+      renderPaper();
+    }
+
+    // The preview follows the same layout as the PDF (app/routers/doctor.py pdf_blocks)
+    function renderPaper() {
+      const s = state.summary;
+      const c = s.content;
+      const p = $("paper");
+      p.replaceChildren();
+      p.append(el("h3", "", "Doctor summary"), el("div", "warn", "DEMO DATA ONLY. Fake resident. Student prototype, not a medical record."));
+      if (s.status === "draft") p.append(el("div", "warn", "DRAFT: not yet reviewed by a nurse. Do not send."));
+      p.append(el("hr"));
+      p.append(el("strong", "", c.resident.name + ", " + c.resident.room));
+      p.append(el("div", "", "Summary date: " + c.resident.date_of_summary));
+      p.append(el("div", "", "To: " + c.doctor.name + ", " + c.doctor.practice + ". Phone " + c.doctor.phone));
+      p.append(el("strong", "", "Allergies: " + c.resident.allergies.join(", ")));
+      p.append(el("div", "", "Conditions: " + (c.resident.conditions.join(", ") || "None recorded")));
+      p.append(el("hr"));
+      c.sections.forEach((sec) => {
+        const kept = sec.lines.filter((l) => l.include);
+        if (!kept.length) return;
+        p.append(el("h4", "", sec.title));
+        if (sec.label) p.append(el("div", "lab", sec.label));
+        const ul = el("ul");
+        kept.forEach((l) => {
+          const li = el("li", "", l.text);
+          if (l.edited) li.append(el("span", "fix", "  (corrected by nurse)"));
+          if (l.source) li.append(el("div", "src", l.source));
+          ul.append(li);
+        });
+        p.append(ul);
+      });
+      if (c.nurse_note) p.append(el("h4", "", "Note from the nurse"), el("div", "", c.nurse_note));
+      p.append(el("hr"));
+      p.append(el("div", "src", "Prepared by " + s.prepared_by + " at " + when(s.prepared_at) + "."));
+      if (s.reviewed_by) p.append(el("div", "src", "Reviewed by " + s.reviewed_by + " at " + when(s.reviewed_at) + "."));
+      if (s.sent_by) p.append(el("div", "src", "Sent by " + s.sent_by + " at " + when(s.sent_at) + " (simulated: no doctor was contacted)."));
+    }
+
+    function renderTrail() {
+      const s = state.summary;
+      const ul = $("trail");
+      ul.replaceChildren();
+      const item = (label, who, at) => {
+        const li = el("li");
+        li.append(el("span", "", label + (who ? ": " + who : "")), el("span", "mono-time", at ? when(at) : "Not yet"));
+        ul.append(li);
+      };
+      item("Prepared", s.prepared_by, s.prepared_at);
+      item("Reviewed", s.reviewed_by, s.reviewed_at);
+      item("Sent", s.sent_by, s.sent_at);
+    }
+
+    function renderSend() {
+      const s = state.summary;
+      const btn = $("sendBtn");
+      if (s.status === "sent") {
+        $("sendHint").textContent = "Sent to " + s.sent_to + ". No doctor was contacted.";
+        btn.textContent = "Download the sent PDF";
+        btn.disabled = false;
+        btn.className = "btn btn-secondary btn-block";
+        step(3);
+        return;
+      }
+      btn.className = "btn btn-primary btn-block";
+      btn.textContent = "Send to doctor (simulated)";
+      btn.disabled = s.status !== "reviewed" || state.dirty;
+      $("sendHint").textContent = s.status === "reviewed" && !state.dirty
+        ? "Ready. Sending downloads the PDF. In this prototype no doctor is contacted."
+        : "Save your changes and mark the summary as reviewed first.";
+    }
+
+    async function save() {
+      const s = state.summary;
+      const body = {
+        sections: s.content.sections.map((sec) => ({ key: sec.key, lines: sec.lines.map((l) => ({ text: l.text.trim() || l.original, include: l.include })) })),
+        nurse_note: s.content.nurse_note || "",
+      };
+      state.summary = await send("PUT", "/api/doctor-summaries/" + s.id, body);
+      state.dirty = false;
+    }
+
+    $("saveBtn").addEventListener("click", async () => {
+      try {
+        await save();
+        render();
+        msg("editMsg", "Changes saved.", "ok");
+      } catch (e) { msg("editMsg", e.message, "err"); }
+    });
+
+    $("reviewBtn").addEventListener("click", async () => {
+      try {
+        if (state.dirty) await save();
+        state.summary = await send("POST", "/api/doctor-summaries/" + state.summary.id + "/review");
+        render();
+        msg("editMsg", "Reviewed. You can now send it.", "ok");
+        if (window.showToast) window.showToast("Summary reviewed");
+      } catch (e) { msg("editMsg", e.message, "err"); }
+    });
+
+    // ---------- PDF and step 3: send ----------
+    async function fetchPdf() {
+      const res = await window.authFetch("/api/doctor-summaries/" + state.summary.id + "/pdf");
+      if (!res.ok) throw new Error("Could not make the PDF.");
+      return URL.createObjectURL(await res.blob());
+    }
+
+    $("pdfBtn").addEventListener("click", async () => {
+      try {
+        if (state.dirty && state.summary.status !== "sent") { await save(); render(); }
+        window.open(await fetchPdf(), "_blank");
+      } catch (e) { if (window.showToast) window.showToast(e.message, true); }
+    });
+
+    function download(url) {
+      const a = el("a");
+      a.href = url;
+      a.download = "doctor-summary-" + state.summary.id + ".pdf";
+      document.body.append(a);
+      a.click();
+      a.remove();
+    }
+
+    $("sendBtn").addEventListener("click", async () => {
+      const s = state.summary;
+      try {
+        if (s.status !== "sent") {
+          const ok = confirm("Send this summary to " + s.content.doctor.name + "?\n\nPrototype: this only downloads the PDF. No doctor is contacted.");
+          if (!ok) return;
+          state.summary = await send("POST", "/api/doctor-summaries/" + s.id + "/send");
+          render();
+          msg("sendMsg", "Sent (simulated). The PDF has been downloaded and the audit log updated.", "ok");
+          if (window.showToast) window.showToast("Summary sent (simulated)");
+        }
+        download(await fetchPdf());
+      } catch (e) { msg("sendMsg", e.message, "err"); }
+    });
+
+    window.addEventListener("beforeunload", (e) => { if (state.dirty) { e.preventDefault(); e.returnValue = ""; } });
+
+    (async function start() {
+      try {
+        state.people = await api("/api/residents");
+        const wanted = new URLSearchParams(location.search).get("resident");
+        await selectResident(wanted ? Number(wanted) : state.people[0].resident_id);
+      } catch (e) {
+        $("earlier").replaceChildren(el("p", "alert-box alert-danger", e.message));
+      }
+    })();
+  </script>
+</body>
+</html>
