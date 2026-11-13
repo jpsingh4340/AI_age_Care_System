@@ -364,7 +364,7 @@
         h(
           "div",
           { class: "foot-links" },
-          h("a", { href: "/welcome", text: "Overview" }),
+          h("a", { href: "/welcome", text: "Home" }),
           h("a", { href: "/static/privacy.html", text: "Privacy" }),
           h("a", { href: "/static/terms.html", text: "Terms" })
         )
