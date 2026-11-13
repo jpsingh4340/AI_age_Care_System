@@ -105,8 +105,8 @@ async function loadPage() {
 
   var opts = await getJSON("/api/carer/options");
   if (opts) {
-    fillSelect($("task"), opts.tasks || []);
-    fillSelect($("ctype"), opts.concern_types || []);
+    if ($("task")) fillSelect($("task"), opts.tasks || []);
+    if ($("ctype")) fillSelect($("ctype"), opts.concern_types || []);
   }
 
   var people = await getJSON("/api/residents");
@@ -133,9 +133,11 @@ function changeResident() {
   $("todayName").textContent = person.name;
   $("recordName").textContent = person.name;
   $("residentConditions").textContent = (person.conditions || []).join(", ");
-  ["noteMsg", "taskMsg", "vitalsMsg", "concernMsg"].forEach(function (m) {
-    $(m).textContent = "";
-    $(m).className = "text-sm";
+  ["noteMsg", "vitalsMsg", "concernMsg"].forEach(function (m) {
+    if ($(m)) {
+      $(m).textContent = "";
+      $(m).className = "text-sm";
+    }
   });
   renderPills();
     if (window.loadFollowups) window.loadFollowups(person.resident_id);  // Feature C: nurse follow-ups
@@ -326,21 +328,23 @@ $("saveNote").addEventListener("click", async function () {
   }
 });
 
-$("saveTask").addEventListener("click", async function () {
-  var name = carerName("taskMsg");
-  if (!name) return;
-  var statusRadio = document.querySelector("input[name=status]:checked");
-  var status = statusRadio ? statusRadio.value : "given";
-  try {
-    await postJSON("/api/carer/tasks", {
-      resident_id: String(state.selected), task: $("task").value, status: status, carer: name,
-    });
-    showMsg("taskMsg", "Saved: " + $("task").value + " (" + (STATUS_TEXT[status] || status) + ")", "ok");
-    loadToday();
-  } catch (e) {
-    showMsg("taskMsg", e.message, "err");
-  }
-});
+if ($("saveTask")) {
+  $("saveTask").addEventListener("click", async function () {
+    var name = carerName("taskMsg");
+    if (!name) return;
+    var statusRadio = document.querySelector("input[name=status]:checked");
+    var status = statusRadio ? statusRadio.value : "given";
+    try {
+      await postJSON("/api/carer/tasks", {
+        resident_id: String(state.selected), task: $("task").value, status: status, carer: name,
+      });
+      showMsg("taskMsg", "Saved: " + $("task").value + " (" + (STATUS_TEXT[status] || status) + ")", "ok");
+      loadToday();
+    } catch (e) {
+      showMsg("taskMsg", e.message, "err");
+    }
+  });
+}
 
 $("saveVitals").addEventListener("click", async function () {
   var name = carerName("vitalsMsg");

@@ -50,8 +50,8 @@
 
   const PUBLIC_NAV = [
     { href: "/welcome", label: "Home" },
-    { href: "/static/privacy.html", label: "Privacy" },
-    { href: "/static/terms.html", label: "Terms" },
+    { href: "/static/privacy.html?v=3", label: "Privacy" },
+    { href: "/static/terms.html?v=3", label: "Terms" },
   ];
 
   const token = localStorage.getItem("agecare_token") || "";
@@ -207,7 +207,7 @@
       { class: "brand", href: signedIn ? HOME_BY_ROLE[role] || "/welcome" : "/welcome" },
       h("img", { src: "/static/img/favicon.png", alt: "", width: "28", height: "28" }),
       h("span", { class: "brand-name", text: "AgeCare" }),
-      h("span", { class: "brand-sub", text: "AI Age-Care System" })
+      h("span", { class: "brand-sub", text: "Care Signal" })
     );
 
     const toggle = h("button", {
@@ -227,11 +227,12 @@
       "nav",
       { class: "nav-links", "aria-label": "Main" },
       links.map(function (l) {
+        const cleanHref = l.href.split("?")[0].toLowerCase();
         return h("a", {
           class: "nav-link",
           href: l.href,
           "data-nav": l.href,
-          "aria-current": path === l.href.toLowerCase() || (l.href === "/nurse" && path === "/") ? "page" : false,
+          "aria-current": path === cleanHref || (cleanHref === "/nurse" && path === "/") ? "page" : false,
           text: l.label,
         });
       })
@@ -258,8 +259,8 @@
       user = h(
         "div",
         { class: "nav-user" },
-        h("a", { class: "btn-nav", href: "/login#register", text: "Create account" }),
-        h("a", { class: "btn-nav solid", href: "/login", text: "Sign in" })
+        h("a", { class: "btn-nav", href: "/login?v=2#register", text: "Create account" }),
+        h("a", { class: "btn-nav solid", href: "/login?v=2", text: "Sign in" })
       );
     } else {
       user = h(
@@ -324,7 +325,7 @@
         h(
           "div",
           { class: "foot-col" },
-          h("strong", { class: "foot-title", text: "AgeCare — AI Age-Care System" }),
+          h("strong", { class: "foot-title", text: "AgeCare — Care Signal" }),
           h("p", {
             text: "Supporting New Zealand rest-home carers, registered nurses, managers, and families with connected shift handovers, NZEWS priority checks, OCR health report reading, and nurse-approved care guidance.",
           })
@@ -351,8 +352,8 @@
           h("strong", { class: "foot-title", text: "Navigation" }),
           h("a", { href: "/welcome", text: "Home" }),
           h("a", { href: "/login", text: "Sign in" }),
-          h("a", { href: "/static/privacy.html", text: "Privacy Policy" }),
-          h("a", { href: "/static/terms.html", text: "Terms of Use" })
+          h("a", { href: "/static/privacy.html?v=2", text: "Privacy Policy" }),
+          h("a", { href: "/static/terms.html?v=2", text: "Terms of Use" })
         )
       ),
       h(
@@ -365,8 +366,8 @@
           "div",
           { class: "foot-links" },
           h("a", { href: "/welcome", text: "Home" }),
-          h("a", { href: "/static/privacy.html", text: "Privacy" }),
-          h("a", { href: "/static/terms.html", text: "Terms" })
+          h("a", { href: "/static/privacy.html?v=2", text: "Privacy" }),
+          h("a", { href: "/static/terms.html?v=2", text: "Terms" })
         )
       )
     );

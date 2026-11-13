@@ -44,7 +44,6 @@
 
         <div class="tabs" role="tablist" aria-label="What to record">
           <button type="button" class="tab" role="tab" id="tab-note" aria-controls="panel-note" aria-selected="true">Quick note</button>
-          <button type="button" class="tab" role="tab" id="tab-task" aria-controls="panel-task" aria-selected="false">Care task</button>
           <button type="button" class="tab" role="tab" id="tab-vitals" aria-controls="panel-vitals" aria-selected="false">Vital signs</button>
           <button type="button" class="tab" role="tab" id="tab-concern" aria-controls="panel-concern" aria-selected="false">Concern</button>
         </div>
@@ -59,25 +58,6 @@
             <button type="button" id="saveNote" class="btn btn-primary">Save note</button>
           </div>
           <p class="sub-text" style="margin-top: 12px;">Your notes stay on this shift's record. When you finish, the AI uses them to draft your <a href="/handover">handover</a>.</p>
-        </div>
-
-        <div id="panel-task" role="tabpanel" aria-labelledby="tab-task" hidden>
-          <div class="form-group">
-            <label for="task">Task</label>
-            <select id="task" class="field"></select>
-          </div>
-          <div class="form-group">
-            <label id="statusLabel">How did it go?</label>
-            <div class="choices" role="radiogroup" aria-labelledby="statusLabel">
-              <label class="choice"><input type="radio" name="status" value="given" checked> Done</label>
-              <label class="choice"><input type="radio" name="status" value="refused"> Refused</label>
-              <label class="choice"><input type="radio" name="status" value="not_done"> Not done</label>
-            </div>
-          </div>
-          <div class="form-actions">
-            <p class="text-sm" id="taskMsg" role="status"></p>
-            <button type="button" id="saveTask" class="btn btn-primary">Save task</button>
-          </div>
         </div>
 
         <div id="panel-vitals" role="tabpanel" aria-labelledby="tab-vitals" hidden>

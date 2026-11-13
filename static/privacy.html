@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Privacy · AgeCare</title>
   <link rel="icon" type="image/png" href="/static/img/favicon.png">
-  <link rel="stylesheet" href="/static/app.css?v=20261114">
+  <link rel="stylesheet" href="/static/app.css?v=20261114d">
 </head>
 <body>
   <header class="topbar"></header>
@@ -23,23 +23,20 @@
       <h2 style="margin-top: 0;">Overview</h2>
       <p>AgeCare is an AI-assisted rest-home care system built by Jaspreet, Dhruv, and Tanveer. Every clinical decision is verified by a registered nurse.</p>
 
-      <h2>Fake data only</h2>
-      <p>All residents, staff, readings, notes and contacts are made up. Do not enter real health information.</p>
-
       <h2>AI runs locally</h2>
-      <p>The language model runs with Ollama on the computer running AgeCare. Notes and questions are not sent to a cloud AI service.</p>
+      <p>The language model and OCR report reader run locally on the computer running AgeCare. Notes and questions are not sent to an external cloud AI service.</p>
 
       <h2>Photos are not stored</h2>
-      <p>Report photos, face photos and video frames are read in memory and then discarded. Only the result, any alert and the nurse's decision are saved.</p>
+      <p>Report photos, face photos, and video frames are read in memory and then discarded right away. Only the extracted reading, any alert, and the nurse's decision are saved.</p>
 
-      <h2>Who sees what</h2>
-      <p>Each person sees only the pages for their role. Families see only nurse-approved updates for their own family member. Sign-offs and account changes are kept in an audit log.</p>
+      <h2>Role-based access</h2>
+      <p>Each person sees only the pages for their role. Families see only nurse-approved updates for their own family member. Sign-offs and account changes are kept in the audit log.</p>
 
-      <p style="margin-top: 24px;"><a href="/welcome">Back to the overview</a></p>
+      <p style="margin-top: 24px;"><a href="/welcome">Back to Home</a></p>
     </article>
   </main>
 
   <footer class="foot"></footer>
-  <script src="/static/auth.js?v=20261114c"></script>
+  <script src="/static/auth.js?v=20261114e"></script>
 </body>
 </html>

@@ -61,6 +61,17 @@ STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")  # pictures used by the pages
 
 
+@app.middleware("http")
+async def disable_html_js_cache(request, call_next):
+    response = await call_next(request)
+    ct = response.headers.get("content-type", "")
+    if "text/html" in ct or "javascript" in ct or "text/css" in ct:
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
+
+
 def need_nurse(
     x_role: str = "",
     authorization: str = "",
