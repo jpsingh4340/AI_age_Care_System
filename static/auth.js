@@ -13,6 +13,7 @@
     "/handover": ["carer", "nurse"],
     "/guidance": ["nurse"],
     "/ocr": ["nurse"],
+    "/doctor-summary": ["nurse"],
     "/vision": ["nurse"],
     "/ask": ["carer", "nurse"],
     "/manager": ["manager"],
@@ -34,6 +35,7 @@
       { href: "/nurse/schedule", label: "Schedule" },
       { href: "/guidance", label: "Guidance" },
       { href: "/ocr", label: "Reports" },
+      { href: "/doctor-summary", label: "Doctor PDF" },
       { href: "/vision", label: "Camera" },
       { href: "/ask", label: "Ask AI" },
     ],
@@ -311,11 +313,12 @@
         "div",
         { class: "foot-inner" },
         h("p", {
-          text: "Student prototype. Demo data only, with fake residents. AI runs locally with Ollama. Photos are not saved. Not a medical device.",
+          text: "Kōwhai Gardens Rest Home · 42 Kōwhai Road, Epsom, Auckland 1023 · +64 9 302 4810 · Local on-device AI & OCR · NZS 8134 aligned.",
         }),
         h(
           "div",
           { class: "foot-links" },
+          h("a", { href: "/welcome", text: "Overview" }),
           h("a", { href: "/static/privacy.html", text: "Privacy" }),
           h("a", { href: "/static/terms.html", text: "Terms" })
         )

@@ -19,7 +19,7 @@
       </div>
     </div>
 
-    <p class="notice"><strong>Demo data only.</strong> Use photos of fake sample reports. The reader can misread numbers, so the nurse checks every value before saving. Photos are not saved.</p>
+    <p class="notice"><strong>Nurse-in-the-loop verification:</strong> Optical character recognition (RapidOCR) can misread printed numbers, so a Registered Nurse checks every value against the report photo before saving to the resident's clinical record. Photos are processed in memory and never stored.</p>
 
     <ol class="steps" aria-label="Steps">
       <li class="step active" id="s1"><span class="num">1</span>Upload photo</li>
@@ -70,8 +70,12 @@
               <input id="reviewer" type="text" maxlength="60" class="field">
             </div>
           </div>
-          <div class="form-actions" style="margin-top: 0;">
+          <div class="form-actions" style="margin-top: 0; flex-wrap: wrap; gap: 8px;">
             <div class="text-sm" id="saveNote" role="status"></div>
+            <div id="postSaveLinks" class="inline hidden" style="gap: 8px;">
+              <a class="btn btn-secondary btn-sm" id="goNurseBtn" href="/nurse">View Resident on Nurse Dashboard →</a>
+              <a class="btn btn-secondary btn-sm" id="goDoctorBtn" href="/doctor-summary">Doctor Summary PDF →</a>
+            </div>
             <button class="btn btn-primary" id="save" type="button" disabled style="margin-left: auto;">Save to record</button>
           </div>
 
@@ -312,9 +316,11 @@
       try {
         const response = await fetch("/api/residents");
         const people = await response.json();
+        const reqResident = new URLSearchParams(window.location.search).get("resident");
         for (const p of people) {
           const option = el("option", "", p.name + " (Room " + (100 + Number(p.resident_id)) + ")");
           option.value = p.resident_id;
+          if (reqResident && String(p.resident_id) === String(reqResident)) option.selected = true;
           $("resident").append(option);
         }
       } catch (error) {
@@ -339,7 +345,8 @@
 
       $("save").disabled = true;
       try {
-        const response = await (window.authFetch || fetch)("/api/residents/" + $("resident").value + "/readings", {
+        const resId = $("resident").value;
+        const response = await (window.authFetch || fetch)("/api/residents/" + resId + "/readings", {
           method: "POST",
           headers: { "Content-Type": "application/json", "X-Role": "nurse" },
           body: JSON.stringify({ reviewer: reviewer, report_date: reportDate, readings: readings }),
@@ -347,7 +354,10 @@
         const data = await response.json();
         if (!response.ok) throw new Error(typeof data.detail === "string" ? data.detail : "Check the format of each value.");
         const name = $("resident").selectedOptions[0].textContent;
-        setSaveNote("Saved " + readings.length + " values for " + name + ". Added to the audit log.", "ok");
+        setSaveNote("Saved " + readings.length + " values for " + name + ". Added to the audit log & updated NZEWS triage.", "ok");
+        $("goNurseBtn").href = "/nurse?resident=" + encodeURIComponent(resId);
+        $("goDoctorBtn").href = "/doctor-summary?resident=" + encodeURIComponent(resId);
+        $("postSaveLinks").classList.remove("hidden");
         setStep(3);
         if (window.showToast) window.showToast("Saved " + readings.length + " values");
       } catch (error) {
