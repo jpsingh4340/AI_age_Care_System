@@ -50,8 +50,6 @@
 
   const PUBLIC_NAV = [
     { href: "/welcome", label: "Home" },
-    { href: "/welcome#whoTitle", label: "Roles" },
-    { href: "/welcome#rulesTitle", label: "Safety Rules" },
     { href: "/static/privacy.html", label: "Privacy" },
     { href: "/static/terms.html", label: "Terms" },
   ];
@@ -209,7 +207,7 @@
       { class: "brand", href: signedIn ? HOME_BY_ROLE[role] || "/welcome" : "/welcome" },
       h("img", { src: "/static/img/favicon.png", alt: "", width: "28", height: "28" }),
       h("span", { class: "brand-name", text: "AgeCare" }),
-      h("span", { class: "brand-sub", text: "AI Age-Care System · Jaspreet, Dhruv & Tanveer" })
+      h("span", { class: "brand-sub", text: "AI Age-Care System" })
     );
 
     const toggle = h("button", {
