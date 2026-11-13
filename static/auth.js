@@ -312,7 +312,7 @@
         "div",
         { class: "foot-inner" },
         h("p", {
-          text: "AgeCare · AI runs locally on this computer. Photos are not saved. A nurse checks every decision.",
+          text: "© 2026 AgeCare — AI Age-Care System · Built by Jaspreet, Dhruv, and Tanveer",
         }),
         h(
           "div",
