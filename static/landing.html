@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AgeCare · Kōwhai Gardens Rest Home</title>
-  <meta name="description" content="New Zealand Residential Aged-Care Clinical & Whānau Platform: connecting Carers, Registered Nurses, Facility Managers, and Families with NZEWS triage, ISBAR handovers, OCR report verification, and nurse-approved guidance.">
+  <title>AgeCare</title>
+  <meta name="description" content="Helps rest home carers record daily care, nurses see who needs help first, and families get a checked daily update.">
   <link rel="icon" type="image/png" href="/static/img/favicon.png">
   <link rel="stylesheet" href="/static/app.css">
 </head>
@@ -14,63 +14,29 @@
   <main class="page-container">
     <section class="hero">
       <div>
-        <p class="eyebrow">Kōwhai Gardens Rest Home · New Zealand Aged-Care Platform</p>
-        <h1>Carers record the shift. The Registered Nurse sees who needs clinical attention first.</h1>
-        <p class="lede">Built around New Zealand aged-care workflows — combining <strong>NZEWS</strong> vital-sign scoring, <strong>ISBAR</strong> shift handovers, <strong>OCR</strong> hospital &amp; lab report verification, and <strong>nurse-approved RAG care guidance</strong> across four connected role portals.</p>
-        <div class="inline" style="margin-top: 16px; gap: 10px;">
-          <a href="/login" class="btn btn-primary">Sign in to Workspace</a>
-          <a href="#workflowSection" class="btn btn-secondary">How the 4 roles connect</a>
-        </div>
+        <p class="eyebrow">AI Age-Care System</p>
+        <h1>Carers record the shift. The nurse sees who needs them first.</h1>
+        <p class="lede">Made for New Zealand rest homes — it checks vital signs and shift handovers, reads printed health reports, and gives carers nurse-approved care steps across four role pages.</p>
+        <a href="/login" class="btn btn-primary">Sign in</a>
       </div>
       <figure class="shot">
-        <img src="/static/img/shot-nurse.png" alt="Nurse dashboard: residents sorted by NZEWS care priority, the selected resident's care priority with reasons, and items waiting for the nurse" width="1280" height="800">
-        <figcaption>Registered Nurse clinical dashboard — NZEWS Red / Amber / Green triage &amp; active shift queue</figcaption>
+        <img src="/static/img/shot-nurse.png" alt="Nurse dashboard: residents sorted by care priority, the selected resident's care priority with reasons, and items waiting for the nurse" width="1280" height="800">
+        <figcaption>Nurse dashboard — Red, Amber, and Green care priority</figcaption>
       </figure>
     </section>
 
-    <section class="section" id="workflowSection" aria-labelledby="flowTitle">
-      <h2 id="flowTitle">How information flows across the rest home</h2>
-      <p class="sub-text" style="margin-bottom: 18px;">In New Zealand residential aged care, clinical safety depends on a clear chain of responsibility from care staff to the Registered Nurse, Facility Manager, GP, and Whānau.</p>
-      <ol class="rules">
-        <li>
-          <span>
-            <strong>1. Carer Shift &amp; ADL Recording (/carer, /handover)</strong>
-            Health Care Assistants record daily care tasks (meals, fluids, mobility, hygiene), spot vital signs, and shift concerns, then send a structured shift handover to the Registered Nurse.
-          </span>
-        </li>
-        <li>
-          <span>
-            <strong>2. Registered Nurse Clinical Triage &amp; Verification (/nurse, /ocr, /guidance)</strong>
-            The Nurse Dashboard combines <strong>NZEWS</strong> vital-sign rules with local AI note analysis to rank residents <strong>Red, Amber, or Green</strong>. Nurses verify printed hospital/lab reports via <strong>OCR</strong>, approve <strong>RAG care guidance</strong>, and generate 1-page <strong>ISBAR Doctor Summary PDFs</strong>.
-          </span>
-        </li>
-        <li>
-          <span>
-            <strong>3. Facility Manager Governance &amp; Medicine Audit (/manager)</strong>
-            Facility Managers oversee staff accounts, review the clinical audit log, and track scheduled medicine rounds and clinical sign-offs in line with NZ Health and Disability Services Standards (NZS 8134).
-          </span>
-        </li>
-        <li>
-          <span>
-            <strong>4. Whānau / Family Daily Updates (/family)</strong>
-            Families receive plain-language daily wellbeing updates that a Registered Nurse has reviewed and approved first, with direct messaging to the care team.
-          </span>
-        </li>
-      </ol>
-    </section>
-
     <section class="section" aria-labelledby="whoTitle">
-      <h2 id="whoTitle">Designed for every role in New Zealand aged care</h2>
+      <h2 id="whoTitle">Who it is for</h2>
 
       <div class="role-row">
         <div>
-          <p class="eyebrow">Health Care Assistants (Carers)</p>
-          <h3>Record daily care &amp; shift handovers in a few taps</h3>
-          <p>Select a resident to log Activities of Daily Living (ADLs), spot vital signs, or flag a concern for the Registered Nurse on duty.</p>
+          <p class="eyebrow">Carers</p>
+          <h3>Record care in a few taps</h3>
+          <p>Pick a resident, then save a daily care task, a set of vital signs, or a concern for the nurse.</p>
           <ul>
-            <li>Clear shift task buttons built for mobile and tablet use on the floor</li>
-            <li>Displays only care guidance that a Registered Nurse has checked and approved</li>
-            <li>Vital signs outside normal range automatically escalate to the Nurse Dashboard</li>
+            <li>Large buttons that work easily on a phone or tablet</li>
+            <li>Shows only care guidance that a nurse has checked and approved</li>
+            <li>Readings outside the normal range go straight to the nurse</li>
           </ul>
         </div>
         <figure class="shot">
@@ -80,13 +46,13 @@
 
       <div class="role-row">
         <div>
-          <p class="eyebrow">Registered Nurses (RNs)</p>
-          <h3>Clinical triage, OCR report reader, &amp; GP handover</h3>
-          <p>Each resident receives an NZEWS + AI care priority with full source traceability. Nurses accept or override priorities with a clinical reason recorded in the audit log.</p>
+          <p class="eyebrow">Registered nurses</p>
+          <h3>Know who needs you first</h3>
+          <p>Each resident gets a suggested Red, Amber, or Green priority with the reasons and the carer's notes. Accept it or change it with a reason in the audit log.</p>
           <ul>
-            <li><strong>OCR Health Report Reader:</strong> Extract vital signs from printed discharge or lab reports, verify every value against the photo, and save to the resident's record</li>
-            <li><strong>RAG Care Guidance:</strong> Review source-quoted care guidance lines before carers see them</li>
-            <li><strong>Doctor Summary PDF &amp; Camera Check:</strong> Export 1-page GP handover summaries and review privacy-first room/discomfort alerts</li>
+            <li>Check numbers read from printed health reports before saving</li>
+            <li>Approve or edit AI care guidance before carers see it</li>
+            <li>Review shift handovers, camera alerts, and print a 1-page doctor summary</li>
           </ul>
         </div>
         <figure class="shot">
@@ -96,12 +62,12 @@
 
       <div class="role-row">
         <div>
-          <p class="eyebrow">Whānau &amp; Families</p>
-          <h3>Reassuring daily updates checked by a Registered Nurse</h3>
-          <p>A warm, plain-language summary of your family member's day — meals, comfort, and activities — reviewed by a nurse before publication, plus direct care-team messaging.</p>
+          <p class="eyebrow">Families</p>
+          <h3>A daily update you can trust</h3>
+          <p>A short, simple update about your family member, checked by a nurse first, and a way to message the care team.</p>
           <ul>
-            <li>Plain language with no raw clinical scores or unreviewed AI output</li>
-            <li>Direct message channel to the nursing team with urgent-concern flagging</li>
+            <li>Plain language with no confusing medical scores</li>
+            <li>Direct message box to reach the nursing team</li>
           </ul>
         </div>
         <figure class="shot">
@@ -111,20 +77,20 @@
     </section>
 
     <section class="section" aria-labelledby="rulesTitle">
-      <h2 id="rulesTitle">Clinical governance &amp; privacy safeguards</h2>
+      <h2 id="rulesTitle">Safety rules</h2>
       <ol class="rules">
-        <li><span><strong>Nurse-in-the-loop authority</strong>AI suggests priorities and drafts guidance; a Registered Nurse must verify, edit, or approve every clinical decision before it takes effect.</span></li>
-        <li><span><strong>Source-grounded care guidance</strong>Every guidance line quotes an approved clinical reference note. Any line mentioning prescription medicines or medical diagnoses is automatically blocked.</span></li>
-        <li><span><strong>On-device AI &amp; OCR processing</strong>Language models (Ollama) and optical character recognition (RapidOCR) run locally on the facility server so resident notes stay on-premise.</span></li>
-        <li><span><strong>Zero raw photo retention</strong>Uploaded report photos and camera frames are processed in memory and immediately discarded after extraction.</span></li>
-        <li><span><strong>Full clinical audit trail</strong>Every priority decision, OCR vital-sign save, handover sign-off, and guidance approval is logged with staff name and timestamp.</span></li>
-        <li><span><strong>NZ standards alignment</strong>Aligned with NZEWS vital-sign thresholds, ISBAR clinical communication, and NZ Health Information Privacy Code principles.</span></li>
+        <li><span><strong>The nurse decides</strong>The AI suggests a priority and drafts guidance. A registered nurse accepts, changes, or rejects it.</span></li>
+        <li><span><strong>Every line has a source</strong>Guidance lines must quote an approved reference note. Lines that mention medicines or diagnoses are removed.</span></li>
+        <li><span><strong>AI runs locally</strong>The language model and report reader run on this computer. Resident notes are not sent to a cloud AI service.</span></li>
+        <li><span><strong>Photos are not saved</strong>Report photos and camera frames are read in memory and then discarded right away.</span></li>
+        <li><span><strong>Audit log for every action</strong>Every priority check, saved report reading, handover, and guidance approval is recorded with the staff member's name and time.</span></li>
+        <li><span><strong>Built for New Zealand care</strong>Uses New Zealand Early Warning Score (NZEWS) vital-sign rules and clear shift handovers.</span></li>
       </ol>
 
       <div class="cta-band">
         <div>
-          <h2>Access your Kōwhai Gardens portal</h2>
-          <p>Sign in with your staff or whānau account to open your role workspace.</p>
+          <h2>Open your workspace</h2>
+          <p>Sign in with your staff or family account to go to your page.</p>
         </div>
         <a href="/login" class="btn btn-primary">Sign in</a>
       </div>

@@ -206,8 +206,7 @@
       "a",
       { class: "brand", href: signedIn ? HOME_BY_ROLE[role] || "/welcome" : "/welcome" },
       h("img", { src: "/static/img/favicon.png", alt: "", width: "28", height: "28" }),
-      h("span", { class: "brand-name", text: "AgeCare" }),
-      h("span", { class: "brand-sub", text: "Kōwhai Gardens rest home" })
+      h("span", { class: "brand-name", text: "AgeCare" })
     );
 
     const toggle = h("button", {
@@ -313,7 +312,7 @@
         "div",
         { class: "foot-inner" },
         h("p", {
-          text: "Kōwhai Gardens Rest Home · 42 Kōwhai Road, Epsom, Auckland 1023 · +64 9 302 4810 · Local on-device AI & OCR · NZS 8134 aligned.",
+          text: "AgeCare · AI runs locally on this computer. Photos are not saved. A nurse checks every decision.",
         }),
         h(
           "div",
