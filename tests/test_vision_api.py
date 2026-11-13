@@ -206,3 +206,46 @@ def test_live_view_is_a_stick_figure_only():
     assert picture[:2] == b"\xff\xd8"  # a JPEG drawn from keypoints, not the camera image
     status = client.get("/api/vision/monitor/status").json()
     assert status["running"] is False and "people" in status
+
+def test_nurse_can_send_a_follow_up_and_the_carer_ticks_it_off():
+    alert = alerts.add_alert("room_monitor", "no_movement", "No movement for a while.", resident_id=2)
+    r = client.post(f"/api/vision/alerts/{alert['id']}/send-to-carer", headers=NURSE,
+                    json={"instruction": "Check on Ron every 30 minutes tonight.", "nurse": "Nurse Sam"})
+    assert r.status_code == 201
+    item = r.json()
+    assert item["resident_id"] == 2 and item["sent_by"] == "Nurse Sam" and item["done_at"] is None
+
+    # The carer sees it for Ron, but not for another resident.
+    mine = client.get("/api/vision/followups?resident_id=2", headers=CARER).json()
+    assert [f["instruction"] for f in mine] == ["Check on Ron every 30 minutes tonight."]
+    assert client.get("/api/vision/followups?resident_id=1", headers=CARER).json() == []
+
+    done = client.post(f"/api/vision/followups/{item['id']}/done", headers=CARER,
+                       json={"carer": "Carer Ana", "note": "Checked at 9 and 9:30, sleeping well."})
+    assert done.status_code == 200 and done.json()["done_by"] == "Carer Ana"
+    assert client.get("/api/vision/followups?resident_id=2", headers=CARER).json() == []
+    # The nurse sees it as done on the alert.
+    shown = client.get("/api/vision/alerts?resident_id=2").json()[0]["followups"][0]
+    assert shown["done_note"] == "Checked at 9 and 9:30, sleeping well."
+    # It cannot be ticked off twice.
+    again = client.post(f"/api/vision/followups/{item['id']}/done", headers=CARER, json={"carer": "Carer Ana"})
+    assert again.status_code == 409
+
+
+def test_follow_up_rules():
+    practice = alerts.add_alert("cue_check", "high_cue", "Please look closer.")
+    r = client.post(f"/api/vision/alerts/{practice['id']}/send-to-carer", headers=NURSE,
+                    json={"instruction": "Check on them soon.", "nurse": "Nurse Sam"})
+    assert r.status_code == 422  # a practice alert has no resident, so no carer
+    alert = alerts.add_alert("cue_check", "high_cue", "Please look closer.", resident_id=1)
+    r = client.post(f"/api/vision/alerts/{alert['id']}/send-to-carer", headers=CARER,
+                    json={"instruction": "Check on them soon.", "nurse": "Ana"})
+    assert r.status_code == 403  # only a nurse can send
+    r = client.get("/api/vision/followups")
+    assert r.status_code == 403  # nobody signed in
+
+
+def test_carer_page_shows_nurse_follow_ups():
+    page = client.get("/carer").text
+    assert 'id="followupCard"' in page and "/static/carer-followups.js" in page
+    assert client.get("/static/carer-followups.js").status_code == 200

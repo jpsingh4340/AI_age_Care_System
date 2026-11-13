@@ -73,6 +73,16 @@ def nurse_name(x_role="", authorization="", x_session_token=""):
     raise HTTPException(status_code=403, detail="Only a nurse can do this.")
 
 
+def staff_name(x_role="", authorization="", x_session_token=""):
+    """A signed-in carer or nurse. Returns their name, or "" if only X-Role was sent."""
+    sess = auth.session_from_headers(authorization, x_session_token)
+    if sess and sess["role"] in ("carer", "nurse"):
+        return sess["full_name"]
+    if x_role.strip().lower() in ("carer", "nurse"):
+        return ""
+    raise HTTPException(status_code=403, detail="Only a carer or a nurse can do this.")
+
+
 def check_resident(resident_id):
     if resident_id is not None and guidance.load_resident(resident_id) is None:
         raise HTTPException(status_code=404, detail="There is no resident with that number.")
@@ -231,6 +241,7 @@ def list_alerts(open_only: bool = False, resident_id: int | None = None):
     found = alerts.list_alerts(open_only, resident_id=resident_id)
     for alert in found:
         alert["suggestions"] = None if alert["outcome"] else suggestions.for_alert(alert)
+        alert["followups"] = alerts.list_followups(alert_id=alert["id"])
     return found
 
 
@@ -269,3 +280,52 @@ def decide(alert_id: int, body: AlertDecision, x_role: str = Header(default=""),
         raise HTTPException(status_code=409, detail=str(error))
     except ValueError as error:
         raise HTTPException(status_code=422, detail=str(error))
+
+
+# ---------- follow-ups for the carer ----------
+class FollowupIn(BaseModel):
+    instruction: str = Field(..., max_length=300)
+    nurse: str = Field("", max_length=60)
+
+
+@router.post("/api/vision/alerts/{alert_id}/send-to-carer", status_code=201)
+def send_to_carer(alert_id: int, body: FollowupIn, x_role: str = Header(default=""),
+                  authorization: str = Header(default=""), x_session_token: str = Header(default="")):
+    """Nurse only: ask the carers to do something for this alert's resident. Shows on the carer's My shift page."""
+    name = nurse_name(x_role, authorization, x_session_token) or body.nurse.strip()
+    if not name:
+        raise HTTPException(status_code=422, detail="Please type your name.")
+    try:
+        return alerts.send_to_carer(alert_id, body.instruction, name)
+    except LookupError as error:
+        raise HTTPException(status_code=404, detail=str(error))
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error))
+
+
+@router.get("/api/vision/followups")
+def list_followups(resident_id: int | None = None, open_only: bool = True, x_role: str = Header(default=""),
+                   authorization: str = Header(default=""), x_session_token: str = Header(default="")):
+    """Carer or nurse: the nurse's follow-ups, newest first. Open ones only by default."""
+    staff_name(x_role, authorization, x_session_token)
+    return alerts.list_followups(resident_id=resident_id, open_only=open_only)
+
+
+class FollowupDone(BaseModel):
+    note: str = Field("", max_length=300)
+    carer: str = Field("", max_length=60)
+
+
+@router.post("/api/vision/followups/{followup_id}/done")
+def followup_done(followup_id: int, body: FollowupDone, x_role: str = Header(default=""),
+                  authorization: str = Header(default=""), x_session_token: str = Header(default="")):
+    """Carer or nurse: tick off a follow-up. Saved in the audit log."""
+    name = staff_name(x_role, authorization, x_session_token) or body.carer.strip()
+    if not name:
+        raise HTTPException(status_code=422, detail="Please type your name.")
+    try:
+        return alerts.complete_followup(followup_id, name, body.note)
+    except LookupError as error:
+        raise HTTPException(status_code=404, detail=str(error))
+    except alerts.AlreadyDecided as error:
+        raise HTTPException(status_code=409, detail=str(error))

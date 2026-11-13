@@ -127,6 +127,16 @@
       </section>
 
       <aside class="stack">
+        <section class="card followups" id="followupCard" aria-labelledby="followupTitle" hidden>
+          <div class="card-header" style="margin-bottom: 4px;">
+            <div>
+              <h2 class="card-title" id="followupTitle">From the nurse</h2>
+              <p class="sub-text">Follow-ups after a camera alert. Tick off when done.</p>
+            </div>
+            <span class="badge badge-red" id="followupCount"></span>
+          </div>
+          <div id="followups"></div>
+        </section>
         <section class="card" aria-labelledby="planTitle">
           <div class="card-header" style="margin-bottom: 4px;">
             <div>
@@ -192,5 +202,6 @@
     })();
   </script>
   <script src="/static/carer.js"></script>
+  <script src="/static/carer-followups.js"></script>
 </body>
 </html>
