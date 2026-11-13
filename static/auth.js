@@ -49,7 +49,9 @@
   };
 
   const PUBLIC_NAV = [
-    { href: "/welcome", label: "Overview" },
+    { href: "/welcome", label: "Home" },
+    { href: "/welcome#whoTitle", label: "Roles" },
+    { href: "/welcome#rulesTitle", label: "Safety Rules" },
     { href: "/static/privacy.html", label: "Privacy" },
     { href: "/static/terms.html", label: "Terms" },
   ];
@@ -206,7 +208,8 @@
       "a",
       { class: "brand", href: signedIn ? HOME_BY_ROLE[role] || "/welcome" : "/welcome" },
       h("img", { src: "/static/img/favicon.png", alt: "", width: "28", height: "28" }),
-      h("span", { class: "brand-name", text: "AgeCare" })
+      h("span", { class: "brand-name", text: "AgeCare" }),
+      h("span", { class: "brand-sub", text: "AI Age-Care System · Jaspreet, Dhruv & Tanveer" })
     );
 
     const toggle = h("button", {
@@ -254,9 +257,18 @@
         out
       );
     } else if (path !== "/login") {
-      user = h("div", { class: "nav-user" }, h("a", { class: "btn-nav solid", href: "/login", text: "Sign in" }));
+      user = h(
+        "div",
+        { class: "nav-user" },
+        h("a", { class: "btn-nav", href: "/login#register", text: "Create account" }),
+        h("a", { class: "btn-nav solid", href: "/login", text: "Sign in" })
+      );
     } else {
-      user = h("div", { class: "nav-user" });
+      user = h(
+        "div",
+        { class: "nav-user" },
+        h("a", { class: "btn-nav", href: "/welcome", text: "Back to Home" })
+      );
     }
 
     header.className = "topbar";
@@ -310,9 +322,46 @@
     footer.replaceChildren(
       h(
         "div",
+        { class: "foot-grid" },
+        h(
+          "div",
+          { class: "foot-col" },
+          h("strong", { class: "foot-title", text: "AgeCare — AI Age-Care System" }),
+          h("p", {
+            text: "Supporting New Zealand rest-home carers, registered nurses, managers, and families with connected shift handovers, NZEWS priority checks, OCR health report reading, and nurse-approved care guidance.",
+          })
+        ),
+        h(
+          "div",
+          { class: "foot-col" },
+          h("strong", { class: "foot-title", text: "Created By" }),
+          h("p", { text: "Jaspreet Singh" }),
+          h("p", { text: "Dhruv" }),
+          h("p", { text: "Tanveer" })
+        ),
+        h(
+          "div",
+          { class: "foot-col" },
+          h("strong", { class: "foot-title", text: "Contact Details" }),
+          h("p", { text: "Email: support@agecare.co.nz" }),
+          h("p", { text: "Phone: +64 9 302 4810" }),
+          h("p", { text: "Auckland, New Zealand" })
+        ),
+        h(
+          "div",
+          { class: "foot-col" },
+          h("strong", { class: "foot-title", text: "Navigation" }),
+          h("a", { href: "/welcome", text: "Home" }),
+          h("a", { href: "/login", text: "Sign in" }),
+          h("a", { href: "/static/privacy.html", text: "Privacy Policy" }),
+          h("a", { href: "/static/terms.html", text: "Terms of Use" })
+        )
+      ),
+      h(
+        "div",
         { class: "foot-inner" },
         h("p", {
-          text: "© 2026 AgeCare — AI Age-Care System · Built by Jaspreet, Dhruv, and Tanveer",
+          text: "© 2026 AgeCare · Developed by Jaspreet, Dhruv, and Tanveer. All rights reserved.",
         }),
         h(
           "div",

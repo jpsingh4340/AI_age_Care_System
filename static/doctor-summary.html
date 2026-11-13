@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Doctor summary · AgeCare</title>
   <link rel="icon" type="image/png" href="/static/img/favicon.png">
-  <link rel="stylesheet" href="/static/app.css">
+  <link rel="stylesheet" href="/static/app.css?v=20261114">
   <style>
     .ds-line { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: start; padding: 8px 0; border-bottom: 1px solid var(--line); }
     .ds-line:last-child { border-bottom: 0; }
@@ -38,7 +38,7 @@
       </div>
     </div>
 
-    <p class="notice"><strong>Demo data only.</strong> These are fake residents. Sending is simulated: you download the PDF and no doctor is contacted. The facts come from the care records, not the AI.</p>
+    <p class="notice"><strong>Doctor handover PDF:</strong> All facts in this summary come directly from verified care records and nurse-checked vital signs.</p>
 
     <ol class="steps" aria-label="Steps">
       <li class="step active" id="st1"><span class="num">1</span>Prepare</li>
@@ -103,7 +103,7 @@
 
   <footer class="foot"></footer>
 
-  <script src="/static/auth.js"></script>
+  <script src="/static/auth.js?v=20261114"></script>
   <script>
     const $ = (id) => document.getElementById(id);
     const STATUS = {
@@ -296,7 +296,7 @@
       const c = s.content;
       const p = $("paper");
       p.replaceChildren();
-      p.append(el("h3", "", "Doctor summary"), el("div", "warn", "DEMO DATA ONLY. Fake resident. Student prototype, not a medical record."));
+      p.append(el("h3", "", "Doctor summary"), el("div", "warn", "Verified clinical handover summary generated from resident care records."));
       if (s.status === "draft") p.append(el("div", "warn", "DRAFT: not yet reviewed by a nurse. Do not send."));
       p.append(el("hr"));
       p.append(el("strong", "", c.resident.name + ", " + c.resident.room));

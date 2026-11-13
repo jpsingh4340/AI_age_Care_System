@@ -699,9 +699,44 @@ input[type="file"].field { padding: 8px; }
 .foot {
   margin-top: auto;
   border-top: 1px solid var(--line);
-  padding: 20px 16px;
+  background: var(--bg-subtle);
+  padding: 28px 16px 20px;
   font-size: var(--fs-sm);
   color: var(--ink-2);
+}
+.foot-grid {
+  max-width: var(--wrap);
+  margin: 0 auto 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1fr 1fr;
+  gap: var(--s5);
+}
+.foot-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.foot-title {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.foot-col a {
+  color: var(--ink-2);
+  text-decoration: none;
+}
+.foot-col a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+@media (max-width: 800px) {
+  .foot-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 520px) {
+  .foot-grid { grid-template-columns: 1fr; }
 }
 .foot-inner {
   max-width: var(--wrap);
