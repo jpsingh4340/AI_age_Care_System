@@ -35,13 +35,12 @@
       <div class="stack">
         <section class="card" id="priority"><div class="skeleton w40"></div><div class="skeleton w80"></div><div class="skeleton w60"></div></section>
         <section class="card" id="resident"><div class="skeleton w40"></div><div class="skeleton w80"></div></section>
-        <section class="card" id="care"><div class="skeleton w40"></div><div class="skeleton w80"></div></section>
+        <section class="card" id="care"><div class="skeleton w40"></div><div class="skeleton w60"></div></section>
         <section class="card" id="guide"><div class="skeleton w40"></div><div class="skeleton w60"></div></section>
-        <section class="card" id="contacts"></section>
       </div>
 
       <aside class="stack">
-        <section class="card" id="needs"><div class="skeleton w60"></div><div class="skeleton w80"></div></section>
+        <section class="card" id="contacts"></section>
         <section class="card" id="activity"></section>
       </aside>
     </div>
@@ -434,6 +433,7 @@
           items.push(needItem(d.resident + " · guidance draft", null, d.lines + " lines to check and approve", false, "/guidance"));
         }
       }
+      if (!$("needs")) return;
       fill(
         "needs",
         head("Waiting for you", null, h("span", { class: "badge " + (items.length ? "badge-red" : "badge-neutral"), text: String(items.length) })),
