@@ -152,3 +152,11 @@ def test_pdf_writer_handles_long_text_and_special_letters():
     assert data.startswith(b"%PDF-1.4") and data.rstrip().endswith(b"%%EOF")
     assert b"Whanau update \\(test\\)" in data        # macron replaced, brackets escaped
     assert b"/Count 2" in data or b"/Count 3" in data  # long text flows onto more pages
+
+
+def test_doctor_page_opens_from_navbar_and_reports_links():
+    # The navbar "Doctor PDF" and the Reports page button use /doctor-summary.
+    for path in ("/doctor-summary", "/nurse/doctor-summary"):
+        r = client.get(path)
+        assert r.status_code == 200
+        assert "Doctor summary" in r.text

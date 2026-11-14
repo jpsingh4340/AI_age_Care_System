@@ -176,6 +176,7 @@ def pdf_blocks(summary: dict) -> list[tuple]:
 
 # ---------- pages ----------
 @router.get("/nurse/doctor-summary", include_in_schema=False)
+@router.get("/doctor-summary", include_in_schema=False)  # short link used by the navbar and Reports page
 def doctor_summary_page():
     return FileResponse(STATIC_DIR / "doctor-summary.html")
 
