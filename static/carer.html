@@ -39,6 +39,7 @@
     </section>
 
     <div class="grid-layout">
+      <div class="stack">
       <section class="card" aria-labelledby="recordTitle">
         <h2 class="card-title lg" id="recordTitle" style="margin-bottom: 12px;">Record for <span id="recordName">this resident</span></h2>
 
@@ -46,6 +47,7 @@
           <button type="button" class="tab" role="tab" id="tab-note" aria-controls="panel-note" aria-selected="true">Quick note</button>
           <button type="button" class="tab" role="tab" id="tab-vitals" aria-controls="panel-vitals" aria-selected="false">Vital signs</button>
           <button type="button" class="tab" role="tab" id="tab-concern" aria-controls="panel-concern" aria-selected="false">Concern</button>
+          <button type="button" class="tab" role="tab" id="tab-ocr" aria-controls="panel-ocr" aria-selected="false">Upload Health Report (OCR)</button>
         </div>
 
         <div id="panel-note" role="tabpanel" aria-labelledby="tab-note">
@@ -104,7 +106,70 @@
             <button type="button" id="saveConcern" class="btn btn-danger">Send to nurse</button>
           </div>
         </div>
+
+        <div id="panel-ocr" role="tabpanel" aria-labelledby="tab-ocr" hidden>
+          <p class="sub-text" style="margin-bottom: 12px;">Upload a printed health report (PDF, JPG, or PNG) for <strong id="ocrResidentLabel">this resident</strong>. The OCR extracts the text and sends it to the Registered Nurse for verification and approval.</p>
+          <div class="form-group">
+            <label for="ocrDocType">Document type</label>
+            <select id="ocrDocType" class="field">
+              <option value="Health Report">Health Report</option>
+              <option value="Medical Report">Medical Report</option>
+              <option value="Hospital Discharge Summary">Hospital Discharge Summary</option>
+              <option value="Laboratory Report">Laboratory Report</option>
+              <option value="Medication Chart">Medication Chart</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="ocrFile">Select health document (PDF, JPG, or PNG)</label>
+            <input id="ocrFile" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" class="field" style="padding: 8px;">
+            <div class="inline" style="margin-top: 6px; gap: 8px;">
+              <button type="button" class="btn btn-secondary btn-sm" id="btnCarerSampleOcr">Use Sample Health Report</button>
+              <span class="sub-text" id="ocrFileName">No file selected</span>
+            </div>
+          </div>
+          <div id="ocrPreviewWrap" class="hidden" style="margin-bottom: 12px; border: 1px solid var(--line); border-radius: 6px; padding: 10px; background: var(--bg-subtle);">
+            <p class="section-label" style="margin-top: 0;">Document preview</p>
+            <img id="ocrImgPreview" alt="Uploaded health document preview" style="max-height: 220px; border-radius: 4px;" hidden>
+            <p id="ocrPdfPreview" class="text-sm" hidden></p>
+          </div>
+          <div class="form-group">
+            <label for="ocrComment">Optional comment for the nurse</label>
+            <textarea id="ocrComment" class="field" rows="2" maxlength="400" placeholder="For example: Brought in by family after GP clinic visit today."></textarea>
+          </div>
+          <div class="form-actions">
+            <p class="text-sm" id="ocrUploadMsg" role="status"></p>
+            <button type="button" id="submitOcrDoc" class="btn btn-primary">Submit for OCR &amp; Nurse Review</button>
+          </div>
+        </div>
       </section>
+
+      <section class="card card-flush" id="carerOcrCard" aria-labelledby="myDocsTitle">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title" id="myDocsTitle">My uploaded documents (OCR)</h2>
+            <p class="sub-text">Track whether the nurse has approved, rejected, or returned your uploaded reports for correction.</p>
+          </div>
+          <button type="button" class="btn btn-secondary btn-sm" id="btnOpenOcrTab">Upload Health Report</button>
+        </div>
+        <div class="table-wrap" style="padding: 0 20px 12px;">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>Resident</th>
+                <th>Document</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Nurse comment</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="carerOcrRows">
+              <tr><td colspan="6" class="empty">No health documents uploaded yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      </div>
 
       <aside class="stack">
         <section class="card followups" id="followupCard" aria-labelledby="followupTitle" hidden>

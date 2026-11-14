@@ -3,6 +3,7 @@ __pycache__
 .pytest_cache
 .env
 data/agecare.db
+data/ocr_uploads/
 models/*.task
 models/*.pt
 vision_events.db

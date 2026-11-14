@@ -1,7 +1,7 @@
 import re
 import time
 from pathlib import Path
-from app.routers import ask, carer, decision, doctor, handover, portal, vision
+from app.routers import ask, carer, decision, doctor, handover, ocr_workflow, portal, vision
 
 from fastapi import FastAPI, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -48,6 +48,7 @@ app.include_router(vision.router)
 app.include_router(decision.router)
 app.include_router(handover.router)
 app.include_router(doctor.router)
+app.include_router(ocr_workflow.router)
 
 # Lets the React dashboard (on localhost, any port) call this API from the browser
 app.add_middleware(
@@ -301,16 +302,20 @@ async def ocr_extract(file: UploadFile):
         raise HTTPException(status_code=413, detail="The image is too big. Use a photo under 6 MB.")
     is_png = data.startswith(b"\x89PNG\r\n\x1a\n")
     is_jpg = data.startswith(b"\xff\xd8\xff")
-    if not (is_png or is_jpg):
-        raise HTTPException(status_code=400, detail="Please upload a PNG or JPG image.")
+    is_pdf = data.startswith(b"%PDF-")
+    if not (is_png or is_jpg or is_pdf):
+        raise HTTPException(status_code=400, detail="Please upload a PNG, JPG, or PDF document.")
 
     started = time.perf_counter()
     try:
-        lines = await run_in_threadpool(ocr.read_lines, data)
+        if is_pdf:
+            lines = await run_in_threadpool(ocr.read_document_lines, data, file.filename or "report.pdf")
+        else:
+            lines = await run_in_threadpool(ocr.read_lines, data)
     except ocr.OcrError as error:
         raise HTTPException(status_code=503, detail=str(error))
     except Exception as error:
-        raise HTTPException(status_code=422, detail="The OCR could not read this image.") from error
+        raise HTTPException(status_code=422, detail="The OCR could not read this document.") from error
 
     return OcrResponse(
         readings=ocr.extract_readings(lines),

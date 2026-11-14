@@ -40,10 +40,13 @@
       </div>
 
       <aside class="stack">
+        <section class="card" id="ocrQueueCard"></section>
         <section class="card" id="contacts"></section>
         <section class="card" id="activity"></section>
       </aside>
     </div>
+
+    <section class="card hidden" id="ocrReviewPanel" style="margin-top: 24px;" aria-labelledby="ocrReviewTitle"></section>
   </main>
 
   <footer class="foot"></footer>
@@ -64,6 +67,8 @@
       handovers: [],
       famMessages: [],
       visionAlerts: [],
+      ocrDocs: [],
+      activeOcrDoc: null,
     };
 
     function h(tag, props, ...kids) {
@@ -197,12 +202,13 @@
         })
       );
 
-      const [pending, audit, handovers, famM, visionA] = await Promise.all([
+      const [pending, audit, handovers, famM, visionA, ocrList] = await Promise.all([
         api("/api/guidance/pending"),
         api("/api/audit?limit=10"),
         api("/api/handovers?status=waiting"),
         api("/api/messages"),
         api("/api/vision/alerts?open_only=true"),
+        api("/api/ocr/documents"),
       ]);
 
       state.pending = pending;
@@ -210,6 +216,7 @@
       state.handovers = handovers.ok && Array.isArray(handovers.data) ? handovers.data : [];
       state.famMessages = famM.ok ? famM.data : [];
       state.visionAlerts = visionA.ok && Array.isArray(visionA.data) ? visionA.data : [];
+      state.ocrDocs = ocrList.ok && Array.isArray(ocrList.data) ? ocrList.data : [];
       const urgent = await api("/api/chat/urgent");
       state.urgent = urgent.ok && Array.isArray(urgent.data) ? urgent.data : [];
 
@@ -269,39 +276,13 @@
       }
       const hist = rec.readings_history || {};
       const savedOcr = Array.isArray(rec.readings_saved) ? rec.readings_saved : [];
-      const latestOcrHit = (key) => savedOcr.find((r) => r.key === key) || null;
-      const latestOcr = (key) => {
-        const hit = latestOcrHit(key);
-        return hit ? hit.value : null;
-      };
-      const lastPoint = (key) => (hist[key] && hist[key].length ? hist[key][hist[key].length - 1] : null);
-      const last = (key) => {
-        const pt = lastPoint(key);
-        const ocrHit = latestOcrHit(key);
-        if (pt && ocrHit) {
-          return (pt.date || "") >= (ocrHit.saved_at || "") ? pt.value : ocrHit.value;
-        }
-        if (pt) return pt.value;
-        return ocrHit ? ocrHit.value : null;
-      };
-      const sysPt = lastPoint("systolic");
-      const diaPt = lastPoint("diastolic");
-      const ocrBpHit = latestOcrHit("blood_pressure");
-      let bpVal = null;
-      if (sysPt && diaPt && ocrBpHit) {
-        bpVal = (sysPt.date || "") >= (ocrBpHit.saved_at || "") ? sysPt.value + "/" + diaPt.value : ocrBpHit.value;
-      } else if (sysPt && diaPt) {
-        bpVal = sysPt.value + "/" + diaPt.value;
-      } else if (ocrBpHit) {
-        bpVal = ocrBpHit.value;
-      }
+      const last = (key) => (hist[key] && hist[key].length ? hist[key][hist[key].length - 1].value : null);
+      const bpVal = last("systolic") != null && last("diastolic") != null ? last("systolic") + "/" + last("diastolic") : null;
       const rows = [
         ["Pulse", last("pulse"), "bpm"],
         ["Blood pressure", bpVal, "mmHg"],
         ["Temperature", last("temperature"), "°C"],
         ["Oxygen (SpO2)", last("spo2"), "%"],
-        ["Weight", latestOcr("weight"), "kg"],
-        ["Blood glucose", latestOcr("glucose"), "mmol/L"],
       ].filter((r) => r[1] != null);
 
       const allergies = rec.allergies && rec.allergies.length ? rec.allergies.join(", ") : "None recorded";
@@ -309,19 +290,57 @@
       const carerVitalNote = latestCarerVital
         ? [h("p", { class: "sub-text", style: "margin-top: 8px;", text: "Latest shift vital signs recorded by " + latestCarerVital.carer + " at " + (latestCarerVital.created_at || "").slice(11, 16) })]
         : [];
-      const ocrSection = savedOcr.length
+
+      // Deduplicate saved OCR readings by key (newest first) for this resident's Checked Health Report section
+      const seenOcrKeys = new Set();
+      const latestOcrItems = [];
+      for (const item of savedOcr) {
+        if (!seenOcrKeys.has(item.key)) {
+          seenOcrKeys.add(item.key);
+          latestOcrItems.push(item);
+        }
+      }
+      const resOcrDocs = (state.ocrDocs || []).filter((d) => Number(d.resident_id) === Number(person.resident_id));
+      const latestDoc = resOcrDocs.length ? resOcrDocs[0] : null;
+
+      const ocrActionBtn = h("button", {
+        type: "button",
+        class: "btn btn-secondary btn-sm",
+        text: latestDoc ? "Read report (OCR)" : "Upload / Read report (OCR)",
+      });
+      ocrActionBtn.addEventListener("click", () => {
+        if (latestDoc) {
+          openOcrReview(latestDoc.id);
+        } else {
+          window.location.href = "/ocr?resident=" + person.resident_id;
+        }
+      });
+
+      const ocrSection = latestOcrItems.length
         ? [
-            h("p", { class: "section-label", style: "margin-top: 14px;", text: "Checked health report (OCR) readings" }),
-            h("p", { class: "sub-text", style: "margin-bottom: 6px;", text: "Verified by " + (savedOcr[0].checked_by || "Nurse") + (savedOcr[0].report_date ? " · Report date " + savedOcr[0].report_date : "") }),
+            h("p", { class: "section-label", style: "margin-top: 16px;", text: "Checked health report (OCR) readings" }),
+            h("p", {
+              class: "sub-text",
+              style: "margin-bottom: 8px;",
+              text: "Verified by " + (latestOcrItems[0].checked_by || "Nurse") +
+                (latestOcrItems[0].report_date ? " · Report date: " + latestOcrItems[0].report_date : "") +
+                (latestOcrItems[0].saved_at ? " · Verified: " + whenText(latestOcrItems[0].saved_at) : ""),
+            }),
+            h("dl", { class: "kv" }, latestOcrItems.map((item) => [
+              h("dt", { text: item.label }),
+              h("dd", { class: "num", text: item.value + (item.unit ? " " + item.unit : "") }),
+            ])),
           ]
-        : [];
+        : [
+            h("p", { class: "section-label", style: "margin-top: 16px;", text: "Checked health report (OCR) readings" }),
+            h("p", { class: "empty", text: "No verified health report readings saved for this resident yet." }),
+          ];
+
       fill(
         "resident",
-        head(person.name + " · " + room(person), (person.conditions || []).join(", "),
-          h("a", { class: "btn btn-secondary btn-sm", href: "/ocr?resident=" + person.resident_id, text: "Read report (OCR)" })
-        ),
+        head(person.name + " · " + room(person), (person.conditions || []).join(", "), ocrActionBtn),
         h("p", { class: "text-sm", style: "margin-bottom: 12px;" }, h("strong", { text: "Allergies: " }), allergies),
-        h("p", { class: "section-label", style: "margin-top: 0;", text: "Latest vital signs" }),
+        h("p", { class: "section-label", style: "margin-top: 0;", text: "Latest vital signs (current shift)" }),
         rows.length
           ? h("dl", { class: "kv" }, rows.map((r) => [h("dt", { text: r[0] }), h("dd", { class: "num", text: r[1] + " " + r[2] })]))
           : h("p", { class: "empty", text: "No vital signs recorded yet. Ask a carer to take a set." }),
@@ -438,6 +457,298 @@
         "needs",
         head("Waiting for you", null, h("span", { class: "badge " + (items.length ? "badge-red" : "badge-neutral"), text: String(items.length) })),
         items.length ? h("ul", { class: "audit-list" }, items) : h("p", { class: "empty", text: "Nothing waiting. No handovers, messages, concerns, drafts or camera alerts." })
+      );
+    }
+
+    const OCR_BADGE_MAP = {
+      "Uploaded": "badge-neutral",
+      "Processing OCR": "badge-amber",
+      "Pending Nurse Review": "status-waiting",
+      "Needs Correction": "status-returned",
+      "Approved": "status-approved",
+      "Rejected": "badge-red",
+      "OCR Failed": "badge-red",
+    };
+
+    function renderOcrQueue() {
+      const docs = state.ocrDocs || [];
+      const pendingCount = docs.filter((d) => d.review_status === "Pending Nurse Review").length;
+      const badge = h("span", {
+        class: "badge " + (pendingCount > 0 ? "status-waiting" : "badge-neutral"),
+        text: pendingCount + " Pending Review",
+      });
+
+      const uploadBtn = h("a", {
+        class: "btn btn-secondary btn-sm",
+        href: "/ocr?resident=" + (state.selected || 1),
+        text: "Upload Report",
+      });
+
+      if (!docs.length) {
+        fill(
+          "ocrQueueCard",
+          head("OCR Review Queue", "Health documents uploaded by carers or nurses", h("div", { class: "inline" }, badge, uploadBtn)),
+          h("p", { class: "empty", text: "No OCR health documents in the queue yet." })
+        );
+        return;
+      }
+
+      const table = h("div", { class: "table-wrap" },
+        h("table", { class: "tbl" },
+          h("thead", {},
+            h("tr", {},
+              h("th", { text: "Resident" }),
+              h("th", { text: "Document" }),
+              h("th", { text: "Uploaded By" }),
+              h("th", { text: "Date" }),
+              h("th", { text: "Status" }),
+              h("th", { text: "Action" })
+            )
+          ),
+          h("tbody", {},
+            docs.slice(0, 12).map((doc) => {
+              const isPending = doc.review_status === "Pending Nurse Review";
+              const actBtn = h("button", {
+                type: "button",
+                class: "btn btn-sm " + (isPending ? "btn-primary" : "btn-secondary"),
+                text: isPending ? "Review" : "View",
+              });
+              actBtn.addEventListener("click", () => openOcrReview(doc.id));
+              return h("tr", {},
+                h("td", {}, h("strong", { text: doc.resident_name })),
+                h("td", {}, doc.document_type || "Health Report"),
+                h("td", { class: "sub-text", text: doc.uploaded_by }),
+                h("td", { class: "text-mono", text: (doc.upload_date || "").slice(0, 10) }),
+                h("td", {}, h("span", { class: "badge " + (OCR_BADGE_MAP[doc.review_status] || "badge-neutral"), text: isPending ? "Pending Review" : doc.review_status })),
+                h("td", { class: "actions" }, actBtn)
+              );
+            })
+          )
+        )
+      );
+
+      fill(
+        "ocrQueueCard",
+        head("OCR Review Queue", "Verify extracted medical fields against the original document", h("div", { class: "inline" }, badge, uploadBtn)),
+        table
+      );
+    }
+
+    async function openOcrReview(docId) {
+      const res = await api("/api/ocr/documents/" + docId);
+      if (!res.ok || !res.data) {
+        if (window.showToast) window.showToast("Could not load OCR document details.", true);
+        return;
+      }
+      state.activeOcrDoc = res.data;
+      renderOcrReviewPanel(res.data);
+      const panel = $("ocrReviewPanel");
+      if (panel) {
+        panel.classList.remove("hidden");
+        panel.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+
+    function renderOcrReviewPanel(doc) {
+      const panel = $("ocrReviewPanel");
+      if (!panel) return;
+
+      const closeBtn = h("button", { type: "button", class: "btn btn-secondary btn-sm", text: "Close review" });
+      closeBtn.addEventListener("click", () => panel.classList.add("hidden"));
+
+      const statusBadge = h("span", {
+        class: "badge " + (OCR_BADGE_MAP[doc.review_status] || "badge-neutral"),
+        text: doc.review_status,
+      });
+
+      const fieldInputs = [];
+      const fieldsWrap = h("div", { class: "stack", style: "gap: 10px;" },
+        (doc.extracted_fields || []).map((f) => {
+          const inp = h("input", {
+            type: "text",
+            class: "field",
+            value: f.value || "",
+            "data-field-key": f.key,
+            "data-field-label": f.label || f.key,
+            "data-field-unit": f.unit || "",
+            placeholder: f.needs_check ? "Verify against original document" : "",
+          });
+          fieldInputs.push(inp);
+          const warnTag = f.needs_check
+            ? h("span", { class: "badge badge-amber", style: "margin-left: 8px;", text: "Needs check" })
+            : null;
+          return h("div", {
+            style: f.needs_check ? "padding: 8px 10px; border: 1px solid var(--amber-line); background: var(--amber-soft); border-radius: 6px;" : "",
+          },
+            h("label", { style: "display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; font-weight: 600; font-size: 13px;" },
+              h("span", {}, f.label + (f.unit ? " (" + f.unit + ")" : ""), warnTag),
+              f.confidence ? h("span", { class: "sub-text", text: "OCR " + Math.round(f.confidence * 100) + "%" }) : null
+            ),
+            inp,
+            f.reason ? h("p", { class: "sub-text", style: "margin-top: 4px;", text: f.reason }) : null
+          );
+        })
+      );
+
+      const commentInput = h("textarea", {
+        class: "field",
+        id: "ocrReviewComment",
+        rows: "2",
+        placeholder: "Add nurse verification notes, reason for rejection, or instructions for carer correction…",
+      }, doc.review_comment || "");
+
+      const verifyCheck = h("input", { type: "checkbox", id: "ocrVerifyCheckbox" });
+      const verifyLabel = h("label", {
+        class: "choice",
+        style: "margin: 12px 0; padding: 10px 12px; border: 1px solid var(--accent-line); background: var(--accent-soft); border-radius: 6px; font-weight: 600;",
+      },
+        verifyCheck,
+        h("span", { text: "I have compared the extracted information with the original medical document and verified its accuracy." })
+      );
+
+      const statusMsg = h("p", { class: "text-sm", role: "status" });
+      const approveBtn = h("button", {
+        type: "button",
+        class: "btn btn-primary",
+        id: "btnOcrApprove",
+        disabled: "disabled",
+        text: "Approve & Save to Resident Record",
+      });
+      const correctBtn = h("button", {
+        type: "button",
+        class: "btn btn-secondary",
+        id: "btnOcrCorrection",
+        text: "Request Correction",
+      });
+      const rejectBtn = h("button", {
+        type: "button",
+        class: "btn btn-danger",
+        id: "btnOcrReject",
+        text: "Reject Document",
+      });
+
+      verifyCheck.addEventListener("change", () => {
+        approveBtn.disabled = !verifyCheck.checked;
+      });
+
+      async function submitDecision(decision) {
+        if (decision === "Approved" && !verifyCheck.checked) {
+          statusMsg.className = "text-sm alert-danger";
+          statusMsg.textContent = "Please tick the verification checkbox before approving.";
+          return;
+        }
+        if ((decision === "Needs Correction" || decision === "Rejected") && commentInput.value.trim().length < 3) {
+          statusMsg.className = "text-sm alert-danger";
+          statusMsg.textContent = "Please write a comment explaining what needs correcting or why the document is rejected.";
+          commentInput.focus();
+          return;
+        }
+        approveBtn.disabled = true;
+        correctBtn.disabled = true;
+        rejectBtn.disabled = true;
+        const editedFields = fieldInputs.map((inp) => ({
+          key: inp.getAttribute("data-field-key"),
+          label: inp.getAttribute("data-field-label"),
+          unit: inp.getAttribute("data-field-unit"),
+          value: inp.value.trim(),
+        }));
+        const res = await api("/api/ocr/documents/" + doc.id + "/review", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            decision: decision,
+            review_comment: commentInput.value.trim(),
+            verified_accurate: verifyCheck.checked,
+            reviewer_name: nurseName(),
+            fields: editedFields,
+          }),
+        });
+        if (!res.ok) {
+          statusMsg.className = "text-sm alert-danger";
+          statusMsg.textContent = (res.data && res.data.detail) || "Could not save review.";
+          approveBtn.disabled = !verifyCheck.checked;
+          correctBtn.disabled = false;
+          rejectBtn.disabled = false;
+          return;
+        }
+        if (window.showToast) window.showToast("OCR Document " + decision);
+        // Refresh OCR queue, resident records, and audit log
+        const [ocrList, recRes, auditRes] = await Promise.all([
+          api("/api/ocr/documents"),
+          api("/api/residents/" + doc.resident_id + "/records"),
+          api("/api/audit?limit=10"),
+        ]);
+        if (ocrList.ok) state.ocrDocs = ocrList.data;
+        if (recRes.ok) state.records.set(doc.resident_id, recRes.data);
+        await addCarerEntries();
+        state.audit = auditRes;
+        state.selected = doc.resident_id;
+        renderAll();
+        await openOcrReview(doc.id);
+      }
+
+      approveBtn.addEventListener("click", () => submitDecision("Approved"));
+      correctBtn.addEventListener("click", () => submitDecision("Needs Correction"));
+      rejectBtn.addEventListener("click", () => submitDecision("Rejected"));
+
+      const isPdf = (doc.mime_type || "").includes("pdf") || (doc.original_filename || "").toLowerCase().endsWith(".pdf");
+      const docPreview = isPdf
+        ? h("div", {},
+            h("iframe", { src: doc.file_url, style: "width: 100%; height: 480px; border: 1px solid var(--line); border-radius: 6px;", title: "Original PDF document" }),
+            h("p", { class: "sub-text", style: "margin-top: 8px;" }, h("a", { href: doc.file_url, target: "_blank", text: "Open original PDF in new tab →" }))
+          )
+        : h("div", {},
+            h("img", { src: doc.file_url, alt: "Original uploaded health report", style: "width: 100%; max-height: 540px; object-fit: contain; border: 1px solid var(--line); border-radius: 6px; background: var(--bg-subtle);" }),
+            h("p", { class: "sub-text", style: "margin-top: 8px;" }, h("a", { href: doc.file_url, target: "_blank", text: "Open full-size original image →" }))
+          );
+
+      const historyRows = (doc.reviews || []).map((rv) =>
+        h("li", { class: "list-item", style: "flex-direction: column; gap: 2px;" },
+          h("div", { class: "between", style: "width: 100%;" },
+            h("strong", { text: rv.decision + " by " + rv.reviewer_name }),
+            h("span", { class: "mono-time", text: whenText(rv.reviewed_at) })
+          ),
+          rv.review_comment ? h("span", { class: "sub-text", text: "Comment: " + rv.review_comment }) : null
+        )
+      );
+
+      fill(
+        "ocrReviewPanel",
+        head(
+          "OCR Document Review · " + doc.resident_name + " (" + (doc.document_type || "Health Report") + ")",
+          "Uploaded by " + doc.uploader_name + " (" + doc.uploaded_by + ") on " + whenText(doc.upload_date) +
+            (doc.carer_comment ? " · Carer note: “" + doc.carer_comment + "”" : ""),
+          h("div", { class: "inline" }, statusBadge, closeBtn)
+        ),
+        h("div", { class: "grid-layout" },
+          h("div", {},
+            h("h3", { style: "margin-bottom: 10px;", text: "1. Verify & edit OCR-extracted medical fields" }),
+            fieldsWrap,
+            h("div", { class: "form-group", style: "margin-top: 14px;" },
+              h("label", { for: "ocrReviewComment", text: "Nurse review comment (sent to carer if correction requested)" }),
+              commentInput
+            ),
+            verifyLabel,
+            statusMsg,
+            h("div", { class: "inline", style: "margin-top: 10px; gap: 8px;" }, approveBtn, correctBtn, rejectBtn),
+            historyRows.length
+              ? h("div", { style: "margin-top: 20px;" },
+                  h("p", { class: "section-label", text: "Previous review history" }),
+                  h("ul", { class: "audit-list" }, historyRows)
+                )
+              : null
+          ),
+          h("div", {},
+            h("h3", { style: "margin-bottom: 10px;", text: "2. Original uploaded document (" + doc.original_filename + ")" }),
+            docPreview,
+            doc.raw_text
+              ? h("details", { style: "margin-top: 12px;" },
+                  h("summary", { class: "sub-text", style: "cursor: pointer; font-weight: 600;", text: "Show raw OCR text" }),
+                  h("pre", { class: "text-mono", style: "background: var(--bg-subtle); padding: 10px; border-radius: 4px; margin-top: 6px; white-space: pre-wrap;", text: doc.raw_text })
+                )
+              : null
+          )
+        )
       );
     }
 
@@ -589,6 +900,7 @@
       renderResident(person, rec);
       renderCare(person, rec);
       renderGuide(person);
+      renderOcrQueue();
       renderContacts(rec);
       renderNeeds();
       renderActivity();

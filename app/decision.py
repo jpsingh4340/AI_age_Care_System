@@ -46,22 +46,6 @@ def _carer_page_entries(resident_id: int) -> tuple[dict, list[dict]]:
                 extra_vitals.setdefault(key, []).append({"date": row["created_at"], "value": row[key]})
     for row in concerns:
         notes.append({"time": row["created_at"][11:16], "text": row["note"]})
-
-    # Also include vital signs checked and saved by a nurse from the OCR Health Report Reader
-    try:
-        for row in reversed(db.list_readings(resident_id)):
-            val_str = str(row.get("value", "")).replace(",", ".").strip()
-            date_str = row.get("report_date") or row.get("saved_at") or ""
-            key = row.get("key")
-            if key in ("pulse", "temperature", "spo2"):
-                extra_vitals.setdefault(key, []).append({"date": date_str, "value": float(val_str)})
-            elif key == "blood_pressure" and "/" in val_str:
-                sys_s, dia_s = val_str.split("/", 1)
-                extra_vitals.setdefault("systolic", []).append({"date": date_str, "value": float(sys_s)})
-                extra_vitals.setdefault("diastolic", []).append({"date": date_str, "value": float(dia_s)})
-    except Exception:
-        pass
-
     return extra_vitals, notes
 
 

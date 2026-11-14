@@ -132,16 +132,18 @@ function changeResident() {
   state.selected = person.resident_id;
   $("todayName").textContent = person.name;
   $("recordName").textContent = person.name;
+  if ($("ocrResidentLabel")) $("ocrResidentLabel").textContent = person.name;
   $("residentConditions").textContent = (person.conditions || []).join(", ");
-  ["noteMsg", "vitalsMsg", "concernMsg"].forEach(function (m) {
+  ["noteMsg", "vitalsMsg", "concernMsg", "ocrUploadMsg"].forEach(function (m) {
     if ($(m)) {
       $(m).textContent = "";
       $(m).className = "text-sm";
     }
   });
   renderPills();
-    if (window.loadFollowups) window.loadFollowups(person.resident_id);  // Feature C: nurse follow-ups
+  if (window.loadFollowups) window.loadFollowups(person.resident_id);  // Feature C: nurse follow-ups
   loadGuide();
+  loadCarerOcrDocs();
   loadSchedule().then(loadToday);
 }
 
@@ -387,5 +389,211 @@ $("saveConcern").addEventListener("click", async function () {
     showMsg("concernMsg", e.message, "err");
   }
 });
+
+// ---------- Upload Health Report (OCR) & My Uploaded Documents ----------
+var selectedOcrFile = null;
+var resubmitDocId = null;
+
+var OCR_STATUS_BADGE = {
+  "Uploaded": "badge-neutral",
+  "Processing OCR": "badge-amber",
+  "Pending Nurse Review": "status-waiting",
+  "Needs Correction": "status-returned",
+  "Approved": "status-approved",
+  "Rejected": "badge-red",
+  "OCR Failed": "badge-red",
+};
+
+function setChosenOcrFile(file) {
+  selectedOcrFile = file || null;
+  if (!file) {
+    if ($("ocrFileName")) $("ocrFileName").textContent = "No file selected";
+    if ($("ocrPreviewWrap")) $("ocrPreviewWrap").classList.add("hidden");
+    return;
+  }
+  $("ocrFileName").textContent = file.name + " (" + Math.max(1, Math.round(file.size / 1024)) + " KB)";
+  $("ocrPreviewWrap").classList.remove("hidden");
+  var isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+  if (isPdf) {
+    $("ocrImgPreview").hidden = true;
+    $("ocrPdfPreview").hidden = false;
+    $("ocrPdfPreview").textContent = "PDF document ready for OCR: " + file.name;
+  } else {
+    $("ocrPdfPreview").hidden = true;
+    $("ocrImgPreview").hidden = false;
+    $("ocrImgPreview").src = URL.createObjectURL(file);
+  }
+}
+
+if ($("ocrFile")) {
+  $("ocrFile").addEventListener("change", function () {
+    setChosenOcrFile($("ocrFile").files[0]);
+  });
+}
+
+if ($("btnOpenOcrTab")) {
+  $("btnOpenOcrTab").addEventListener("click", function () {
+    resubmitDocId = null;
+    if ($("submitOcrDoc")) $("submitOcrDoc").textContent = "Submit for OCR & Nurse Review";
+    if ($("tab-ocr")) {
+      $("tab-ocr").click();
+      $("tab-ocr").scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  });
+}
+
+if ($("btnCarerSampleOcr")) {
+  $("btnCarerSampleOcr").addEventListener("click", function () {
+    var person = state.people.find(function (p) { return String(p.resident_id) === String(state.selected); }) || { name: "Margaret T." };
+    var canvas = document.createElement("canvas");
+    canvas.width = 780;
+    canvas.height = 560;
+    var ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = "#cbd5e1";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(20, 20, 740, 520);
+
+    ctx.fillStyle = "#0f172a";
+    ctx.font = "bold 24px Arial, sans-serif";
+    ctx.fillText("CARE SIGNAL CLINICAL HEALTH REPORT", 44, 66);
+
+    var lines = [
+      "Resident name: " + person.name,
+      "Date of birth: 12/04/1942",
+      "Report date: 14/11/2026",
+      "Document type: " + ($("ocrDocType") ? $("ocrDocType").value : "Health Report"),
+      "Blood pressure: 132 / 82 mmHg",
+      "Pulse: 76 bpm",
+      "Temperature: 36.8 C",
+      "Oxygen saturation: 97 %",
+      "Medications: Paracetamol 500mg BD, Amlodipine 5mg OD",
+      "Allergies: Penicillin"
+    ];
+    ctx.font = "20px Arial, sans-serif";
+    lines.forEach(function (line, idx) {
+      ctx.fillText(line, 44, 115 + idx * 42);
+    });
+    canvas.toBlob(function (blob) {
+      if (!blob) return;
+      var sampleFile = new File([blob], "health-report-" + String(person.name).toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".png", { type: "image/png" });
+      setChosenOcrFile(sampleFile);
+      showMsg("ocrUploadMsg", "Sample report loaded. Click 'Submit for OCR & Nurse Review'.", "ok");
+    }, "image/png");
+  });
+}
+
+async function loadCarerOcrDocs() {
+  var tbody = $("carerOcrRows");
+  if (!tbody) return;
+  var docs = await getJSON("/api/ocr/documents");
+  tbody.replaceChildren();
+  if (!docs || !docs.length) {
+    var trEmpty = tbody.insertRow();
+    var tdEmpty = trEmpty.insertCell();
+    tdEmpty.colSpan = 6;
+    tdEmpty.className = "empty";
+    tdEmpty.textContent = "No health documents uploaded yet.";
+    return;
+  }
+  docs.forEach(function (doc) {
+    var tr = tbody.insertRow();
+    tr.insertCell().appendChild(el("strong", "", doc.resident_name));
+    var tdDoc = tr.insertCell();
+    tdDoc.appendChild(el("div", "", doc.document_type || "Health Report"));
+    tdDoc.appendChild(el("span", "sub-text", doc.original_filename));
+
+    var tdDate = tr.insertCell();
+    tdDate.className = "text-mono";
+    tdDate.textContent = (doc.upload_date || "").slice(0, 16).replace("T", " ");
+
+    var tdStatus = tr.insertCell();
+    var badgeCls = OCR_STATUS_BADGE[doc.review_status] || "badge-neutral";
+    tdStatus.appendChild(el("span", "badge " + badgeCls, doc.review_status));
+
+    var tdComment = tr.insertCell();
+    tdComment.className = "sub-text";
+    tdComment.textContent = doc.review_comment || (doc.carer_comment ? "Your note: " + doc.carer_comment : "—");
+
+    var tdAct = tr.insertCell();
+    tdAct.className = "actions";
+    if (doc.review_status === "Needs Correction" || doc.review_status === "OCR Failed") {
+      var fixBtn = el("button", "btn btn-primary btn-sm", "Resubmit / Fix");
+      fixBtn.type = "button";
+      fixBtn.addEventListener("click", function () {
+        resubmitDocId = doc.id;
+        $("resident").value = String(doc.resident_id);
+        changeResident();
+        if ($("ocrComment")) $("ocrComment").value = doc.carer_comment || "";
+        if ($("submitOcrDoc")) $("submitOcrDoc").textContent = "Resubmit Document #" + doc.id;
+        if ($("tab-ocr")) {
+          $("tab-ocr").click();
+          $("tab-ocr").scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+        showMsg("ocrUploadMsg", "Resubmitting Document #" + doc.id + ". Choose a clearer file or update your comment for the nurse.", "warn");
+      });
+      tdAct.appendChild(fixBtn);
+    } else {
+      var viewLink = el("a", "btn btn-secondary btn-sm", "View File");
+      viewLink.href = doc.file_url;
+      viewLink.target = "_blank";
+      tdAct.appendChild(viewLink);
+    }
+  });
+}
+
+if ($("submitOcrDoc")) {
+  $("submitOcrDoc").addEventListener("click", async function () {
+    var name = carerName("ocrUploadMsg");
+    if (!name) return;
+    if (!selectedOcrFile && !resubmitDocId) {
+      showMsg("ocrUploadMsg", "Please choose a PDF, JPG, or PNG health document first (or click 'Use Sample Health Report').", "err");
+      return;
+    }
+    var btn = $("submitOcrDoc");
+    btn.disabled = true;
+    showMsg("ocrUploadMsg", "Processing OCR…", "warn");
+    try {
+      var fd = new FormData();
+      var url = "/api/ocr/documents";
+      if (resubmitDocId) {
+        url = "/api/ocr/documents/" + resubmitDocId + "/resubmit";
+        fd.append("carer_comment", $("ocrComment") ? $("ocrComment").value.trim() : "");
+        if (selectedOcrFile) fd.append("file", selectedOcrFile);
+      } else {
+        fd.append("resident_id", String(state.selected));
+        fd.append("document_type", $("ocrDocType") ? $("ocrDocType").value : "Health Report");
+        fd.append("carer_comment", $("ocrComment") ? $("ocrComment").value.trim() : "");
+        fd.append("file", selectedOcrFile);
+      }
+      var fn = window.authFetch || fetch;
+      var res = await fn(url, {
+        method: "POST",
+        headers: { "X-Role": "carer", "X-User": name },
+        body: fd,
+      });
+      var body = await res.json();
+      if (!res.ok) {
+        throw new Error(typeof body.detail === "string" ? body.detail : "Could not upload document.");
+      }
+      resubmitDocId = null;
+      btn.textContent = "Submit for OCR & Nurse Review";
+      if ($("ocrFile")) $("ocrFile").value = "";
+      if ($("ocrComment")) $("ocrComment").value = "";
+      setChosenOcrFile(null);
+      if (body.review_status === "OCR Failed") {
+        showMsg("ocrUploadMsg", "Uploaded, but OCR could not read the file. You can resubmit a clearer file below.", "err");
+      } else {
+        showMsg("ocrUploadMsg", "OCR completed — status: " + body.review_status + ". Sent to the Nurse OCR Review Queue.", "ok");
+      }
+      await loadCarerOcrDocs();
+    } catch (e) {
+      showMsg("ocrUploadMsg", e.message, "err");
+    } finally {
+      btn.disabled = false;
+    }
+  });
+}
 
 loadPage();

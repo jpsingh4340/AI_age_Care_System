@@ -41,6 +41,49 @@ CREATE TABLE IF NOT EXISTS audit_log (
     draft_id INTEGER,
     detail TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS ocr_documents (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    resident_id INTEGER NOT NULL,
+    resident_name TEXT NOT NULL,
+    uploaded_by TEXT NOT NULL,
+    uploader_name TEXT NOT NULL,
+    uploader_role TEXT NOT NULL,
+    original_filename TEXT NOT NULL,
+    mime_type TEXT NOT NULL,
+    storage_ref TEXT NOT NULL,
+    document_type TEXT NOT NULL DEFAULT 'Health Report',
+    carer_comment TEXT NOT NULL DEFAULT '',
+    upload_date TEXT NOT NULL,
+    processing_status TEXT NOT NULL DEFAULT 'Uploaded',
+    review_status TEXT NOT NULL DEFAULT 'Pending Nurse Review',
+    raw_text TEXT NOT NULL DEFAULT '',
+    extracted_json TEXT NOT NULL DEFAULT '[]',
+    reviewed_by TEXT,
+    reviewed_at TEXT,
+    review_comment TEXT NOT NULL DEFAULT ''
+);
+CREATE TABLE IF NOT EXISTS ocr_reviews (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    document_id INTEGER NOT NULL,
+    reviewer_username TEXT NOT NULL,
+    reviewer_name TEXT NOT NULL,
+    decision TEXT NOT NULL,
+    corrected_json TEXT NOT NULL DEFAULT '[]',
+    review_comment TEXT NOT NULL DEFAULT '',
+    verified_accurate INTEGER NOT NULL DEFAULT 0,
+    reviewed_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS ocr_audit_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    user_name TEXT NOT NULL,
+    role TEXT NOT NULL,
+    action TEXT NOT NULL,
+    document_id INTEGER,
+    resident_id INTEGER,
+    detail TEXT NOT NULL DEFAULT '',
+    timestamp TEXT NOT NULL
+);
 """
 
 
