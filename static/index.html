@@ -141,6 +141,30 @@
           rec.concerns.push({ time: (c.created_at || "").slice(11, 16), type: c.type, text: c.note + " (" + c.carer + ")" });
         }
       }
+      for (const v of [...(today.data.vitals || [])].reverse()) {
+        const rec = find(v.resident_id);
+        if (!rec) continue;
+        rec.readings_history = rec.readings_history || {};
+        rec.carer_vitals = rec.carer_vitals || [];
+        rec.carer_vitals.push(v);
+        for (const k of ["pulse", "systolic", "diastolic", "temperature", "spo2"]) {
+          if (v[k] != null) {
+            rec.readings_history[k] = rec.readings_history[k] || [];
+            rec.readings_history[k].push({ date: v.created_at, value: v[k], by: v.carer });
+          }
+        }
+        const parts = [];
+        if (v.pulse != null) parts.push("Pulse " + v.pulse + " bpm");
+        if (v.systolic != null && v.diastolic != null) parts.push("BP " + v.systolic + "/" + v.diastolic + " mmHg");
+        else if (v.systolic != null) parts.push("BP systolic " + v.systolic + " mmHg");
+        if (v.temperature != null) parts.push("Temp " + v.temperature + "°C");
+        if (v.spo2 != null) parts.push("SpO2 " + v.spo2 + "%");
+        const time = (v.created_at || "").slice(11, 16);
+        const taskLabel = "Vital signs: " + parts.join(", ");
+        if (parts.length && rec.care_record && !rec.care_record.some((x) => x.time === time && x.task === taskLabel)) {
+          rec.care_record.push({ time: time, task: taskLabel, status: "given", by: v.carer });
+        }
+      }
     }
 
     async function loadAll() {
@@ -246,19 +270,32 @@
       }
       const hist = rec.readings_history || {};
       const savedOcr = Array.isArray(rec.readings_saved) ? rec.readings_saved : [];
+      const latestOcrHit = (key) => savedOcr.find((r) => r.key === key) || null;
       const latestOcr = (key) => {
-        const hit = savedOcr.find((r) => r.key === key);
+        const hit = latestOcrHit(key);
         return hit ? hit.value : null;
       };
+      const lastPoint = (key) => (hist[key] && hist[key].length ? hist[key][hist[key].length - 1] : null);
       const last = (key) => {
-        const ocrVal = latestOcr(key);
-        if (ocrVal != null) return ocrVal;
-        return hist[key] && hist[key].length ? hist[key][hist[key].length - 1].value : null;
+        const pt = lastPoint(key);
+        const ocrHit = latestOcrHit(key);
+        if (pt && ocrHit) {
+          return (pt.date || "") >= (ocrHit.saved_at || "") ? pt.value : ocrHit.value;
+        }
+        if (pt) return pt.value;
+        return ocrHit ? ocrHit.value : null;
       };
-      const ocrBp = latestOcr("blood_pressure");
-      const bpVal = ocrBp != null
-        ? ocrBp
-        : (last("systolic") != null && last("diastolic") != null ? last("systolic") + "/" + last("diastolic") : null);
+      const sysPt = lastPoint("systolic");
+      const diaPt = lastPoint("diastolic");
+      const ocrBpHit = latestOcrHit("blood_pressure");
+      let bpVal = null;
+      if (sysPt && diaPt && ocrBpHit) {
+        bpVal = (sysPt.date || "") >= (ocrBpHit.saved_at || "") ? sysPt.value + "/" + diaPt.value : ocrBpHit.value;
+      } else if (sysPt && diaPt) {
+        bpVal = sysPt.value + "/" + diaPt.value;
+      } else if (ocrBpHit) {
+        bpVal = ocrBpHit.value;
+      }
       const rows = [
         ["Pulse", last("pulse"), "bpm"],
         ["Blood pressure", bpVal, "mmHg"],
@@ -269,6 +306,10 @@
       ].filter((r) => r[1] != null);
 
       const allergies = rec.allergies && rec.allergies.length ? rec.allergies.join(", ") : "None recorded";
+      const latestCarerVital = rec.carer_vitals && rec.carer_vitals.length ? rec.carer_vitals[rec.carer_vitals.length - 1] : null;
+      const carerVitalNote = latestCarerVital
+        ? [h("p", { class: "sub-text", style: "margin-top: 8px;", text: "Latest shift vital signs recorded by " + latestCarerVital.carer + " at " + (latestCarerVital.created_at || "").slice(11, 16) })]
+        : [];
       const ocrSection = savedOcr.length
         ? [
             h("p", { class: "section-label", style: "margin-top: 14px;", text: "Checked health report (OCR) readings" }),
@@ -285,6 +326,7 @@
         rows.length
           ? h("dl", { class: "kv" }, rows.map((r) => [h("dt", { text: r[0] }), h("dd", { class: "num", text: r[1] + " " + r[2] })]))
           : h("p", { class: "empty", text: "No vital signs recorded yet. Ask a carer to take a set." }),
+        ...carerVitalNote,
         ...ocrSection
       );
     }
@@ -368,6 +410,21 @@
       }
       for (const p of state.people) {
         const rec = state.records.get(p.resident_id);
+        for (const v of (rec && rec.carer_vitals) || []) {
+          const outOfRange = (v.pulse != null && (v.pulse < 50 || v.pulse > 100))
+            || (v.temperature != null && (v.temperature < 36.0 || v.temperature > 37.8))
+            || (v.spo2 != null && v.spo2 < 94)
+            || (v.systolic != null && (v.systolic < 100 || v.systolic > 160));
+          const summary = [
+            v.pulse != null ? "Pulse " + v.pulse : null,
+            v.systolic != null && v.diastolic != null ? "BP " + v.systolic + "/" + v.diastolic : (v.systolic != null ? "BP " + v.systolic : null),
+            v.temperature != null ? "Temp " + v.temperature + "°C" : null,
+            v.spo2 != null ? "SpO2 " + v.spo2 + "%" : null,
+          ].filter(Boolean).join(", ");
+          if (summary) {
+            items.push(needItem(p.name + " · vital signs (" + v.carer + ")", (v.created_at || "").slice(11, 16), summary, outOfRange, "/nurse?resident=" + p.resident_id));
+          }
+        }
         for (const c of (rec && rec.concerns) || []) {
           items.push(needItem(p.name + " · " + c.type, c.time, "“" + c.text + "”", false));
         }

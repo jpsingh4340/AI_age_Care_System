@@ -41,7 +41,7 @@ def _carer_page_entries(resident_id: int) -> tuple[dict, list[dict]]:
         return extra_vitals, notes
 
     for row in vitals:
-        for key in ("pulse", "systolic", "temperature", "spo2"):
+        for key in ("pulse", "systolic", "diastolic", "temperature", "spo2"):
             if row[key] is not None:
                 extra_vitals.setdefault(key, []).append({"date": row["created_at"], "value": row[key]})
     for row in concerns:
