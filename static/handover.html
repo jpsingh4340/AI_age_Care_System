@@ -27,11 +27,6 @@
       <li class="step" id="st3"><span class="num">3</span>Send to the nurse</li>
     </ol>
 
-    <section class="card" style="margin-bottom: 16px;" aria-labelledby="shiftTitle">
-      <h2 class="card-title" id="shiftTitle" style="margin-bottom: 12px;">Which shift are you handing over?</h2>
-      <div class="shift-choice" id="shiftChoice" role="radiogroup" aria-labelledby="shiftTitle"><div class="skeleton w60" style="height: 44px;"></div></div>
-    </section>
-
     <section class="card card-flush" style="margin-bottom: 24px;" aria-labelledby="gridTitle">
       <div class="card-header">
         <h2 class="card-title" id="gridTitle">Your residents</h2>
@@ -119,28 +114,9 @@
     }
 
     function renderShiftChoice() {
-      const wrap = $("shiftChoice");
-      wrap.replaceChildren();
-      for (const which of ["previous", "current"]) {
-        const s = state.shifts[which];
-        const parts = s.label.split(", ");
-        const label = el("label", "choice");
-        const radio = el("input");
-        radio.type = "radio";
-        radio.name = "shift";
-        radio.value = which;
-        radio.checked = state.shift === which;
-        radio.addEventListener("change", () => {
-          state.shift = which;
-          renderGrid();
-          if (state.selected != null) renderEditor();
-        });
-        const text = el("span");
-        text.append(el("strong", "", parts[0] + (which === "current" ? " (now)" : " (just ended)")), el("span", "sub-text", " " + parts.slice(1).join(", ")));
-        label.append(radio, text);
-        wrap.append(label);
+      if (state.shifts && state.shift && $("gridSub")) {
+        $("gridSub").textContent = "Status for this shift";
       }
-      $("gridSub").textContent = "Status for the " + state.shifts[state.shift].name + " shift";
     }
 
     async function loadAll() {
@@ -151,9 +127,8 @@
         api("/api/handovers"),
         api("/api/shifts"),
       ]);
-      const shiftChanged = !state.shifts || state.shifts.current.key !== shifts.current.key;
       state.shifts = shifts;
-      if (shiftChanged) state.shift = shifts.suggested;
+      state.shift = "current";
       renderShiftChoice();
       state.people = people;
       state.handovers = handovers;
