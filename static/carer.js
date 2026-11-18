@@ -55,19 +55,14 @@ function fillSelect(select, items) {
   });
 }
 
+// The carer on duty is always the signed-in account, so records show the right name.
 function carerName(msgId) {
-  var name = $("carer").value.trim();
+  var name = (localStorage.getItem("agecare_name") || "").trim();
+  if ($("carer")) $("carer").value = name;
   if (name.length < 2) {
-    var fallback = localStorage.getItem("agecare_name") || "";
-    if (fallback) {
-      $("carer").value = fallback;
-      return fallback;
-    }
-    showMsg(msgId, "Type your name in 'Carer on duty' first.", "err");
-    $("carer").focus();
+    showMsg(msgId, "Please sign in again so your name is saved with your records.", "err");
     return null;
   }
-  localStorage.setItem("carerName", name);
   return name;
 }
 
@@ -101,7 +96,8 @@ function renderPills() {
 }
 
 async function loadPage() {
-  $("carer").value = localStorage.getItem("carerName") || localStorage.getItem("agecare_name") || "";
+  localStorage.removeItem("carerName"); // old name typed on this browser
+  $("carer").value = localStorage.getItem("agecare_name") || "";
 
   var opts = await getJSON("/api/carer/options");
   if (opts) {

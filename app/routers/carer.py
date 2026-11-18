@@ -64,7 +64,7 @@ class TaskIn(BaseModel):
     resident_id: str
     task: str = Field(min_length=2, max_length=60)
     status: Literal["given", "refused", "not_done"]
-    carer: str = Field(min_length=2, max_length=40)
+    carer: str = ""  # ignored: the name comes from the signed-in account
 
 
 class VitalsIn(BaseModel):
@@ -74,14 +74,14 @@ class VitalsIn(BaseModel):
     diastolic: int | None = Field(None, ge=30, le=150)
     temperature: float | None = Field(None, ge=34, le=42)
     spo2: int | None = Field(None, ge=70, le=100)
-    carer: str = Field(min_length=2, max_length=40)
+    carer: str = ""  # ignored: the name comes from the signed-in account
 
 
 class ConcernIn(BaseModel):
     resident_id: str
     type: str
     note: str = Field(min_length=3, max_length=300)
-    carer: str = Field(min_length=2, max_length=40)
+    carer: str = ""  # ignored: the name comes from the signed-in account
 
 
 @router.get("/carer", include_in_schema=False)
@@ -96,21 +96,21 @@ def options():
 
 @router.post("/api/carer/tasks", status_code=201)
 def add_task(body: TaskIn, authorization: str = Header(default=""), x_session_token: str = Header(default="")):
-    signed_in_staff(authorization, x_session_token)
+    sess = signed_in_staff(authorization, x_session_token)
     save("INSERT INTO carer_tasks (resident_id, task, status, carer, created_at) VALUES (?, ?, ?, ?, ?)",
-         (body.resident_id, body.task, body.status, body.carer, now()))
+         (body.resident_id, body.task, body.status, sess["full_name"], now()))
     return {"ok": True}
 
 
 @router.post("/api/carer/vitals", status_code=201)
 def add_vitals(body: VitalsIn, authorization: str = Header(default=""), x_session_token: str = Header(default="")):
-    signed_in_staff(authorization, x_session_token)
+    sess = signed_in_staff(authorization, x_session_token)
     values = [body.pulse, body.systolic, body.diastolic, body.temperature, body.spo2]
     if all(v is None for v in values):
         raise HTTPException(400, "Enter at least one number")
     save("""INSERT INTO carer_vitals (resident_id, pulse, systolic, diastolic, temperature, spo2, carer, created_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-         (body.resident_id, *values, body.carer, now()))
+         (body.resident_id, *values, sess["full_name"], now()))
     # simple check against usual ranges, not a risk score
     tell_nurse = ((body.pulse is not None and not 50 <= body.pulse <= 100)
                   or (body.temperature is not None and not 36.0 <= body.temperature <= 37.8)
@@ -121,11 +121,11 @@ def add_vitals(body: VitalsIn, authorization: str = Header(default=""), x_sessio
 
 @router.post("/api/carer/concerns", status_code=201)
 def add_concern(body: ConcernIn, authorization: str = Header(default=""), x_session_token: str = Header(default="")):
-    signed_in_staff(authorization, x_session_token)
+    sess = signed_in_staff(authorization, x_session_token)
     if body.type not in CONCERN_TYPES:
         raise HTTPException(400, "Pick a concern type from the list")
     save("INSERT INTO carer_concerns (resident_id, type, note, carer, created_at) VALUES (?, ?, ?, ?, ?)",
-         (body.resident_id, body.type, body.note, body.carer, now()))
+         (body.resident_id, body.type, body.note, sess["full_name"], now()))
     return {"ok": True}
 
 

@@ -27,7 +27,7 @@ def test_save_task_shows_today():
     assert r.status_code == 201
     today = client.get("/api/carer/today?resident_id=1").json()
     assert today["tasks"][0]["task"] == "Offer a drink"
-    assert today["tasks"][0]["carer"] == "Priya"
+    assert today["tasks"][0]["carer"] == "Carer Priya Patel"  # from the sign-in, not the browser
 
 
 def test_bad_status_rejected():
@@ -74,7 +74,7 @@ def test_today_only_shows_that_resident():
 def test_carer_task_reflected_in_resident_records():
     client.post("/api/carer/tasks", json={"resident_id": "1", "task": "Assisted with walker", "status": "given", "carer": "Priya"})
     records = client.get("/api/residents/1/records").json()
-    assert any(t["task"] == "Assisted with walker" and t["by"] == "Priya" for t in records["care_record"])
+    assert any(t["task"] == "Assisted with walker" and t["by"] == "Carer Priya Patel" for t in records["care_record"])
 
 def test_shift_records_need_a_signed_in_carer_or_nurse():
     anon = TestClient(app)
@@ -85,3 +85,16 @@ def test_shift_records_need_a_signed_in_carer_or_nurse():
     refused = anon.post("/api/carer/tasks", json=body, headers={"Authorization": f"Bearer {family}"})
     assert refused.status_code == 403
     assert "signed in as Claire Taylor" in refused.json()["detail"] and "carer or nurse" in refused.json()["detail"]
+
+
+def test_records_use_the_signed_in_carer_not_an_old_browser_name():
+    # A second carer signs in on a browser that still remembers Priya's name.
+    other = client.post("/api/auth/register", json={
+        "username": "aman1", "password": "password123", "full_name": "Aman Kaur", "role": "carer"}).json()["token"]
+    h = {"Authorization": f"Bearer {other}"}
+    old = "Carer Priya Patel"
+    assert client.post("/api/carer/tasks", json={"resident_id": "1", "task": "Lunch eaten", "status": "given", "carer": old}, headers=h).status_code == 201
+    assert client.post("/api/carer/vitals", json={"resident_id": "1", "pulse": 72, "carer": old}, headers=h).status_code == 201
+    assert client.post("/api/carer/concerns", json={"resident_id": "1", "type": "Not drinking", "note": "Only a few sips", "carer": old}, headers=h).status_code == 201
+    today = client.get("/api/carer/today?resident_id=1").json()
+    assert {r["carer"] for kind in ("tasks", "vitals", "concerns") for r in today[kind]} == {"Aman Kaur"}
