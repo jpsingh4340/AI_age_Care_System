@@ -234,17 +234,28 @@
     }
 
     const RANK = { Red: 1, Amber: 2, Green: 3 };
+    const NEXT_STEP = { Red: "A nurse should see the resident now.", Amber: "A nurse should check the resident.", Green: "Continue normal care." };
+    // The nurse's decision wins while the system still suggests the same level she reviewed.
+    // If new records change the suggestion, the new suggestion shows until she reviews it again.
+    function shownLevel(d) {
+      if (!d) return "Green";
+      const r = d.last_review;
+      return r && r.final && r.suggested === d.level ? r.final : d.level;
+    }
+    function changedByNurse(d) {
+      return !!d && shownLevel(d) !== d.level;
+    }
     function sortedPeople() {
       return [...state.people].sort((a, b) => {
         const da = state.decisions.get(a.resident_id);
         const db = state.decisions.get(b.resident_id);
-        return (da ? RANK[da.level] || 4 : 4) - (db ? RANK[db.level] || 4 : 4);
+        return (da ? RANK[shownLevel(da)] || 4 : 4) - (db ? RANK[shownLevel(db)] || 4 : 4);
       });
     }
 
     function renderSummary() {
       const count = { Red: 0, Amber: 0, Green: 0 };
-      for (const d of state.decisions.values()) if (count[d.level] != null) count[d.level]++;
+      for (const d of state.decisions.values()) { const l = shownLevel(d); if (count[l] != null) count[l]++; }
       $("summary").textContent = count.Red + " Red, " + count.Amber + " Amber, " + count.Green + " Green. Red first.";
     }
 
@@ -254,9 +265,9 @@
         "priorityTriage",
         sortedPeople().map((p) => {
           const d = state.decisions.get(p.resident_id);
-          const lvl = d ? d.level : "Green";
+          const lvl = shownLevel(d);
           const isSelected = p.resident_id === state.selected;
-          const reason = d ? (d.reasons[0] ? d.reasons[0].text : d.next_step) : "Checking priority…";
+          const reason = !d ? "Checking priority…" : changedByNurse(d) ? "Set to " + lvl + " by " + d.last_review.actor + ". The system suggested " + d.level + "." : (d.reasons[0] ? d.reasons[0].text : d.next_step);
           const row = h("button", { type: "button", class: "triage-row", "aria-pressed": String(isSelected) },
             h("span", {}, h("span", { class: "badge badge-" + lvl.toLowerCase(), text: lvl })),
             h("span", { class: "t-name" }, p.name, h("span", { class: "t-room", text: room(p) })),
@@ -823,8 +834,9 @@
       fill(
         "priority",
         head("Care priority" + (person ? " · " + person.name : ""), "Suggested from vital sign rules (NZEWS) and today's carer notes.",
-          h("span", { class: "badge lg badge-" + d.level.toLowerCase(), text: d.level })),
-        h("p", { class: "next-step", text: d.next_step }),
+          h("span", { class: "badge lg badge-" + shownLevel(d).toLowerCase(), text: shownLevel(d) })),
+        h("p", { class: "next-step", text: NEXT_STEP[shownLevel(d)] || d.next_step }),
+        changedByNurse(d) ? h("p", { class: "sub-text", style: "margin-bottom: 8px;", text: "Changed by a nurse. The system suggested " + d.level + "." }) : null,
         thinking ? h("p", { class: "sub-text", style: "margin-bottom: 8px;", text: "Reading carer notes…" }) : null,
         d.reasons.length
           ? h("ul", { class: "bullets" },
@@ -843,15 +855,15 @@
 
     function reviewPart(d) {
       const r = d.last_review;
-      const done = r ? h("span", { class: "sub-text", text: (r.action === "priority_accepted" ? "Accepted" : "Changed") + " by " + r.actor + ", " + whenText(r.at) }) : null;
-      const accept = h("button", { type: "button", class: "btn btn-primary btn-sm", text: "Accept " + d.level });
+      const done = r ? h("span", { class: "sub-text", text: (r.action === "priority_accepted" ? "Accepted " + (r.final || "") : "Changed to " + (r.final || "a new level")) + " by " + r.actor + ", " + whenText(r.at) }) : null;
+      const accept = h("button", { type: "button", class: "btn btn-primary btn-sm", text: changedByNurse(d) ? "Go back to " + d.level : "Accept " + d.level });
       const change = h("button", { type: "button", class: "btn btn-secondary btn-sm", text: "Change priority" });
       const box = h("div", { class: "review-row" }, accept, change, done);
 
       accept.addEventListener("click", () => sendReview(d, d.level, ""));
       change.addEventListener("click", () => {
         const pick = h("select", { class: "field", "aria-label": "New priority" },
-          ["Green", "Amber", "Red"].filter((l) => l !== d.level).map((l) => h("option", { value: l, text: l }))
+          ["Green", "Amber", "Red"].filter((l) => l !== shownLevel(d)).map((l) => h("option", { value: l, text: l }))
         );
         const why = h("textarea", { class: "field", rows: "2", placeholder: "Why are you changing it? (required)", "aria-label": "Reason for the change" });
         const save = h("button", { type: "button", class: "btn btn-primary btn-sm", text: "Save decision" });
