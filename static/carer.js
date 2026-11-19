@@ -438,48 +438,6 @@ if ($("btnOpenOcrTab")) {
   });
 }
 
-if ($("btnCarerSampleOcr")) {
-  $("btnCarerSampleOcr").addEventListener("click", function () {
-    var person = state.people.find(function (p) { return String(p.resident_id) === String(state.selected); }) || { name: "Margaret T." };
-    var canvas = document.createElement("canvas");
-    canvas.width = 780;
-    canvas.height = 560;
-    var ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = "#cbd5e1";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(20, 20, 740, 520);
-
-    ctx.fillStyle = "#0f172a";
-    ctx.font = "bold 24px Arial, sans-serif";
-    ctx.fillText("CARE SIGNAL CLINICAL HEALTH REPORT", 44, 66);
-
-    var lines = [
-      "Resident name: " + person.name,
-      "Date of birth: 12/04/1942",
-      "Report date: 14/11/2026",
-      "Document type: " + ($("ocrDocType") ? $("ocrDocType").value : "Health Report"),
-      "Blood pressure: 132 / 82 mmHg",
-      "Pulse: 76 bpm",
-      "Temperature: 36.8 C",
-      "Oxygen saturation: 97 %",
-      "Medications: Paracetamol 500mg BD, Amlodipine 5mg OD",
-      "Allergies: Penicillin"
-    ];
-    ctx.font = "20px Arial, sans-serif";
-    lines.forEach(function (line, idx) {
-      ctx.fillText(line, 44, 115 + idx * 42);
-    });
-    canvas.toBlob(function (blob) {
-      if (!blob) return;
-      var sampleFile = new File([blob], "health-report-" + String(person.name).toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".png", { type: "image/png" });
-      setChosenOcrFile(sampleFile);
-      showMsg("ocrUploadMsg", "Sample report loaded. Click 'Submit for OCR & Nurse Review'.", "ok");
-    }, "image/png");
-  });
-}
-
 async function loadCarerOcrDocs() {
   var tbody = $("carerOcrRows");
   if (!tbody) return;
@@ -544,7 +502,7 @@ if ($("submitOcrDoc")) {
     var name = carerName("ocrUploadMsg");
     if (!name) return;
     if (!selectedOcrFile && !resubmitDocId) {
-      showMsg("ocrUploadMsg", "Please choose a PDF, JPG, or PNG health document first (or click 'Use Sample Health Report').", "err");
+      showMsg("ocrUploadMsg", "Please choose a PDF, JPG, or PNG health document first.", "err");
       return;
     }
     var btn = $("submitOcrDoc");
