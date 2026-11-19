@@ -712,6 +712,14 @@
         )
       );
 
+      const nameField = (doc.extracted_fields || []).find((f) => f.key === "resident_name");
+      const nameMismatchBanner = nameField && nameField.needs_check && (nameField.reason || "").toLowerCase().includes("name mismatch")
+        ? h("div", {
+            style: "margin-bottom: 14px; padding: 10px 14px; border: 1px solid var(--amber-line); background: var(--amber-soft); border-radius: 6px; font-weight: 600; font-size: 13px;",
+            text: "⚠️ " + nameField.reason + " Please check the document or request correction.",
+          })
+        : null;
+
       fill(
         "ocrReviewPanel",
         head(
@@ -720,6 +728,7 @@
             (doc.carer_comment ? " · Carer note: “" + doc.carer_comment + "”" : ""),
           h("div", { class: "inline" }, statusBadge, closeBtn)
         ),
+        nameMismatchBanner,
         h("div", { class: "grid-layout" },
           h("div", {},
             h("h3", { style: "margin-bottom: 10px;", text: "1. Verify & edit OCR-extracted medical fields" }),
