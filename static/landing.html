@@ -7,77 +7,224 @@
   <meta name="description" content="Helps rest home carers record daily care, nurses see who needs help first, and families get a checked daily update.">
   <link rel="icon" type="image/png" href="/static/img/favicon.png">
   <link rel="stylesheet" href="/static/app.css?v=20261114">
+  <style>
+    /* Welcome page only. Colours come from the shared tokens in app.css. */
+    body { overflow-x: clip; }
+    .lp-bleed { margin-inline: calc(50% - 50vw); padding-inline: max(16px, calc(50vw - var(--wrap) / 2 + 16px)); }
+
+    /* Hero */
+    .lp-hero {
+      margin-top: calc(-1 * var(--s5));
+      padding-block: 56px 64px;
+      background:
+        radial-gradient(1100px 420px at 85% 10%, var(--accent-soft), transparent 70%),
+        linear-gradient(180deg, var(--bg-subtle), var(--bg));
+      border-bottom: 1px solid var(--line);
+    }
+    .lp-hero-grid { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 48px; align-items: center; }
+    .lp-hero h1 { font-size: 44px; line-height: 1.08; letter-spacing: -0.025em; }
+    .lp-hero h1 em { font-style: normal; color: var(--accent); }
+    .lp-hero .lede { font-size: var(--fs-lg); color: var(--ink-2); margin: 18px 0 26px; max-width: 34em; }
+    .lp-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+    .lp-actions .btn { min-height: 48px; padding: 0 22px; font-size: 16px; }
+    .lp-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 28px; padding: 0; list-style: none; }
+    .lp-chips li {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 13px; color: var(--ink-2);
+      background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px;
+    }
+    .lp-chips li::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+
+    /* Photo mosaic */
+    .lp-mosaic { position: relative; display: grid; grid-template-columns: 1.35fr 1fr; grid-template-rows: 1fr 1fr; gap: 14px; aspect-ratio: 4 / 3; }
+    .lp-mosaic figure { margin: 0; border-radius: 14px; overflow: hidden; box-shadow: 0 12px 32px rgba(18, 48, 45, 0.16); background: var(--bg-subtle); }
+    .lp-mosaic figure:first-child { grid-row: 1 / span 2; }
+    .lp-mosaic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .lp-mosaic figure:first-child img { object-position: 62% 50%; }
+    .lp-float {
+      position: absolute; left: -22px; bottom: 26px;
+      display: flex; align-items: center; gap: 10px;
+      background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+      padding: 10px 14px; box-shadow: 0 10px 28px rgba(18, 48, 45, 0.18);
+      font-size: 13px; color: var(--ink-2); max-width: 260px;
+    }
+    .lp-float strong { display: block; color: var(--ink); font-size: 14px; }
+    .lp-dot { flex: none; width: 12px; height: 12px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 0 4px var(--amber-soft); }
+
+    /* Section headings */
+    .lp-section { padding: 64px 0 8px; }
+    .lp-head { max-width: 640px; margin-bottom: 28px; }
+    .lp-head h2 { font-size: 28px; letter-spacing: -0.015em; margin-top: 4px; }
+    .lp-head p { color: var(--ink-2); margin-top: 8px; font-size: 16px; }
+
+    /* Role cards */
+    .lp-roles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+    .lp-role { display: flex; flex-direction: column; background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); }
+    .lp-role-img { aspect-ratio: 16 / 10; overflow: hidden; background: var(--bg-subtle); border-bottom: 1px solid var(--line); }
+    .lp-role-img img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; transition: transform 300ms ease; }
+    .lp-role:hover .lp-role-img img { transform: scale(1.03); }
+    .lp-role-body { padding: 20px 20px 22px; display: flex; flex-direction: column; flex: 1; }
+    .lp-role h3 { font-size: var(--fs-lg); margin: 4px 0 8px; }
+    .lp-role p { color: var(--ink-2); font-size: 14px; }
+    .lp-role ul { margin: 12px 0 0; padding-left: 18px; color: var(--ink-2); font-size: 14px; }
+    .lp-role li { margin-bottom: 4px; }
+
+    /* How it works */
+    .lp-flow { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 40px; align-items: center; }
+    .lp-steps { list-style: none; margin: 0; padding: 0; counter-reset: step; }
+    .lp-steps li { counter-increment: step; display: grid; grid-template-columns: 40px 1fr; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--line); color: var(--ink-2); font-size: 14px; }
+    .lp-steps li:last-child { border-bottom: 0; }
+    .lp-steps li::before {
+      content: counter(step); display: grid; place-items: center;
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent-line);
+      font-weight: 600; font-size: 14px;
+    }
+    .lp-steps strong { display: block; color: var(--ink); font-size: 15px; margin-bottom: 2px; }
+    .lp-flow .shot { border-radius: 12px; box-shadow: 0 12px 32px rgba(18, 48, 45, 0.14); }
+
+    /* Closing band with photo */
+    .lp-cta {
+      position: relative; overflow: hidden; border-radius: 16px; margin: 64px 0 8px;
+      min-height: 300px; display: flex; align-items: center;
+      background: var(--nav-bg) url("/static/img/role-family.jpg") center 35% / cover no-repeat;
+    }
+    .lp-cta::before { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(12, 36, 33, 0.94) 0%, rgba(12, 36, 33, 0.82) 42%, rgba(12, 36, 33, 0.15) 100%); }
+    .lp-cta-inner { position: relative; padding: 40px; max-width: 520px; color: #EEF4F2; }
+    .lp-cta h2 { color: #FFFFFF; font-size: 28px; letter-spacing: -0.015em; }
+    .lp-cta p { color: #C9DAD6; margin: 10px 0 22px; font-size: 16px; }
+    .lp-cta .btn-primary { background: #FFFFFF; border-color: #FFFFFF; color: #12302D; }
+    .lp-cta .btn-primary:hover { background: #DDEBE8; border-color: #DDEBE8; }
+    .lp-cta .btn-secondary { background: transparent; border-color: rgba(255, 255, 255, 0.55); color: #FFFFFF; }
+    .lp-cta .btn-secondary:hover { background: rgba(255, 255, 255, 0.1); color: #FFFFFF; }
+
+    @media (max-width: 960px) {
+      .lp-hero-grid, .lp-flow { grid-template-columns: 1fr; gap: 32px; }
+      .lp-hero h1 { font-size: 34px; }
+      .lp-roles { grid-template-columns: 1fr; }
+      .lp-float { left: 12px; }
+    }
+    @media (max-width: 560px) {
+      .lp-hero { padding-block: 32px 40px; }
+      .lp-hero h1 { font-size: 30px; }
+      .lp-mosaic { gap: 8px; }
+      .lp-float { display: none; }
+      .lp-cta-inner { padding: 28px 20px; }
+      .lp-cta::before { background: rgba(12, 36, 33, 0.84); }
+    }
+    @media (prefers-reduced-motion: reduce) { .lp-role-img img { transition: none; } }
+  </style>
 </head>
 <body>
   <header class="topbar"></header>
 
   <main class="page-container">
-    <section class="hero">
-      <div>
-        <p class="eyebrow">Care Signal</p>
-        <h1>Carers record the shift. The nurse sees who needs them first.</h1>
-        <p class="lede">Made for New Zealand rest homes — it checks vital signs and shift handovers, reads printed health reports, and gives carers nurse-approved care steps across four role pages.</p>
-        <a href="/login?v=2" class="btn btn-primary">Sign in</a>
-      </div>
-      <figure class="shot">
-        <img src="/static/img/shot-nurse.png" alt="Nurse dashboard: residents sorted by care priority, the selected resident's care priority with reasons, and items waiting for the nurse" width="1280" height="800">
-        <figcaption>Nurse dashboard — Red, Amber, and Green care priority</figcaption>
-      </figure>
-    </section>
-
-    <section class="section" aria-labelledby="whoTitle">
-      <h2 id="whoTitle">Who it is for</h2>
-
-      <div class="role-row">
+    <section class="lp-hero lp-bleed">
+      <div class="lp-hero-grid">
         <div>
-          <p class="eyebrow">Carers</p>
-          <h3>Record care in a few taps</h3>
-          <p>Pick a resident, then save a daily care task, a set of vital signs, or a concern for the nurse.</p>
-          <ul>
-            <li>Large buttons that work easily on a phone or tablet</li>
-            <li>Shows only care guidance that a nurse has checked and approved</li>
-            <li>Readings outside the normal range go straight to the nurse</li>
+          <p class="eyebrow">Care Signal · for New Zealand rest homes</p>
+          <h1>Carers record the shift. <em>The nurse sees who needs them first.</em></h1>
+          <p class="lede">AgeCare checks vital signs and shift handovers, reads printed health reports, and gives carers nurse-approved care steps, with a page for every role in the home.</p>
+          <div class="lp-actions">
+            <a href="/login?v=2" class="btn btn-primary">Sign in</a>
+            <a href="/login?v=2#register" class="btn btn-secondary">Create account</a>
+          </div>
+          <ul class="lp-chips" aria-label="Key features">
+            <li>The nurse makes the final decision</li>
+            <li>AI runs on this computer</li>
+            <li>NZEWS vital-sign rules</li>
           </ul>
         </div>
-        <figure class="shot">
-          <img src="/static/img/role-carer.jpg" alt="Carer supporting an elderly resident in a bright rest home lounge" width="1024" height="576" loading="lazy">
-        </figure>
-      </div>
 
-      <div class="role-row">
-        <div>
-          <p class="eyebrow">Registered nurses</p>
-          <h3>Know who needs you first</h3>
-          <p>Each resident gets a suggested Red, Amber, or Green priority with the reasons and the carer's notes. Accept it or change it with a reason in the audit log.</p>
-          <ul>
-            <li>Check numbers read from printed health reports before saving</li>
-            <li>Approve or edit AI care guidance before carers see it</li>
-            <li>Review shift handovers, camera alerts, and print a 1-page doctor summary</li>
-          </ul>
+        <div class="lp-mosaic">
+          <figure><img src="/static/img/role-carer.jpg" alt="Carer supporting an elderly resident in a bright rest home lounge" width="1024" height="576"></figure>
+          <figure><img src="/static/img/role-nurse.jpg" alt="Registered nurse and carer reviewing care with a resident on a tablet" width="1024" height="576"></figure>
+          <figure><img src="/static/img/role-family.jpg" alt="Family visiting their grandmother in the rest home" width="1024" height="576"></figure>
+          <div class="lp-float" aria-hidden="true">
+            <span class="lp-dot"></span>
+            <span><strong>Joan P. · Amber</strong>Blood pressure low. Nurse to check.</span>
+          </div>
         </div>
-        <figure class="shot">
-          <img src="/static/img/role-nurse.jpg" alt="Registered nurse and carer reviewing care with a resident on a tablet" width="1024" height="576" loading="lazy">
-        </figure>
-      </div>
-
-      <div class="role-row">
-        <div>
-          <p class="eyebrow">Families</p>
-          <h3>A daily update you can trust</h3>
-          <p>A short, simple update about your family member, checked by a nurse first, and a way to message the care team.</p>
-          <ul>
-            <li>Plain language with no confusing medical scores</li>
-            <li>Direct message box to reach the nursing team</li>
-          </ul>
-        </div>
-        <figure class="shot">
-          <img src="/static/img/role-family.jpg" alt="Family visiting their grandmother in the rest home" width="1024" height="576" loading="lazy">
-        </figure>
       </div>
     </section>
 
-    <section class="section" aria-labelledby="rulesTitle">
-      <h2 id="rulesTitle">Safety rules</h2>
+    <section class="lp-section" aria-labelledby="whoTitle">
+      <div class="lp-head">
+        <p class="eyebrow">Who it is for</p>
+        <h2 id="whoTitle">One system, a page for each person in the home</h2>
+        <p>Everyone signs in and goes straight to the page made for their job.</p>
+      </div>
+
+      <div class="lp-roles">
+        <article class="lp-role">
+          <div class="lp-role-img"><img src="/static/img/card-carer.jpg" alt="A carer holding the hands of an elderly resident" width="612" height="344" loading="lazy"></div>
+          <div class="lp-role-body">
+            <p class="eyebrow">Carers</p>
+            <h3>Record care in a few taps</h3>
+            <p>Pick a resident, then save a daily care task, a set of vital signs, or a concern for the nurse.</p>
+            <ul>
+              <li>Large buttons that work easily on a phone or tablet</li>
+              <li>Shows only care guidance that a nurse has checked and approved</li>
+              <li>Readings outside the normal range go straight to the nurse</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="lp-role">
+          <div class="lp-role-img"><img src="/static/img/card-nurse.jpg" alt="Registered nurses meeting around a table to review care" width="612" height="408" loading="lazy"></div>
+          <div class="lp-role-body">
+            <p class="eyebrow">Registered nurses</p>
+            <h3>Know who needs you first</h3>
+            <p>Each resident gets a suggested Red, Amber, or Green priority with the reasons and the carer's notes. Accept it or change it with a reason in the audit log.</p>
+            <ul>
+              <li>Check numbers read from printed health reports before saving</li>
+              <li>Approve or edit AI care guidance before carers see it</li>
+              <li>Review shift handovers, camera alerts, and print a 1-page doctor summary</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="lp-role">
+          <div class="lp-role-img"><img src="/static/img/card-family.jpg" alt="A smiling family with their grandparents" width="500" height="333" loading="lazy"></div>
+          <div class="lp-role-body">
+            <p class="eyebrow">Families</p>
+            <h3>A daily update you can trust</h3>
+            <p>A short, simple update about your family member, checked by a nurse first, and a way to message the care team.</p>
+            <ul>
+              <li>Plain language with no confusing medical scores</li>
+              <li>Direct message box to reach the nursing team</li>
+            </ul>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="lp-section" aria-labelledby="flowTitle">
+      <div class="lp-flow">
+        <figure class="shot">
+          <img src="/static/img/how-it-works-sketch.jpg" alt="Sketch of the AgeCare portal: documentation and care duties on one side, camera and on-duty monitoring on the other" width="1024" height="572" loading="lazy">
+          <figcaption>One shift in AgeCare: carers record care, the nurse checks it, and families get a trusted update</figcaption>
+        </figure>
+        <div>
+          <div class="lp-head" style="margin-bottom: 12px;">
+            <p class="eyebrow">How it works</p>
+            <h2 id="flowTitle">From the carer's note to the family's update</h2>
+          </div>
+          <ol class="lp-steps">
+            <li><span><strong>The carer records</strong>Care tasks, vital signs, and concerns are saved from the carer's page during the shift.</span></li>
+            <li><span><strong>The system suggests</strong>NZEWS rules and the local AI suggest a Red, Amber, or Green priority with reasons.</span></li>
+            <li><span><strong>The nurse decides</strong>The registered nurse accepts or changes the priority and approves any care guidance.</span></li>
+            <li><span><strong>The family hears</strong>A short, nurse-checked update is shared with the family each day.</span></li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <section class="lp-section" aria-labelledby="rulesTitle">
+      <div class="lp-head">
+        <p class="eyebrow">Safety rules</p>
+        <h2 id="rulesTitle">Built so a person stays in charge</h2>
+      </div>
       <ol class="rules">
         <li><span><strong>The nurse decides</strong>The AI suggests a priority and drafts guidance. A registered nurse accepts, changes, or rejects it.</span></li>
         <li><span><strong>Every line has a source</strong>Guidance lines must quote an approved reference note. Lines that mention medicines or diagnoses are removed.</span></li>
@@ -86,6 +233,17 @@
         <li><span><strong>Audit log for every action</strong>Every priority check, saved report reading, handover, and guidance approval is recorded with the staff member's name and time.</span></li>
         <li><span><strong>Built for New Zealand care</strong>Uses New Zealand Early Warning Score (NZEWS) vital-sign rules and clear shift handovers.</span></li>
       </ol>
+    </section>
+
+    <section class="lp-cta" aria-labelledby="ctaTitle">
+      <div class="lp-cta-inner">
+        <h2 id="ctaTitle">Better days for residents, calmer shifts for staff</h2>
+        <p>Sign in to go straight to your page, or create an account for your role.</p>
+        <div class="lp-actions">
+          <a href="/login?v=2" class="btn btn-primary">Sign in</a>
+          <a href="/login?v=2#register" class="btn btn-secondary">Create account</a>
+        </div>
+      </div>
     </section>
   </main>
 

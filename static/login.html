@@ -6,6 +6,27 @@
   <title>Sign in · AgeCare</title>
   <link rel="icon" type="image/png" href="/static/img/favicon.png">
   <link rel="stylesheet" href="/static/app.css?v=20261114">
+  <style>
+    /* Sign-in photo banner (matches the welcome page closing band) */
+    .login-photo {
+      position: relative; overflow: hidden; border-radius: 16px; margin: 20px 0 8px;
+      min-height: 320px; display: flex; align-items: flex-end;
+      background: #12302D url("/static/img/role-family.jpg") 68% 35% / cover no-repeat;
+      box-shadow: 0 12px 32px rgba(18, 48, 45, 0.18);
+    }
+    .login-photo::before { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(12, 36, 33, 0.94) 0%, rgba(12, 36, 33, 0.8) 45%, rgba(12, 36, 33, 0.15) 100%); }
+    .login-photo-inner { position: relative; padding: 32px; max-width: 400px; color: #EEF4F2; }
+    .login-photo h2 { color: #FFFFFF; font-size: 26px; line-height: 1.2; letter-spacing: -0.015em; }
+    .login-photo p { color: #C9DAD6; margin: 10px 0 18px; font-size: 15px; }
+    .login-photo-tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+    .login-photo-tags li { font-size: 13px; color: #FFFFFF; border: 1px solid rgba(255, 255, 255, 0.5); border-radius: 999px; padding: 5px 12px; }
+    @media (max-width: 560px) {
+      .login-photo { min-height: 260px; }
+      .login-photo::before { background: rgba(12, 36, 33, 0.82); }
+      .login-photo-inner { padding: 24px 20px; }
+      .login-photo h2 { font-size: 22px; }
+    }
+  </style>
 </head>
 <body>
   <header class="topbar"></header>
@@ -16,10 +37,17 @@
         <p class="eyebrow">Care Signal</p>
         <h1>Sign in to AgeCare</h1>
         <p class="lede">Carers record daily care, nurses decide who needs help first, and families get a checked daily update.</p>
-        <figure class="shot">
-          <img src="/static/img/shot-nurse.png" alt="The nurse dashboard: residents sorted by care priority, with the selected resident's details below" width="1280" height="800">
-          <figcaption>Registered Nurse clinical dashboard — NZEWS care priority &amp; shift handover queue</figcaption>
-        </figure>
+        <div class="login-photo" role="img" aria-label="A family smiling with their grandmother in the rest home lounge">
+          <div class="login-photo-inner">
+            <h2>Better days for residents, calmer shifts for staff</h2>
+            <p>Carers, nurses, and families working together on one checked record.</p>
+            <ul class="login-photo-tags">
+              <li>Nurse decides</li>
+              <li>AI runs locally</li>
+              <li>NZEWS rules</li>
+            </ul>
+          </div>
+        </div>
         <div class="demo-accounts">
           <p class="section-label">Role workspaces</p>
           <table class="tbl">
